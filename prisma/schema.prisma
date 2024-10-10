@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// prisma/schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // uncomment next line if you use Prisma <5.10
+  // directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+model Usuarios {
+  id       Int      @id @default(autoincrement())
+  nome     String
+  email    String   @unique
+  password String
+  criadoEm DateTime @default(now())
+  // Adicione outros campos conforme necessário
+}
+
+model Escola {
+  id            Int                 @id @default(autoincrement())
+  nome          String
+  projetoId     Int // Cada escola está associada a um único projeto
+  projeto       Projeto             @relation(fields: [projetoId], references: [id])
+  distribuicoes GradeDistribuicao[] // Cada escola pode ter várias grades de distribuição
+}
+
+model Projeto {
+  id      Int      @id @default(autoincrement())
+  nome    String
+  itens   Item[] // Cada projeto tem vários itens
+  escolas Escola[] // Um projeto pode estar associado a várias escolas
+}
+
+model Item {
+  id          Int                  @id @default(autoincrement())
+  nome        String // Nome do item (ex: "calça")
+  projetoId   Int
+  projeto     Projeto              @relation(fields: [projetoId], references: [id])
+  codigoBarra Int                  @unique // Código de barras numérico único (de 000 a 999)
+  genero      Genero // Gênero do item (MASCULINO, FEMININO, UNISSEX)
+  tamanhos    ItemProjetoTamanho[] // Relação com tamanhos e quantidade para cada item
+}
+
+model ItemProjetoTamanho {
+  id                Int                     @id @default(autoincrement())
+  itemId            Int
+  tamanho           String // Tamanho do item (ex: "P", "M", "G")
+  quantidade        Int // Quantidade disponível
+  item              Item                    @relation(fields: [itemId], references: [id])
+  estoque           Estoque? // O relacionamento será definido do lado do `Estoque`
+  distribuicaoItens GradeDistribuicaoItem[] // Itens distribuídos
+}
+
+model Estoque {
+  id                   Int                @id @default(autoincrement())
+  itemProjetoTamanhoId Int                @unique // Definir como único para garantir relação 1:1
+  quantidade           Int // Quantidade disponível no estoque
+  itemProjetoTamanho   ItemProjetoTamanho @relation(fields: [itemProjetoTamanhoId], references: [id])
+}
+
+model GradeDistribuicao {
+  id                Int                     @id @default(autoincrement())
+  escolaId          Int
+  dataDistribuicao  DateTime
+  escola            Escola                  @relation(fields: [escolaId], references: [id])
+  itensDistribuidos GradeDistribuicaoItem[] // Itens e quantidades distribuídos
+}
+
+model GradeDistribuicaoItem {
+  id                    Int                @id @default(autoincrement())
+  gradeDistribuicaoId   Int
+  itemProjetoTamanhoId  Int
+  quantidadeDistribuida Int // Quantidade a ser distribuída para este item/tamanho
+  gradeDistribuicao     GradeDistribuicao  @relation(fields: [gradeDistribuicaoId], references: [id])
+  itemProjetoTamanho    ItemProjetoTamanho @relation(fields: [itemProjetoTamanhoId], references: [id])
+}
+
+enum Genero {
+  MASCULINO
+  FEMININO
+  UNISSEX
+}
