@@ -1,0 +1,15 @@
+GET http://localhost:4997/projetos
+
+###
+GET http://localhost:4997/projetos/30
+
+###
+DELETE http://localhost:4997/projetos/29
+
+###
+POST http://localhost:4997/projetos
+Content-Type: application/json
+
+{
+   
+}
