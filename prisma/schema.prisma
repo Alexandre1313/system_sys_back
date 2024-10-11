@@ -22,70 +22,94 @@ model Usuarios {
   email    String   @unique
   password String
   criadoEm DateTime @default(now())
-  // Adicione outros campos conforme necessário
 }
 
 model Projeto {
-  id      Int      @id @default(autoincrement()) // Identificador único do projeto
-  nome    String   @unique // Nome do projeto (ex: Joinville)
-  escolas Escola[] // Um projeto pode ter várias escolas
-  itens   Item[] // Um projeto pode ter vários itens
+  id        Int      @id @default(autoincrement())
+  nome      String   @unique
+  descricao String?
+  escolas   Escola[] // Relacionamento com as Escolas
+  itens     Item[] // Relacionamento com os Itens do projeto
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Escola {
-  id        Int     @id @default(autoincrement()) // Identificador único
-  nome      String // Nome da escola
-  projetoId Int // Relacionamento com o projeto
-  projeto   Projeto @relation(fields: [projetoId], references: [id])
-  grades    Grade[] // As grades associadas à escola
-  @@unique([projetoId, nome]) // Restringe nomes duplicados por projeto
+  id        Int      @id @default(autoincrement())
+  nome      String
+  projeto   Projeto  @relation(fields: [projetoId], references: [id])
+  projetoId Int // Relacionamento com o Projeto
+  grades    Grade[] // Relacionamento com as Grades de Distribuição
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Item {
-  id        Int       @id @default(autoincrement()) // Identificador único
-  nome      String // Nome do item (ex: Short-Saia)
-  genero    Genero // Enum: MASCULINO, FEMININO, UNISSEX
-  projetoId Int // Relacionamento com o projeto
-  projeto   Projeto   @relation(fields: [projetoId], references: [id])
-  tamanhos  Tamanho[] // Vários tamanhos associados ao item
-  grades    Grade[] // Grades associadas ao item
-  estoque   Estoque[] // Estoque associado ao item
+  id        Int           @id @default(autoincrement())
+  nome      String
+  genero    Genero // Masculino, Feminino ou Unissex
+  projeto   Projeto       @relation(fields: [projetoId], references: [id])
+  projetoId Int
+  tamanhos  ItemTamanho[] // Relacionamento com tamanhos específicos
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }
 
 model Tamanho {
-  id       Int       @id @default(autoincrement()) // Identificador único do tamanho
-  valor    String // Tamanho (ex: P, M, G)
-  itemId   Int // Relacionamento com o item
-  item     Item      @relation(fields: [itemId], references: [id])
-  grades   Grade[]   @relation("GradeTamanho") // Relação oposta com Grade
-  estoques Estoque[] @relation("EstoqueTamanho") // Relação oposta com Estoque
-
-  @@unique([itemId, valor]) // Garante que o tamanho é único por item
+  id    Int           @id @default(autoincrement())
+  nome  String // Tamanho P, M, G, GG, etc.
+  itens ItemTamanho[] // Itens que possuem esse tamanho
 }
 
-model Grade {
-  id             Int      @id @default(autoincrement()) // Identificador único
-  escolaId       Int // Relacionamento com a escola
-  escola         Escola   @relation(fields: [escolaId], references: [id])
-  itemId         Int // Relacionamento com o item
-  item           Item     @relation(fields: [itemId], references: [id])
-  tamanhoId      Int // Relacionamento com o tamanho
-  tamanho        Tamanho  @relation(fields: [tamanhoId], references: [id], name: "GradeTamanho")
-  totalExpedir   Int // Total a ser expedido
-  expedido       Int      @default(0) // Total já expedido
-  expedicaoAtiva Boolean  @default(true) // Se a expedição está ativa
-  createdAt      DateTime @default(now()) // Data de criação da grade
-  updatedAt      DateTime @updatedAt // Data da última atualização
+model ItemTamanho {
+  id        Int         @id @default(autoincrement())
+  item      Item        @relation(fields: [itemId], references: [id])
+  itemId    Int
+  tamanho   Tamanho     @relation(fields: [tamanhoId], references: [id])
+  tamanhoId Int
+  barcode   Barcode? // Relacionamento com o código de barras único
+  estoque   Estoque? // Estoque desse item/tamanho (agora opcional)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  GradeItem GradeItem[]
+}
+
+model Barcode {
+  id            Int         @id @default(autoincrement())
+  codigo        String      @unique
+  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
+  itemTamanhoId Int         @unique // Corrigido para ser único
 }
 
 model Estoque {
-  id         Int      @id @default(autoincrement()) // Identificador único
-  itemId     Int // Relacionamento com o item
-  item       Item     @relation(fields: [itemId], references: [id])
-  tamanhoId  Int // Relacionamento com o tamanho
-  tamanho    Tamanho  @relation(fields: [tamanhoId], references: [id], name: "EstoqueTamanho")
-  quantidade Int // Quantidade disponível no estoque
-  updatedAt  DateTime @updatedAt // Data da última atualização
+  id            Int         @id @default(autoincrement())
+  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
+  itemTamanhoId Int         @unique // Corrigido para ser único
+  quantidade    Int // Quantidade em estoque
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Grade {
+  id         Int         @id @default(autoincrement())
+  escola     Escola      @relation(fields: [escolaId], references: [id])
+  escolaId   Int
+  itensGrade GradeItem[] // Relacionamento com os itens dessa grade
+  finalizada Boolean     @default(false) // Se a grade foi finalizada ou não
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model GradeItem {
+  id                 Int         @id @default(autoincrement())
+  grade              Grade       @relation(fields: [gradeId], references: [id])
+  gradeId            Int
+  itemTamanho        ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
+  itemTamanhoId      Int
+  quantidade         Int // Quantidade total a ser expedida
+  quantidadeExpedida Int // Quantidade já expedida
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
 }
 
 enum Genero {

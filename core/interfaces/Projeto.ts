@@ -2,8 +2,11 @@ import Escola from "./Escola";
 import Item from "./Item";
 
 export default interface Projeto {
-  id: number;                 // Identificador único do projeto
-  nome: string;               // Nome do projeto (ex: Joinville)
-  escolas?: Escola[];          // Um projeto pode ter várias escolas
-  itens?: Item[];              // Um projeto pode ter vários itens
+  id: number;
+  nome: string;
+  descricao?: string; // opcional
+  escolas: Escola[]; // Relacionamento com as Escolas
+  itens: Item[]; // Relacionamento com os Itens do projeto
+  createdAt: Date;
+  updatedAt: Date;
 }

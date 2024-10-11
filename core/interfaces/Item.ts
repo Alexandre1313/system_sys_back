@@ -1,16 +1,14 @@
-import Estoque from "./Estoque";
 import { Genero } from "./Genero";
-import Grade from "./Grade";
+import ItemTamanho from "./ItemTamanho";
 import Projeto from "./Projeto";
-import Tamanho from "./Tamanho";
 
 export default interface Item {
-    id: number;                 // Identificador único do item
-    nome: string;               // Nome do item (ex: Short-Saia)
-    genero: Genero;             // Enum: MASCULINO, FEMININO, UNISSEX
-    projetoId: number;          // ID do projeto associado
-    projeto: Projeto;           // Relacionamento com o projeto
-    tamanhos: Tamanho[];        // Vários tamanhos associados ao item
-    grades: Grade[];            // Grades associadas ao item
-    estoque: Estoque[];         // Estoque associado ao item
+    id: number;
+    nome: string;
+    genero: Genero; // Masculino, Feminino ou Unissex
+    projetoId: number; // Relacionamento com o Projeto
+    projeto?: Projeto; // Relacionamento opcional com o Projeto
+    tamanhos: ItemTamanho[]; // Relacionamento com tamanhos específicos
+    createdAt: Date;
+    updatedAt: Date;
 }

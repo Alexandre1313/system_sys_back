@@ -1,18 +1,12 @@
 import Escola from "./Escola";
-import Item from "./Item";
-import Tamanho from "./Tamanho";
+import GradeItem from "./GradeItem";
 
 export default interface Grade {
-    id: number;                 // Identificador único da grade
-    escolaId: number;          // ID da escola associada
-    escola: Escola;             // Relacionamento com a escola
-    itemId: number;            // ID do item associado
-    item: Item;                 // Relacionamento com o item
-    tamanhoId: number;         // ID do tamanho associado
-    tamanho: Tamanho;           // Relacionamento com o tamanho
-    totalExpedir: number;       // Total a ser expedido
-    expedido: number;           // Total já expedido
-    expedicaoAtiva: boolean;    // Se a expedição está ativa
-    createdAt: Date;            // Data de criação da grade
-    updatedAt: Date;            // Data da última atualização
-}
+    id: number;
+    escolaId: number; // Relacionamento com Escola
+    escola?: Escola; // Relacionamento opcional com Escola
+    itensGrade: GradeItem[]; // Relacionamento com os itens dessa grade
+    finalizada: boolean; // Se a grade foi finalizada ou não
+    createdAt: Date;
+    updatedAt: Date;
+  }

@@ -1,12 +1,10 @@
-import Item from "./Item";
-import Tamanho from "./Tamanho";
+import ItemTamanho from "./ItemTamanho";
 
 export default interface Estoque {
-    id: number;                 // Identificador único do estoque
-    itemId: number;            // ID do item associado
-    item: Item;                 // Relacionamento com o item
-    tamanhoId: number;         // ID do tamanho associado
-    tamanho: Tamanho;           // Relacionamento com o tamanho
-    quantidade: number;         // Quantidade disponível no estoque
-    updatedAt: Date;            // Data da última atualização
+    id: number;
+    itemTamanhoId: number; // Relacionamento com ItemTamanho
+    itemTamanho?: ItemTamanho; // Relacionamento opcional com ItemTamanho
+    quantidade: number; // Quantidade em estoque
+    createdAt: Date;
+    updatedAt: Date;
 }
