@@ -27,7 +27,7 @@ model Usuarios {
 model Projeto {
   id        Int      @id @default(autoincrement())
   nome      String   @unique
-  descricao String?
+  descricao String
   escolas   Escola[] // Relacionamento com as Escolas
   itens     Item[] // Relacionamento com os Itens do projeto
   createdAt DateTime @default(now())
@@ -42,6 +42,7 @@ model Escola {
   grades    Grade[] // Relacionamento com as Grades de Distribuição
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  @@unique([projetoId, nome]) // Garante que o nome da escola é único por projeto
 }
 
 model Item {

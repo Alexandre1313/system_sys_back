@@ -4,19 +4,34 @@ import { PrismaProvider } from 'src/db/prisma.provider';
 
 @Injectable()
 export class ProjetoPrisma {
-  constructor(readonly prisma: PrismaProvider) {}
+  constructor(readonly prisma: PrismaProvider) { }
 
-  async salvar(projeto: Projeto): Promise<void> {
-    await this.prisma.projeto.upsert({
-      where: { id: projeto.id ?? -1 },
-      update: projeto,
-      create: projeto,
+  async salvar(projeto: Projeto): Promise<Projeto> {
+    const { id, escolas, itens, ...dadosDoProjeto } = projeto;
+  
+    const projetoSalvo = await this.prisma.projeto.upsert({
+      where: {
+        id: id !== undefined ? +id : -1, 
+      },
+      update: {
+        ...dadosDoProjeto,
+        // Aqui você pode adicionar lógica específica para atualizar itens ou escolas se necessário
+      },
+      create: {
+        ...dadosDoProjeto,
+        // Aqui você pode adicionar lógica específica para criar itens ou escolas se necessário
+      },
     });
+    return projetoSalvo as any; // Retorne o projeto salvo
   }
 
   async obter(): Promise<Projeto[]> {
-    const projetos = await this.prisma.projeto.findMany();
-    return projetos as any;
+    const projetos = await this.prisma.projeto.findMany({
+      include: {
+        escolas: true, // Inclui os dados das escolas associadas a cada projeto
+      },
+    });
+    return projetos;
   }
 
   async obterPorId(id: number): Promise<Projeto | null> {

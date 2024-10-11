@@ -1,0 +1,16 @@
+GET http://localhost:4997/escolas
+
+###
+GET http://localhost:4997/escolas/1
+
+###
+DELETE http://localhost:4997/escolas/2
+
+###
+POST http://localhost:4997/escolas
+Content-Type: application/json
+
+{ 
+  "nome": "Escola Papa Pio XVII",
+  "projetoId": 3
+}
