@@ -25,63 +25,67 @@ model Usuarios {
   // Adicione outros campos conforme necessário
 }
 
-model Escola {
-  id            Int                 @id @default(autoincrement())
-  nome          String
-  projetoId     Int // Cada escola está associada a um único projeto
-  projeto       Projeto             @relation(fields: [projetoId], references: [id])
-  distribuicoes GradeDistribuicao[] // Cada escola pode ter várias grades de distribuição
+model Projeto {
+  id      Int      @id @default(autoincrement()) // Identificador único do projeto
+  nome    String   @unique // Nome do projeto (ex: Joinville)
+  escolas Escola[] // Um projeto pode ter várias escolas
+  itens   Item[] // Um projeto pode ter vários itens
 }
 
-model Projeto {
-  id      Int      @id @default(autoincrement())
-  nome    String
-  itens   Item[] // Cada projeto tem vários itens
-  escolas Escola[] // Um projeto pode estar associado a várias escolas
+model Escola {
+  id        Int     @id @default(autoincrement()) // Identificador único
+  nome      String // Nome da escola
+  projetoId Int // Relacionamento com o projeto
+  projeto   Projeto @relation(fields: [projetoId], references: [id])
+  grades    Grade[] // As grades associadas à escola
+  @@unique([projetoId, nome]) // Restringe nomes duplicados por projeto
 }
 
 model Item {
-  id          Int                  @id @default(autoincrement())
-  nome        String // Nome do item (ex: "calça")
-  projetoId   Int
-  projeto     Projeto              @relation(fields: [projetoId], references: [id])
-  codigoBarra Int                  @unique // Código de barras numérico único (de 000 a 999)
-  genero      Genero // Gênero do item (MASCULINO, FEMININO, UNISSEX)
-  tamanhos    ItemProjetoTamanho[] // Relação com tamanhos e quantidade para cada item
+  id        Int       @id @default(autoincrement()) // Identificador único
+  nome      String // Nome do item (ex: Short-Saia)
+  genero    Genero // Enum: MASCULINO, FEMININO, UNISSEX
+  projetoId Int // Relacionamento com o projeto
+  projeto   Projeto   @relation(fields: [projetoId], references: [id])
+  tamanhos  Tamanho[] // Vários tamanhos associados ao item
+  grades    Grade[] // Grades associadas ao item
+  estoque   Estoque[] // Estoque associado ao item
 }
 
-model ItemProjetoTamanho {
-  id                Int                     @id @default(autoincrement())
-  itemId            Int
-  tamanho           String // Tamanho do item (ex: "P", "M", "G")
-  quantidade        Int // Quantidade disponível
-  item              Item                    @relation(fields: [itemId], references: [id])
-  estoque           Estoque? // O relacionamento será definido do lado do `Estoque`
-  distribuicaoItens GradeDistribuicaoItem[] // Itens distribuídos
+model Tamanho {
+  id       Int       @id @default(autoincrement()) // Identificador único do tamanho
+  valor    String // Tamanho (ex: P, M, G)
+  itemId   Int // Relacionamento com o item
+  item     Item      @relation(fields: [itemId], references: [id])
+  grades   Grade[]   @relation("GradeTamanho") // Relação oposta com Grade
+  estoques Estoque[] @relation("EstoqueTamanho") // Relação oposta com Estoque
+
+  @@unique([itemId, valor]) // Garante que o tamanho é único por item
+}
+
+model Grade {
+  id             Int      @id @default(autoincrement()) // Identificador único
+  escolaId       Int // Relacionamento com a escola
+  escola         Escola   @relation(fields: [escolaId], references: [id])
+  itemId         Int // Relacionamento com o item
+  item           Item     @relation(fields: [itemId], references: [id])
+  tamanhoId      Int // Relacionamento com o tamanho
+  tamanho        Tamanho  @relation(fields: [tamanhoId], references: [id], name: "GradeTamanho")
+  totalExpedir   Int // Total a ser expedido
+  expedido       Int      @default(0) // Total já expedido
+  expedicaoAtiva Boolean  @default(true) // Se a expedição está ativa
+  createdAt      DateTime @default(now()) // Data de criação da grade
+  updatedAt      DateTime @updatedAt // Data da última atualização
 }
 
 model Estoque {
-  id                   Int                @id @default(autoincrement())
-  itemProjetoTamanhoId Int                @unique // Definir como único para garantir relação 1:1
-  quantidade           Int // Quantidade disponível no estoque
-  itemProjetoTamanho   ItemProjetoTamanho @relation(fields: [itemProjetoTamanhoId], references: [id])
-}
-
-model GradeDistribuicao {
-  id                Int                     @id @default(autoincrement())
-  escolaId          Int
-  dataDistribuicao  DateTime
-  escola            Escola                  @relation(fields: [escolaId], references: [id])
-  itensDistribuidos GradeDistribuicaoItem[] // Itens e quantidades distribuídos
-}
-
-model GradeDistribuicaoItem {
-  id                    Int                @id @default(autoincrement())
-  gradeDistribuicaoId   Int
-  itemProjetoTamanhoId  Int
-  quantidadeDistribuida Int // Quantidade a ser distribuída para este item/tamanho
-  gradeDistribuicao     GradeDistribuicao  @relation(fields: [gradeDistribuicaoId], references: [id])
-  itemProjetoTamanho    ItemProjetoTamanho @relation(fields: [itemProjetoTamanhoId], references: [id])
+  id         Int      @id @default(autoincrement()) // Identificador único
+  itemId     Int // Relacionamento com o item
+  item       Item     @relation(fields: [itemId], references: [id])
+  tamanhoId  Int // Relacionamento com o tamanho
+  tamanho    Tamanho  @relation(fields: [tamanhoId], references: [id], name: "EstoqueTamanho")
+  quantidade Int // Quantidade disponível no estoque
+  updatedAt  DateTime @updatedAt // Data da última atualização
 }
 
 enum Genero {
