@@ -1,6 +1,5 @@
 import Escola from "./Escola";
 import Estoque from "./Estoque";
-import { Genero } from "./Genero";
 import Grade from "./Grade";
 import Item from "./Item";
 import Projeto from "./Projeto";
@@ -12,8 +11,7 @@ import Barcode from "./Barcode";
 
 export type { 
     Escola,
-    Estoque,
-    Genero,
+    Estoque,  
     Grade,
     Item,
     Projeto,

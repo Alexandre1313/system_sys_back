@@ -1,0 +1,16 @@
+GET http://localhost:4997/barcodes
+
+###
+GET http://localhost:4997/barcodes/18
+
+###
+DELETE http://localhost:4997/barcodes/27
+
+###
+POST http://localhost:4997/barcodes
+Content-Type: application/json
+
+{ 
+    "codigo": "999",
+    "itemTamanhoId": 1
+}

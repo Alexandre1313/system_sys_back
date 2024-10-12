@@ -1,0 +1,16 @@
+GET http://localhost:4997/itenstamanho
+
+###
+GET http://localhost:4997/itenstamanho/18
+
+###
+DELETE http://localhost:4997/itenstamanho/27
+
+###
+POST http://localhost:4997/itenstamanho
+Content-Type: application/json
+
+{ 
+   "itemId": 1,   
+   "tamanhoId": 1
+}

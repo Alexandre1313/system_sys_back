@@ -1,0 +1,17 @@
+GET http://localhost:4997/itens
+
+###
+GET http://localhost:4997/itens/1
+
+###
+DELETE http://localhost:4997/itens/1
+
+###
+POST http://localhost:4997/itens
+Content-Type: application/json
+
+{ 
+  "nome": "Calça Helanca",
+  "genero": "UNISSEX",
+  "projetoId": 1
+}

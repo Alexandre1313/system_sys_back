@@ -49,10 +49,25 @@ export class EscolaPrisma {
 
     async obterPorId(id: number): Promise<Escola | null> {
         const escola = await this.prisma.escola.findUnique({ where: { id } });
-        return (escola as any) ?? null;
+        return (escola as Escola) ?? null;
     }
 
     async excluir(id: number): Promise<void> {
-        await this.prisma.escola.delete({ where: { id } });
+        try {
+            // Tente excluir o item com o ID fornecido
+            await this.prisma.escola.delete({ where: { id } });
+        } catch (error) {
+            // Aqui você pode capturar e tratar o erro
+            console.error('Erro ao excluir a escola:', error);
+            
+            // Lançar um erro apropriado ou lançar uma exceção
+            if (error.code === 'P2025') {
+                // Erro específico quando o registro não é encontrado
+                throw new Error('O escola não foi encontrada.');
+            } else {
+                // Lidar com outros erros genéricos
+                throw new Error('Erro ao tentar excluir a escola. Por favor, tente novamente.');
+            }
+        }
     }
 }

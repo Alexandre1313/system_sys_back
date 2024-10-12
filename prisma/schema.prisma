@@ -17,11 +17,12 @@ datasource db {
 }
 
 model Usuarios {
-  id       Int      @id @default(autoincrement())
-  nome     String
-  email    String   @unique
-  password String
-  criadoEm DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  nome      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Projeto {
@@ -42,6 +43,7 @@ model Escola {
   grades    Grade[] // Relacionamento com as Grades de Distribuição
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@unique([projetoId, nome]) // Garante que o nome da escola é único por projeto
 }
 
@@ -57,9 +59,11 @@ model Item {
 }
 
 model Tamanho {
-  id    Int           @id @default(autoincrement())
-  nome  String // Tamanho P, M, G, GG, etc.
-  itens ItemTamanho[] // Itens que possuem esse tamanho
+  id        Int           @id @default(autoincrement())
+  nome      String // Tamanho P, M, G, GG, etc.
+  itens     ItemTamanho[] // Itens que possuem esse tamanho
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }
 
 model ItemTamanho {
@@ -80,6 +84,8 @@ model Barcode {
   codigo        String      @unique
   itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
   itemTamanhoId Int         @unique // Corrigido para ser único
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 model Estoque {

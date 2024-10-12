@@ -3,5 +3,6 @@ export default interface Usuarios {
     nome: string;
     email: string;
     password: string;
-    criadoEm: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }

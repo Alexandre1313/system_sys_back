@@ -1,0 +1,15 @@
+GET http://localhost:4997/tamanhos
+
+###
+GET http://localhost:4997/tamanhos/1
+
+###
+DELETE http://localhost:4997/tamanhos/2
+
+###
+POST http://localhost:4997/tamanhos
+Content-Type: application/json
+
+{ 
+  "nome": "G2" 
+}

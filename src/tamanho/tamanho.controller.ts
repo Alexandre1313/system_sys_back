@@ -1,38 +1,38 @@
 import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
-import { EscolaPrisma } from './escola.prisma';
-import { Escola } from '@core/index';
+import { TamanhoPrisma } from './tamanho.prisma';
+import { Tamanho } from '@core/index';
 
-@Controller('escolas')
-export class EscolaController {
-  constructor(private readonly repo: EscolaPrisma) { }
+@Controller('tamanhos')
+export class TamanhoController {
+  constructor(private readonly repo: TamanhoPrisma) { }
 
-  // Salvar ou criar uma escola
+  // Salvar ou criar um tamanho
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async salvarEscola(@Body() escola: Omit<Escola, 'createdAt' | 'updatedAt'>): Promise<Escola> {
+  async salvarTamanho(@Body() tamanho: Omit<Tamanho, 'createdAt' | 'updatedAt'>): Promise<Tamanho> {
     try {
-        return await this.repo.salvar(escola);
+        return await this.repo.salvar(tamanho);
     } catch (error) {
         throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
     }
   }
    
-  // Obter todas as escolas
+  // Obter todos os tamanhos
   @Get()
-  async obterEscolas(): Promise<Escola[]> {
+  async obterTamanhos(): Promise<Tamanho[]> {
     return this.repo.obter();
   }
 
-  // Obter uma escola específica pelo ID
+  // Obter um tamanho específica pelo ID
   @Get(':id')
-  async obterEscola(@Param('id') id: string): Promise<Escola> {
+  async obterTamanho(@Param('id') id: string): Promise<Tamanho> {
     return this.repo.obterPorId(+id);
   }
 
-  // Excluir uma escola específica pelo ID 
+  // Excluir um tamanho específico pelo ID
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT) // Indica que não há conteúdo após a exclusão
-  async excluirEscola(@Param('id') id: string): Promise<any> {
+  async excluirTamanho(@Param('id') id: string): Promise<any> {
     try {
         return await this.repo.excluir(+id);
     } catch (error) {

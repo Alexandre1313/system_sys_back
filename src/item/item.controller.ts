@@ -1,38 +1,38 @@
 import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
-import { EscolaPrisma } from './escola.prisma';
-import { Escola } from '@core/index';
+import { ItemPrisma } from './item.prisma';
+import { Item } from '@core/index';
 
-@Controller('escolas')
-export class EscolaController {
-  constructor(private readonly repo: EscolaPrisma) { }
+@Controller('itens')
+export class ItemController {
+  constructor(private readonly repo: ItemPrisma) { }
 
-  // Salvar ou criar uma escola
+  // Salvar ou criar um Item
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async salvarEscola(@Body() escola: Omit<Escola, 'createdAt' | 'updatedAt'>): Promise<Escola> {
+  async salvarItem(@Body() item: Omit<Item, 'createdAt' | 'updatedAt'>): Promise<Item> {
     try {
-        return await this.repo.salvar(escola);
+        return await this.repo.salvar(item);
     } catch (error) {
         throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
     }
   }
    
-  // Obter todas as escolas
+  // Obter todas os itens
   @Get()
-  async obterEscolas(): Promise<Escola[]> {
+  async obterItens(): Promise<Item[]> {
     return this.repo.obter();
   }
 
-  // Obter uma escola específica pelo ID
+  // Obter um item específico pelo ID
   @Get(':id')
-  async obterEscola(@Param('id') id: string): Promise<Escola> {
+  async obterItem(@Param('id') id: string): Promise<Item> {
     return this.repo.obterPorId(+id);
   }
 
-  // Excluir uma escola específica pelo ID 
+  // Excluir um item específico pelo ID 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT) // Indica que não há conteúdo após a exclusão
-  async excluirEscola(@Param('id') id: string): Promise<any> {
+  async excluirItem(@Param('id') id: string): Promise<any> {
     try {
         return await this.repo.excluir(+id);
     } catch (error) {

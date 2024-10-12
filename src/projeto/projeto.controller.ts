@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
 import { ProjetoPrisma } from './projeto.prisma';
 import { Projeto } from '@core/index';
 
@@ -10,7 +10,11 @@ export class ProjetoController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async salvarProjeto(@Body() projeto: Omit<Projeto, 'createdAt' | 'updatedAt'>): Promise<Projeto> {
-    return this.repo.salvar(projeto); // Chamando a função salvar
+    try {
+      return await this.repo.salvar(projeto);
+    } catch (error) {
+      throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
+    }
   }
 
   // Obter todos os projetos
@@ -28,7 +32,11 @@ export class ProjetoController {
   // Excluir um projeto específico pelo ID
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT) // Indica que não há conteúdo após a exclusão
-  async excluirProjeto(@Param('id') id: string): Promise<void> {
-    await this.repo.excluir(+id);
+  async excluirProjeto(@Param('id') id: string): Promise<any> {
+    try {
+        return await this.repo.excluir(+id);
+    } catch (error) {
+        throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
+    }
   }
 }
