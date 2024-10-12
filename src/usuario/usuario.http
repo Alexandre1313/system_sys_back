@@ -1,0 +1,17 @@
+GET http://localhost:4997/usuarios
+
+###
+GET http://localhost:4997/usuarios/1
+
+###
+DELETE http://localhost:4997/usuarios/27
+
+###
+POST http://localhost:4997/usuarios
+Content-Type: application/json
+
+{ 
+    "nome": "Alexandre Cordeiro",
+    "email": "alexandre.13a@gmail.com",
+    "password": "18100707nc"
+}

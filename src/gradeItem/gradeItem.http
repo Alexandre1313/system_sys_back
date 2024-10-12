@@ -1,0 +1,18 @@
+GET http://localhost:4997/gradeitens
+
+###
+GET http://localhost:4997/gradeitens/18
+
+###
+DELETE http://localhost:4997/gradeitens/27
+
+###
+POST http://localhost:4997/gradeitens
+Content-Type: application/json
+
+{ 
+    "gradeId": 2,   
+    "itemTamanhoId": 1,  
+    "quantidade": 156,
+    "quantidadeExpedida": 100
+}

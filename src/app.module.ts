@@ -7,6 +7,10 @@ import { TamanhoModule } from './tamanho/tamanho.module';
 import { ItemModule } from './item/item.module';
 import { BarcodeModule } from './barCode/barCode.module';
 import { ItemTamanhoModule } from './itemTamanho/itemTamanho.module';
+import { UsuarioModule } from './usuario/usuario.module';
+import { EstoqueModule } from './estoque/estoque.module';
+import { GradeModule } from './grade/grade.module';
+import { GradeItemModule } from './gradeItem/gradeItem.module';
 
 @Module({
   imports: [
@@ -15,9 +19,14 @@ import { ItemTamanhoModule } from './itemTamanho/itemTamanho.module';
     TamanhoModule,
     ItemModule,
     BarcodeModule,
-    ItemTamanhoModule
+    ItemTamanhoModule,
+    UsuarioModule,
+    EstoqueModule,
+    GradeModule,
+    GradeItemModule
   ],
   controllers: [AppController],
   providers: [AppService],
 })
+
 export class AppModule {}

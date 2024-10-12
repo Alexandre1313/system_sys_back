@@ -8,4 +8,5 @@ import { EscolaPrisma } from './escola.prisma';
   controllers: [EscolaController],
   providers: [EscolaPrisma],
 })
+
 export class EscolaModule {}

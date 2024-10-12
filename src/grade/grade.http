@@ -1,0 +1,15 @@
+GET http://localhost:4997/grades
+
+###
+GET http://localhost:4997/grades/18
+
+###
+DELETE http://localhost:4997/grades/27
+
+###
+POST http://localhost:4997/grades
+Content-Type: application/json
+
+{ 
+  "escolaId": 1
+}

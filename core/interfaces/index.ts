@@ -4,7 +4,7 @@ import Grade from "./Grade";
 import Item from "./Item";
 import Projeto from "./Projeto";
 import Tamanho from "./Tamanho";
-import Usuario from "./Usuario";
+import Usuarios from "./Usuarios";
 import ItemTamanho from "./ItemTamanho";
 import GradeItem from "./GradeItem";
 import Barcode from "./Barcode";
@@ -16,7 +16,7 @@ export type {
     Item,
     Projeto,
     Tamanho,
-    Usuario,
+    Usuarios,
     GradeItem,
     ItemTamanho,
     Barcode

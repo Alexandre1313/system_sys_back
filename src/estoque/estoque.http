@@ -1,0 +1,16 @@
+GET http://localhost:4997/estoques
+
+###
+GET http://localhost:4997/estoques/18
+
+###
+DELETE http://localhost:4997/estoques/27
+
+###
+POST http://localhost:4997/estoques
+Content-Type: application/json
+
+{ 
+   "itemTamanhoId": 1,   
+   "quantidade": 1000
+}
