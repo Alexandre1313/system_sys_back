@@ -124,6 +124,15 @@ CREATE UNIQUE INDEX "Projeto_nome_key" ON "Projeto"("nome");
 CREATE UNIQUE INDEX "Escola_projetoId_nome_key" ON "Escola"("projetoId", "nome");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Item_nome_projetoId_genero_key" ON "Item"("nome", "projetoId", "genero");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Tamanho_nome_key" ON "Tamanho"("nome");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ItemTamanho_itemId_tamanhoId_key" ON "ItemTamanho"("itemId", "tamanhoId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Barcode_codigo_key" ON "Barcode"("codigo");
 
 -- CreateIndex

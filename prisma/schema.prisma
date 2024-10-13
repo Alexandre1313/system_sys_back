@@ -56,6 +56,8 @@ model Item {
   tamanhos  ItemTamanho[] // Relacionamento com tamanhos específicos
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+
+  @@unique([nome, projetoId, genero])
 }
 
 model Tamanho {
@@ -64,6 +66,8 @@ model Tamanho {
   itens     ItemTamanho[] // Itens que possuem esse tamanho
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+
+  @@unique([nome])
 }
 
 model ItemTamanho {
@@ -77,6 +81,8 @@ model ItemTamanho {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   GradeItem GradeItem[]
+
+  @@unique([itemId, tamanhoId])
 }
 
 model Barcode {

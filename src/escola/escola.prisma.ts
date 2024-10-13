@@ -48,8 +48,43 @@ export class EscolaPrisma {
     }
 
     async obterPorId(id: number): Promise<Escola | null> {
-        const escola = await this.prisma.escola.findUnique({ where: { id } });
+        const escola = await this.prisma.escola.findUnique({
+            where: { id },
+            include: {
+                projeto: true,
+                grades: true,
+            },
+        });
         return (escola as Escola) ?? null;
+    }
+
+    async encontrarEscolaPorIdCompleta(id: number): Promise<Escola> {        
+            const escola = await this.prisma.escola.findUnique({
+                where: { id },
+                include: {
+                    projeto: true,
+                    grades: {
+                        include: {
+                            itensGrade: {
+                                include: {
+                                    itemTamanho: {
+                                        include: {
+                                            item: true,
+                                            tamanho: true,
+                                            estoque: true, 
+                                            barcode: true, 
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            });    
+            if (!escola) {
+                throw new Error('Escola não encontrada');
+            }    
+            return escola as Escola;       
     }
 
     async excluir(id: number): Promise<void> {

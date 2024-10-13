@@ -29,6 +29,12 @@ export class EscolaController {
     return this.repo.obterPorId(+id);
   }
 
+  // Obter uma escola específica pelo ID Completa
+  @Get('full/:id')
+  async obterEscolaCompleta(@Param('id') id: string): Promise<Escola> {
+    return this.repo.encontrarEscolaPorIdCompleta(+id);
+  }
+
   // Excluir uma escola específica pelo ID 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT) // Indica que não há conteúdo após a exclusão
