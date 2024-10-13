@@ -1,8 +1,22 @@
 import { Genero, PrismaClient } from '@prisma/client';
 import utilities from '../core/utils/utilities';
 import { DataInserction } from '@core/interfaces';
+import * as readline from 'readline'; 
 
 const prisma = new PrismaClient();
+
+// Função para perguntar ao usuário
+const askQuestion = (question) => {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+
+    return new Promise((resolve) => rl.question(question, (answer) => {
+        rl.close();
+        resolve(answer.toUpperCase()); // Converte a resposta para maiúsculas
+    }));
+};
 
 async function seed() {
     try {
@@ -18,6 +32,8 @@ async function seed() {
                 barcodeCounter = parseInt(lastBarcode.codigo, 10) + 1; // Continua a contagem a partir do último barcode
             }
 
+            console.log('Iniciando a inserção de dados...'); // Mensagem de confirmação no início da inserção
+
             for (const dado of dados) {
                 console.log('Inserindo dados:', dado); // Exibe os dados que estão sendo inseridos
 
@@ -27,7 +43,7 @@ async function seed() {
                     update: {},
                     create: { nome: dado.projeto, descricao: 'Descrição do projeto' },
                 });
-                console.log('Projeto inserido/atualizado:', projeto);
+                console.log('Projeto inserido/atualizado:', projeto);               
 
                 const escola = await prisma.escola.upsert({
                     where: {
@@ -36,7 +52,7 @@ async function seed() {
                     update: {},
                     create: { nome: dado.escola, projetoId: projeto.id },
                 });
-                console.log('Escola inserida/atualizada:', escola);
+                console.log('Escola inserida/atualizada:', escola);              
 
                 // 3. Criar ou conectar ao Item (com gênero)
                 const item = await prisma.item.upsert({
@@ -54,7 +70,7 @@ async function seed() {
                         projetoId: projeto.id,
                     },
                 });
-                console.log('Item inserido/atualizado:', item);
+                console.log('Item inserido/atualizado:', item);               
 
                 const grade = await prisma.grade.create({
                     data: {
@@ -62,7 +78,7 @@ async function seed() {
                         finalizada: false,
                     },
                 });
-                console.log('Grade criada:', grade);
+                console.log('Grade criada:', grade);              
 
                 // 4. Para cada par Tamanho/Quantidade na planilha
                 for (const tamanhoQtd of dado.tamanhos) {
@@ -74,7 +90,7 @@ async function seed() {
                         update: {},
                         create: { nome: String(tamanhoQtd.tamanho) },
                     });
-                    console.log('Tamanho inserido/atualizado:', tamanho);
+                    console.log('Tamanho inserido/atualizado:', tamanho);                 
 
                     // 4.2. Verificar se o ItemTamanho já existe
                     let itemTamanho = await prisma.itemTamanho.findUnique({
@@ -100,7 +116,7 @@ async function seed() {
                                 itemTamanhoId: itemTamanho.id,
                             },
                         });
-                        console.log('Barcode criado:', barcode);
+                        console.log('Barcode criado:', barcode);                      
 
                         // 4.5. Criar um registro de Estoque com quantidade 0
                         await prisma.estoque.create({
@@ -124,12 +140,23 @@ async function seed() {
                         gradeId: grade.id,
                         itemTamanhoId: itemTamanho.id,
                         quantidade: tamanhoQtd.quantidade,
-                    });
+                    });                    
                 }
+                console.clear(); // Limpa o console após criar o objeto
             }
+            console.log('Inserção de dados concluída!'); // Mensagem final após concluir a inserção
         }
 
         const dados = utilities();
+
+        const confirmation = await askQuestion('Você deseja iniciar a inserção de dados no BD? (Y/N) ');
+
+        if (confirmation !== 'Y') {
+            console.log('Inserção abortada pelo usuário.');
+            return; // Sai da função se o usuário não quiser continuar
+        }
+
+        console.clear(); // Limpa o console após processar a planilha
 
         // Chama a função para inserir dados no banco
         await inserirDadosNoBanco(dados);
