@@ -152,6 +152,7 @@ async function seed() {
         const confirmation = await askQuestion('Você deseja iniciar a inserção de dados no BD? (Y/N) ');
 
         if (confirmation !== 'Y') {
+            console.clear();
             console.log('Inserção abortada pelo usuário.');
             return; // Sai da função se o usuário não quiser continuar
         }
