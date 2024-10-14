@@ -1,7 +1,7 @@
 GET http://localhost:4997/projetos
 
 ###
-GET http://localhost:4997/projetos/1
+GET http://localhost:4997/projetos/3
 
 ###
 DELETE http://localhost:4997/projetos/29
@@ -10,7 +10,7 @@ DELETE http://localhost:4997/projetos/29
 POST http://localhost:4997/projetos
 Content-Type: application/json
 
-{ 
-  "nome": "Projeto Botucatu",
-  "descricao": "Projeto destinado a prefeitura de Botucatu"
+{   
+  "id": 1,
+  "url": "/joinville.png"
 }

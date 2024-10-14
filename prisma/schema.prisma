@@ -31,6 +31,7 @@ model Projeto {
   descricao String
   escolas   Escola[] // Relacionamento com as Escolas
   itens     Item[] // Relacionamento com os Itens do projeto
+  url       String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -54,6 +55,7 @@ model Item {
   projeto   Projeto       @relation(fields: [projetoId], references: [id])
   projetoId Int
   tamanhos  ItemTamanho[] // Relacionamento com tamanhos específicos
+  url       String?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
@@ -78,6 +80,7 @@ model ItemTamanho {
   tamanhoId Int
   barcode   Barcode? // Relacionamento com o código de barras único
   estoque   Estoque? // Estoque desse item/tamanho (agora opcional)
+  url       String?
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   GradeItem GradeItem[]

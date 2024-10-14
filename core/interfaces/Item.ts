@@ -9,6 +9,7 @@ export default interface Item {
     projetoId: number; // Relacionamento com o Projeto
     projeto?: Projeto; // Relacionamento opcional com o Projeto
     tamanhos?: ItemTamanho[]; // Relacionamento com tamanhos específicos
+    url: string
     createdAt?: Date;
     updatedAt?: Date;
 }

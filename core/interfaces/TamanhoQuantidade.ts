@@ -1,4 +1,4 @@
 export default interface TamanhoQuantidade {
-    tamanho: number;
+    tamanho: string;
     quantidade: number;
 }

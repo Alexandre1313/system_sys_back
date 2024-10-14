@@ -22,10 +22,10 @@ export default function utilities(caminhoPlanilha: string = 'core/utils/distribu
   for (let i = 1; i < worksheet.length; i++) {
       const linha = worksheet[i];
 
-      const escola = linha[0];
-      const projeto = linha[1];
-      const item = linha[2];
-      const genero = linha[3];
+      const escola = String(linha[0]).toUpperCase();
+      const projeto = String(linha[1]).toUpperCase();
+      const item = String(linha[2]).toUpperCase();
+      const genero = String(linha[3]).toUpperCase();
 
       const tamanhos: TamanhoQuantidade[] = [];
 
@@ -37,7 +37,7 @@ export default function utilities(caminhoPlanilha: string = 'core/utils/distribu
           // Verificar se a quantidade é um número válido, ou seja, maior que 0
           if (quantidade !== undefined && quantidade !== null && !isNaN(quantidade) && quantidade > 0) {
               tamanhos.push({
-                  tamanho: tamanho.toString(),
+                  tamanho: String(tamanho).toUpperCase(),
                   quantidade: Number(quantidade)
               });
           }
