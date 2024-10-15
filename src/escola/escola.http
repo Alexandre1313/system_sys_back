@@ -1,10 +1,10 @@
 GET http://localhost:4997/escolas
 
 ###
-GET http://localhost:4997/escolas/1
+GET http://localhost:4997/escolas/305
 
 ###
-GET http://localhost:4997/escolas/full/305
+GET http://localhost:4997/escolas/full/309
 ###
 DELETE http://localhost:4997/escolas/300
 

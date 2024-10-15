@@ -29,6 +29,12 @@ export class ProjetoController {
     return this.repo.obterPorId(+id);
   }
 
+  // Obter um projeto específico pelo ID
+  @Get('projetocomescolas/:id')
+  async obterProjetoComEscolas(@Param('id') id: string): Promise<Projeto> {
+    return this.repo.obterPorIdEscolas(+id);
+  }
+
   // Excluir um projeto específico pelo ID
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT) // Indica que não há conteúdo após a exclusão

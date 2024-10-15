@@ -35,6 +35,17 @@ export class ProjetoPrisma {
     return (projeto as Projeto) ?? null;
   }
 
+  async obterPorIdEscolas(id: number): Promise<Projeto> {
+    return await this.prisma.projeto.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        escolas: true,
+      },
+    });
+  }
+
   async excluir(id: number): Promise<void> {
     try {
       // Tente excluir o item com o ID fornecido

@@ -39,11 +39,7 @@ export class EscolaPrisma {
     }
 
     async obter(): Promise<Escola[]> {
-        const escolas = await this.prisma.escola.findMany({
-            include: {
-                projeto: true, // Inclui os dados do projeto associado a cada escola
-            },
-        });
+        const escolas = await this.prisma.escola.findMany();
         return escolas;
     }
 
