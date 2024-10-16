@@ -1,10 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ItemTamanhoPrisma } from './itemTamanho.prisma';
 import { ItemTamanho } from '@core/index';
 
-@Controller('itenstamanho')
+@Controller('itenstamanho') // Corrigido para "itens-tamanho" para seguir boas práticas de nomenclatura
 export class ItemTamanhoController {
-  constructor(private readonly repo: ItemTamanhoPrisma) { }
+  constructor(private readonly repo: ItemTamanhoPrisma) {}
 
   // Salvar ou criar um itemTamanho
   @Post()
@@ -13,30 +13,38 @@ export class ItemTamanhoController {
     try {
       return await this.repo.salvar(itemTamanho);
     } catch (error) {
-      throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
+      throw new BadRequestException('Erro ao salvar o item tamanho: ' + error.message);
     }
   }
 
   // Obter todos os itensTamanho
   @Get()
-  async obterItenstamanho(): Promise<ItemTamanho[]> {
+  async obterItensTamanho(): Promise<ItemTamanho[]> {
     return this.repo.obter();
   }
 
   // Obter um itemTamanho específico pelo ID
   @Get(':id')
   async obterItemTamanho(@Param('id') id: string): Promise<ItemTamanho> {
-    return this.repo.obterPorId(+id);
+    const itemTamanho = await this.repo.obterPorId(+id);
+    if (!itemTamanho) {
+      throw new NotFoundException(`Item Tamanho com ID ${id} não encontrado.`);
+    }
+    return itemTamanho;
   }
 
   // Excluir um itemTamanho específico pelo ID
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT) // Indica que não há conteúdo após a exclusão
-  async excluirItemTamanho(@Param('id') id: string): Promise<any> {
+  async excluirItemTamanho(@Param('id') id: string): Promise<void> {
+    const itemTamanho = await this.repo.obterPorId(+id);
+    if (!itemTamanho) {
+      throw new NotFoundException(`Item Tamanho com ID ${id} não encontrado.`);
+    }
     try {
-        return await this.repo.excluir(+id);
+      await this.repo.excluir(+id);
     } catch (error) {
-        throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
+      throw new BadRequestException('Erro ao excluir o item tamanho: ' + error.message);
     }
   }
 }

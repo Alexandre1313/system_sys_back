@@ -1,10 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { UsuarioPrisma } from './usuario.prisma';
 import { Usuarios } from '@core/index';
 
 @Controller('usuarios')
 export class UsuarioController {
-  constructor(private readonly repo: UsuarioPrisma) { }
+  constructor(private readonly repo: UsuarioPrisma) {}
 
   // Salvar ou criar um usuário
   @Post()
@@ -13,30 +13,38 @@ export class UsuarioController {
     try {
       return await this.repo.salvar(usuario);
     } catch (error) {
-      throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
+      throw new BadRequestException('Erro ao salvar o usuário: ' + error.message);
     }
   }
 
   // Obter todos os usuários
   @Get()
-  async obterItenstamanho(): Promise<Usuarios[]> {
+  async obterUsuarios(): Promise<Usuarios[]> {
     return this.repo.obter();
   }
 
   // Obter um usuário específico pelo ID
   @Get(':id')
   async obterUsuario(@Param('id') id: string): Promise<Usuarios> {
-    return this.repo.obterPorId(+id);
+    const usuario = await this.repo.obterPorId(+id);
+    if (!usuario) {
+      throw new NotFoundException(`Usuário com ID ${id} não encontrado.`);
+    }
+    return usuario;
   }
 
-  // Excluir um usuario específico pelo ID
+  // Excluir um usuário específico pelo ID
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT) // Indica que não há conteúdo após a exclusão
-  async excluirUsuario(@Param('id') id: string): Promise<any> {
+  async excluirUsuario(@Param('id') id: string): Promise<void> {
+    const usuario = await this.repo.obterPorId(+id);
+    if (!usuario) {
+      throw new NotFoundException(`Usuário com ID ${id} não encontrado.`);
+    }
     try {
-        return await this.repo.excluir(+id);
+      await this.repo.excluir(+id);
     } catch (error) {
-        throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
+      throw new BadRequestException('Erro ao excluir o usuário: ' + error.message);
     }
   }
 }

@@ -4,7 +4,7 @@ GET http://localhost:4997/barcodes
 GET http://localhost:4997/barcodes/18
 
 ###
-DELETE http://localhost:4997/barcodes/27
+DELETE http://localhost:4997/barcodes/274
 
 ###
 POST http://localhost:4997/barcodes

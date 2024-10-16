@@ -1,10 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ProjetoPrisma } from './projeto.prisma';
 import { Projeto } from '@core/index';
 
 @Controller('projetos')
 export class ProjetoController {
-  constructor(private readonly repo: ProjetoPrisma) { }
+  constructor(private readonly repo: ProjetoPrisma) {}
 
   // Salvar ou criar um projeto
   @Post()
@@ -13,7 +13,7 @@ export class ProjetoController {
     try {
       return await this.repo.salvar(projeto);
     } catch (error) {
-      throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
+      throw new BadRequestException('Erro ao salvar o projeto: ' + error.message);
     }
   }
 
@@ -26,23 +26,35 @@ export class ProjetoController {
   // Obter um projeto específico pelo ID
   @Get(':id')
   async obterProjeto(@Param('id') id: string): Promise<Projeto> {
-    return this.repo.obterPorId(+id);
+    const projeto = await this.repo.obterPorId(+id);
+    if (!projeto) {
+      throw new NotFoundException(`Projeto com ID ${id} não encontrado.`);
+    }
+    return projeto;
   }
 
-  // Obter um projeto específico pelo ID
-  @Get('projetocomescolas/:id')
+  // Obter um projeto específico pelo ID com escolas associadas
+  @Get('comescolas/:id')
   async obterProjetoComEscolas(@Param('id') id: string): Promise<Projeto> {
-    return this.repo.obterPorIdEscolas(+id);
+    const projeto = await this.repo.obterPorIdEscolas(+id);
+    if (!projeto) {
+      throw new NotFoundException(`Projeto com ID ${id} e suas escolas não encontrado.`);
+    }
+    return projeto;
   }
 
   // Excluir um projeto específico pelo ID
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT) // Indica que não há conteúdo após a exclusão
-  async excluirProjeto(@Param('id') id: string): Promise<any> {
+  async excluirProjeto(@Param('id') id: string): Promise<void> {
+    const projeto = await this.repo.obterPorId(+id);
+    if (!projeto) {
+      throw new NotFoundException(`Projeto com ID ${id} não encontrado.`);
+    }
     try {
-        return await this.repo.excluir(+id);
+      await this.repo.excluir(+id);
     } catch (error) {
-        throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
+      throw new BadRequestException('Erro ao excluir o projeto: ' + error.message);
     }
   }
 }

@@ -1,23 +1,23 @@
-import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ItemPrisma } from './item.prisma';
 import { Item } from '@core/index';
 
 @Controller('itens')
 export class ItemController {
-  constructor(private readonly repo: ItemPrisma) { }
+  constructor(private readonly repo: ItemPrisma) {}
 
   // Salvar ou criar um Item
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async salvarItem(@Body() item: Omit<Item, 'createdAt' | 'updatedAt'>): Promise<Item> {
     try {
-        return await this.repo.salvar(item);
+      return await this.repo.salvar(item);
     } catch (error) {
-        throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
+      throw new BadRequestException('Erro ao salvar o item: ' + error.message);
     }
   }
-   
-  // Obter todas os itens
+
+  // Obter todos os itens
   @Get()
   async obterItens(): Promise<Item[]> {
     return this.repo.obter();
@@ -26,17 +26,25 @@ export class ItemController {
   // Obter um item específico pelo ID
   @Get(':id')
   async obterItem(@Param('id') id: string): Promise<Item> {
-    return this.repo.obterPorId(+id);
+    const item = await this.repo.obterPorId(+id);
+    if (!item) {
+      throw new NotFoundException(`Item com ID ${id} não encontrado.`);
+    }
+    return item;
   }
 
-  // Excluir um item específico pelo ID 
+  // Excluir um item específico pelo ID
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT) // Indica que não há conteúdo após a exclusão
-  async excluirItem(@Param('id') id: string): Promise<any> {
+  async excluirItem(@Param('id') id: string): Promise<void> {
+    const item = await this.repo.obterPorId(+id);
+    if (!item) {
+      throw new NotFoundException(`Item com ID ${id} não encontrado.`);
+    }
     try {
-        return await this.repo.excluir(+id);
+      await this.repo.excluir(+id);
     } catch (error) {
-        throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
+      throw new BadRequestException('Erro ao excluir o item: ' + error.message);
     }
   }
 }

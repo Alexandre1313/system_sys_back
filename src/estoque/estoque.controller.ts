@@ -1,10 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { EstoquePrisma } from './estoque.prisma';
 import { Estoque } from '@core/index';
 
 @Controller('estoques')
 export class EstoqueController {
-  constructor(private readonly repo: EstoquePrisma) { }
+  constructor(private readonly repo: EstoquePrisma) {}
 
   // Salvar ou criar um estoque
   @Post()
@@ -13,7 +13,7 @@ export class EstoqueController {
     try {
       return await this.repo.salvar(estoque);
     } catch (error) {
-      throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
+      throw new BadRequestException('Erro ao salvar o estoque: ' + error.message);
     }
   }
 
@@ -26,17 +26,25 @@ export class EstoqueController {
   // Obter um estoque específico pelo ID
   @Get(':id')
   async obterEstoque(@Param('id') id: string): Promise<Estoque> {
-    return this.repo.obterPorId(+id);
+    const estoque = await this.repo.obterPorId(+id);
+    if (!estoque) {
+      throw new NotFoundException(`Estoque com ID ${id} não encontrado.`);
+    }
+    return estoque;
   }
 
   // Excluir um estoque específico pelo ID
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT) // Indica que não há conteúdo após a exclusão
-  async excluirEstoque(@Param('id') id: string): Promise<any> {
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async excluirEstoque(@Param('id') id: string): Promise<void> {
+    const estoque = await this.repo.obterPorId(+id);
+    if (!estoque) {
+      throw new NotFoundException(`Estoque com ID ${id} não encontrado.`);
+    }
     try {
-        return await this.repo.excluir(+id);
+      await this.repo.excluir(+id);
     } catch (error) {
-        throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
+      throw new BadRequestException('Erro ao excluir o estoque: ' + error.message);
     }
   }
 }

@@ -4,7 +4,7 @@ GET http://localhost:4997/tamanhos
 GET http://localhost:4997/tamanhos/1
 
 ###
-DELETE http://localhost:4997/tamanhos/2
+DELETE http://localhost:4997/tamanhos/14
 
 ###
 POST http://localhost:4997/tamanhos

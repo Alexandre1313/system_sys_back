@@ -4,7 +4,11 @@ GET http://localhost:4997/projetos
 GET http://localhost:4997/projetos/3
 
 ###
+GET http://localhost:4997/projetos/comescolas/1
+
+###
 DELETE http://localhost:4997/projetos/29
+
 
 ###
 POST http://localhost:4997/projetos

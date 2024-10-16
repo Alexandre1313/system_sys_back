@@ -4,7 +4,7 @@ GET http://localhost:4997/gradeitens
 GET http://localhost:4997/gradeitens/18
 
 ###
-DELETE http://localhost:4997/gradeitens/27
+DELETE http://localhost:4997/gradeitens/2179
 
 ###
 POST http://localhost:4997/gradeitens

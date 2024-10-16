@@ -1,42 +1,50 @@
-import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { GradePrisma } from './grade.prisma';
 import { Grade } from '@core/index';
 
 @Controller('grades')
 export class GradeController {
-  constructor(private readonly repo: GradePrisma) { }
+  constructor(private readonly repo: GradePrisma) {}
 
-  // Salvar ou criar um grade
+  // Salvar ou criar uma grade
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async salvarGrade(@Body() grade: Omit<Grade, 'createdAt' | 'updatedAt'>): Promise<Grade> {
     try {
-        return await this.repo.salvar(grade);
+      return await this.repo.salvar(grade);
     } catch (error) {
-        throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
+      throw new BadRequestException('Erro ao salvar a grade: ' + error.message);
     }
   }
-   
-  // Obter todas os grades
+
+  // Obter todas as grades
   @Get()
   async obterGrades(): Promise<Grade[]> {
     return this.repo.obter();
   }
 
-  // Obter ua grade específica pelo ID
+  // Obter uma grade específica pelo ID
   @Get(':id')
   async obterGrade(@Param('id') id: string): Promise<Grade> {
-    return this.repo.obterPorId(+id);
+    const grade = await this.repo.obterPorId(+id);
+    if (!grade) {
+      throw new NotFoundException(`Grade com ID ${id} não encontrada.`);
+    }
+    return grade;
   }
 
-  // Excluir uma grade específica pelo ID 
+  // Excluir uma grade específica pelo ID
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT) // Indica que não há conteúdo após a exclusão
-  async excluirGrade(@Param('id') id: string): Promise<any> {
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async excluirGrade(@Param('id') id: string): Promise<void> {
+    const grade = await this.repo.obterPorId(+id);
+    if (!grade) {
+      throw new NotFoundException(`Grade com ID ${id} não encontrada.`);
+    }
     try {
-        return await this.repo.excluir(+id);
+      await this.repo.excluir(+id);
     } catch (error) {
-        throw new BadRequestException(error.message); // Retornando uma resposta adequada em caso de erro
+      throw new BadRequestException('Erro ao excluir a grade: ' + error.message);
     }
   }
 }

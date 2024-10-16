@@ -4,7 +4,7 @@ GET http://localhost:4997/grades
 GET http://localhost:4997/grades/18
 
 ###
-DELETE http://localhost:4997/grades/27
+DELETE http://localhost:4997/grades/447
 
 ###
 POST http://localhost:4997/grades
