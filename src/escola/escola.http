@@ -5,6 +5,10 @@ GET http://localhost:4997/escolas/305
 
 ###
 GET http://localhost:4997/escolas/full/309
+
+###
+GET http://localhost:4997/escolas/escolagrade/309
+
 ###
 DELETE http://localhost:4997/escolas/3000
 
