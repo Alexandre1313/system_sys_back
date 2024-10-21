@@ -31,7 +31,11 @@ export class ItemTamanhoPrisma {
   }
 
   async obterPorId(id: number): Promise<ItemTamanho | null> {
-    const itemtamanho = await this.prisma.itemTamanho.findUnique({ where: { id } });
+    const itemtamanho = await this.prisma.itemTamanho.findUnique({ where: { id },
+      include:{
+        barcode: true
+      }
+     });
     return (itemtamanho as ItemTamanho) ?? null;
   }
 

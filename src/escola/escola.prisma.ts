@@ -60,6 +60,10 @@ export class EscolaPrisma {
             include: {
                 projeto: true,
                 grades: {
+                    take: 50, // Limitar a 50 grades
+                    orderBy: {
+                        createdAt: 'asc', // Ordenar por data de criação, mais recentes primeiro
+                    },
                     include: {
                         itensGrade: {
                             include: {
@@ -67,8 +71,8 @@ export class EscolaPrisma {
                                     include: {
                                         item: true,
                                         tamanho: true,
-                                        estoque: true,
                                         barcode: true,
+                                        estoque: true,
                                     },
                                 },
                             },
@@ -80,6 +84,7 @@ export class EscolaPrisma {
         if (!escola) {
             throw new Error('Escola não encontrada');
         }
+        console.log(JSON.stringify(escola, null, 2));
         return escola as Escola;
     }
 
@@ -87,31 +92,32 @@ export class EscolaPrisma {
         const escolaComGrades = await this.prisma.escola.findUnique({
             where: { id },
             include: {
-              grades: {
-                include: {
-                  itensGrade: {
+                grades: {
                     include: {
-                      itemTamanho: {
-                        include: {
-                          item: true, // Inclui os detalhes do item
-                          tamanho: true, // Inclui os detalhes do tamanho                         
-                          estoque: true, // Inclui o estoque associado a este item/tamanho
+                        itensGrade: {
+                            include: {
+                                itemTamanho: {
+                                    include: {
+                                        item: true, // Inclui os detalhes do item
+                                        tamanho: true, // Inclui os detalhes do tamanho                         
+                                        estoque: true, // Inclui o estoque associado a este item/tamanho
+                                        barcode: true
+                                    },
+                                },
+                            },
+                            orderBy: {
+                                itemTamanho: { // Primeiro ordena os itens pelo nome
+                                    item: {
+                                        nome: 'asc', // Ordena os itens pelo nome
+                                    },
+                                },
+                            },
                         },
-                      },
                     },
-                    orderBy: {
-                      itemTamanho: { // Primeiro ordena os itens pelo nome
-                        item: {
-                          nome: 'asc', // Ordena os itens pelo nome
-                        },
-                      },
-                    },
-                  },
                 },
-              },
-            },
-          })        
-          return escolaComGrades
+            }
+        })
+        return escolaComGrades
     }
 
     async excluir(id: number): Promise<void> {

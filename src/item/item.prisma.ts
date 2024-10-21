@@ -39,7 +39,7 @@ export class ItemPrisma {
         const itens = await this.prisma.item.findMany({
             include: {
                 tamanhos: true,
-                projeto: true,
+                projeto: true,               
             },
         });
 

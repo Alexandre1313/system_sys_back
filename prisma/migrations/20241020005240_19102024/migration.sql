@@ -18,6 +18,7 @@ CREATE TABLE "Projeto" (
     "id" SERIAL NOT NULL,
     "nome" TEXT NOT NULL,
     "descricao" TEXT NOT NULL,
+    "url" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -41,6 +42,7 @@ CREATE TABLE "Item" (
     "nome" TEXT NOT NULL,
     "genero" "Genero" NOT NULL,
     "projetoId" INTEGER NOT NULL,
+    "url" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -62,6 +64,7 @@ CREATE TABLE "ItemTamanho" (
     "id" SERIAL NOT NULL,
     "itemId" INTEGER NOT NULL,
     "tamanhoId" INTEGER NOT NULL,
+    "url" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
