@@ -1,7 +1,7 @@
 import { Genero, PrismaClient } from '@prisma/client';
 import utilities from '../core/utils/utilities';
 import { DataInserction } from '@core/interfaces';
-import * as readline from 'readline'; 
+import * as readline from 'readline';
 
 const prisma = new PrismaClient();
 
@@ -43,7 +43,7 @@ async function seed() {
                     update: {},
                     create: { nome: dado.projeto, descricao: 'Descrição do projeto' },
                 });
-                console.log('Projeto inserido/atualizado:', projeto);               
+                console.log('Projeto inserido/atualizado:', projeto);
 
                 const escola = await prisma.escola.upsert({
                     where: {
@@ -52,7 +52,7 @@ async function seed() {
                     update: {},
                     create: { nome: dado.escola, projetoId: projeto.id },
                 });
-                console.log('Escola inserida/atualizada:', escola);              
+                console.log('Escola inserida/atualizada:', escola);
 
                 // 3. Criar ou conectar ao Item (com gênero)
                 const item = await prisma.item.upsert({
@@ -70,7 +70,7 @@ async function seed() {
                         projetoId: projeto.id,
                     },
                 });
-                console.log('Item inserido/atualizado:', item);               
+                console.log('Item inserido/atualizado:', item);
 
                 const grade = await prisma.grade.create({
                     data: {
@@ -78,7 +78,7 @@ async function seed() {
                         finalizada: false,
                     },
                 });
-                console.log('Grade criada:', grade);              
+                console.log('Grade criada:', grade);
 
                 // 4. Para cada par Tamanho/Quantidade na planilha
                 for (const tamanhoQtd of dado.tamanhos) {
@@ -90,7 +90,7 @@ async function seed() {
                         update: {},
                         create: { nome: String(tamanhoQtd.tamanho) },
                     });
-                    console.log('Tamanho inserido/atualizado:', tamanho);                 
+                    console.log('Tamanho inserido/atualizado:', tamanho);
 
                     // 4.2. Verificar se o ItemTamanho já existe
                     let itemTamanho = await prisma.itemTamanho.findUnique({
@@ -106,9 +106,9 @@ async function seed() {
                             },
                         });
 
-                        // 4.4. Gerar um Barcode (formato: 000 a 999) e associar ao ItemTamanho
-                        const barcode = String(barcodeCounter).padStart(3, '0');
-                        barcodeCounter = (barcodeCounter + 1) % 1000; // Incrementa e volta para 000 após 999
+                        // Gerar um Barcode (formato: 00000 a 99999) e associar ao ItemTamanho
+                        const barcode = String(barcodeCounter).padStart(5, '0');  // Gera um barcode com 5 dígitos
+                        barcodeCounter = (barcodeCounter + 1) % 100000;  // Incrementa e volta para 00000 após 99999
 
                         await prisma.barcode.create({
                             data: {
@@ -116,7 +116,7 @@ async function seed() {
                                 itemTamanhoId: itemTamanho.id,
                             },
                         });
-                        console.log('Barcode criado:', barcode);                      
+                        console.log('Barcode criado:', barcode);
 
                         // 4.5. Criar um registro de Estoque com quantidade 0
                         await prisma.estoque.create({
@@ -140,7 +140,7 @@ async function seed() {
                         gradeId: grade.id,
                         itemTamanhoId: itemTamanho.id,
                         quantidade: tamanhoQtd.quantidade,
-                    });                    
+                    });
                 }
                 console.clear(); // Limpa o console após criar o objeto
             }
