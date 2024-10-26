@@ -50,7 +50,7 @@ async function seed() {
                         projetoId_nome: { projetoId: projeto.id, nome: dado.escola },
                     },
                     update: {},
-                    create: { nome: dado.escola, projetoId: projeto.id },
+                    create: { numeroEscola: dado.numeroEscola, nome: dado.escola, projetoId: projeto.id },
                 });
                 console.log('Escola inserida/atualizada:', escola);
 

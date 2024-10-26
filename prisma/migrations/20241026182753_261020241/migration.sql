@@ -28,6 +28,7 @@ CREATE TABLE "Projeto" (
 -- CreateTable
 CREATE TABLE "Escola" (
     "id" SERIAL NOT NULL,
+    "numeroEscola" TEXT NOT NULL,
     "nome" TEXT NOT NULL,
     "projetoId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -108,6 +109,7 @@ CREATE TABLE "Grade" (
 CREATE TABLE "GradeItem" (
     "id" SERIAL NOT NULL,
     "gradeId" INTEGER NOT NULL,
+    "boxes" JSONB,
     "itemTamanhoId" INTEGER NOT NULL,
     "quantidade" INTEGER NOT NULL,
     "quantidadeExpedida" INTEGER NOT NULL,
@@ -125,6 +127,9 @@ CREATE UNIQUE INDEX "Projeto_nome_key" ON "Projeto"("nome");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Escola_projetoId_nome_key" ON "Escola"("projetoId", "nome");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Escola_projetoId_numeroEscola_key" ON "Escola"("projetoId", "numeroEscola");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Item_nome_projetoId_genero_key" ON "Item"("nome", "projetoId", "genero");

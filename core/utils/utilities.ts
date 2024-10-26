@@ -21,16 +21,16 @@ export default function utilities(caminhoPlanilha: string = 'core/utils/distribu
   // Percorrer cada linha da planilha, começando pela segunda (índice 1)
   for (let i = 1; i < worksheet.length; i++) {
       const linha = worksheet[i];
-
-      const escola = String(linha[0]).toUpperCase();
-      const projeto = String(linha[1]).toUpperCase();
-      const item = String(linha[2]).toUpperCase();
-      const genero = String(linha[3]).toUpperCase();
+      const numeroEscola = String(linha[0]).toUpperCase();
+      const escola = String(linha[1]).toUpperCase();
+      const projeto = String(linha[2]).toUpperCase();
+      const item = String(linha[3]).toUpperCase();
+      const genero = String(linha[4]).toUpperCase();
 
       const tamanhos: TamanhoQuantidade[] = [];
 
       // Processar as colunas de tamanhos a partir da quinta coluna
-      for (let j = 4; j < linha.length; j++) {
+      for (let j = 5; j < linha.length; j++) {
           const quantidade = linha[j];
           const tamanho = headerRow[j]; // O valor do cabeçalho é o tamanho (ex: 2, 4, P, M, etc)
 
@@ -46,6 +46,7 @@ export default function utilities(caminhoPlanilha: string = 'core/utils/distribu
       // Só adicionar o registro se houver tamanhos válidos
       if (tamanhos.length > 0) {
           dadosProcessados.push({
+              numeroEscola: numeroEscola,
               escola: escola,
               projeto: projeto,
               item: item,
@@ -54,6 +55,6 @@ export default function utilities(caminhoPlanilha: string = 'core/utils/distribu
           });
       }
   }
-  console.log(JSON.stringify(dadosProcessados, null, 2));
+  console.dir(dadosProcessados, { depth: null, maxArrayLength: null });
   return dadosProcessados;
 }

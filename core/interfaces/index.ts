@@ -10,6 +10,8 @@ import GradeItem from "./GradeItem";
 import Barcode from "./Barcode";
 import TamanhoQuantidade from "./TamanhoQuantidade";
 import DataInserction from "./DataInserction";
+import Caixa from "./Caixa";
+import CaixaItem from "./CaixaItem";
 
 export type { 
     Escola,
@@ -23,5 +25,7 @@ export type {
     ItemTamanho,
     Barcode,
     TamanhoQuantidade,
-    DataInserction
+    DataInserction,
+    Caixa, 
+    CaixaItem
 }

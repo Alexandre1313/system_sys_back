@@ -7,7 +7,7 @@ export class GradePrisma {
   constructor(readonly prisma: PrismaProvider) { }
 
   async salvar(grade: Grade): Promise<Grade> {
-    const { id, finalizada, itensGrade, escola, ...dadosDaGrade } = grade;
+    const { id, finalizada, itensGrade, escola, gradeCaixas, ...dadosDaGrade } = grade;
 
     const gradeSalva = await this.prisma.grade.upsert({
       where: {

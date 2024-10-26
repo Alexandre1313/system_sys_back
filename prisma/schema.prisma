@@ -37,15 +37,16 @@ model Projeto {
 }
 
 model Escola {
-  id        Int      @id @default(autoincrement())
-  nome      String
-  projeto   Projeto  @relation(fields: [projetoId], references: [id])
-  projetoId Int // Relacionamento com o Projeto
-  grades    Grade[] // Relacionamento com as Grades de Distribuição
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  numeroEscola String
+  nome         String
+  projeto      Projeto  @relation(fields: [projetoId], references: [id])
+  projetoId    Int // Relacionamento com o Projeto
+  grades       Grade[] // Relacionamento com as Grades de Distribuição
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  @@unique([projetoId, nome]) // Garante que o nome da escola é único por projeto
+  @@unique([projetoId, nome]) // Garante que o nome da escola é único por projeto   
 }
 
 model Item {
@@ -107,13 +108,39 @@ model Estoque {
 }
 
 model Grade {
-  id         Int         @id @default(autoincrement())
-  escola     Escola      @relation(fields: [escolaId], references: [id])
-  escolaId   Int
-  itensGrade GradeItem[] // Relacionamento com os itens dessa grade
-  finalizada Boolean     @default(false) // Se a grade foi finalizada ou não
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id          Int         @id @default(autoincrement())
+  escola      Escola      @relation(fields: [escolaId], references: [id])
+  escolaId    Int
+  itensGrade  GradeItem[] // Relacionamento com os itens dessa grade
+  gradeCaixas Caixa[]
+  finalizada  Boolean     @default(false) // Indica se a grade foi finalizada
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Caixa {
+  id          Int         @id @default(autoincrement())
+  grade       Grade       @relation(fields: [gradeId], references: [id])
+  gradeId     Int
+  escolaCaixa String
+  caixaNumber String
+  caixaItem   CaixaItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([gradeId, caixaNumber]) // Garante que cada caixa tenha um número único dentro da mesma grade
+}
+
+model CaixaItem {
+  id         Int      @id @default(autoincrement())
+  caixa      Caixa    @relation(fields: [caixaId], references: [id])
+  caixaId    Int
+  itemName   String
+  itemGenero String
+  itemTam    String
+  itemQty    Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model GradeItem {
