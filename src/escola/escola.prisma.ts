@@ -94,6 +94,7 @@ export class EscolaPrisma {
             include: {
                 grades: {
                     include: {
+                        gradeCaixas: true,
                         itensGrade: {
                             include: {
                                 itemTamanho: {
@@ -113,6 +114,7 @@ export class EscolaPrisma {
                                 },
                             },
                         },
+
                     },
                 },
             }
