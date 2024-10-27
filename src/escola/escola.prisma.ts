@@ -92,6 +92,7 @@ export class EscolaPrisma {
         const escolaComGrades = await this.prisma.escola.findUnique({
             where: { id },
             include: {
+                projeto: true,
                 grades: {
                     include: {
                         gradeCaixas: true,
@@ -117,7 +118,7 @@ export class EscolaPrisma {
 
                     },
                 },
-            }
+            },
         })
         return escolaComGrades
     }

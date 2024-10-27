@@ -106,13 +106,40 @@ CREATE TABLE "Grade" (
 );
 
 -- CreateTable
+CREATE TABLE "Caixa" (
+    "id" SERIAL NOT NULL,
+    "gradeId" INTEGER NOT NULL,
+    "escolaCaixa" TEXT NOT NULL,
+    "caixaNumber" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Caixa_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CaixaItem" (
+    "id" SERIAL NOT NULL,
+    "caixaId" INTEGER NOT NULL,
+    "itemName" TEXT NOT NULL,
+    "itemGenero" TEXT NOT NULL,
+    "itemTam" TEXT NOT NULL,
+    "itemQty" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "CaixaItem_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "GradeItem" (
     "id" SERIAL NOT NULL,
     "gradeId" INTEGER NOT NULL,
-    "boxes" JSONB,
     "itemTamanhoId" INTEGER NOT NULL,
     "quantidade" INTEGER NOT NULL,
     "quantidadeExpedida" INTEGER NOT NULL,
+    "qtyPCaixa" INTEGER NOT NULL DEFAULT 0,
+    "isCount" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -127,9 +154,6 @@ CREATE UNIQUE INDEX "Projeto_nome_key" ON "Projeto"("nome");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Escola_projetoId_nome_key" ON "Escola"("projetoId", "nome");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Escola_projetoId_numeroEscola_key" ON "Escola"("projetoId", "numeroEscola");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Item_nome_projetoId_genero_key" ON "Item"("nome", "projetoId", "genero");
@@ -148,6 +172,9 @@ CREATE UNIQUE INDEX "Barcode_itemTamanhoId_key" ON "Barcode"("itemTamanhoId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Estoque_itemTamanhoId_key" ON "Estoque"("itemTamanhoId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Caixa_gradeId_caixaNumber_key" ON "Caixa"("gradeId", "caixaNumber");
 
 -- AddForeignKey
 ALTER TABLE "Escola" ADD CONSTRAINT "Escola_projetoId_fkey" FOREIGN KEY ("projetoId") REFERENCES "Projeto"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -169,6 +196,12 @@ ALTER TABLE "Estoque" ADD CONSTRAINT "Estoque_itemTamanhoId_fkey" FOREIGN KEY ("
 
 -- AddForeignKey
 ALTER TABLE "Grade" ADD CONSTRAINT "Grade_escolaId_fkey" FOREIGN KEY ("escolaId") REFERENCES "Escola"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Caixa" ADD CONSTRAINT "Caixa_gradeId_fkey" FOREIGN KEY ("gradeId") REFERENCES "Grade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CaixaItem" ADD CONSTRAINT "CaixaItem_caixaId_fkey" FOREIGN KEY ("caixaId") REFERENCES "Caixa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "GradeItem" ADD CONSTRAINT "GradeItem_gradeId_fkey" FOREIGN KEY ("gradeId") REFERENCES "Grade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

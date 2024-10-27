@@ -5,6 +5,7 @@ export default interface Caixa {
     gradeId: number; // Código de barras único+
     escolaCaixa: string;
     caixaNumber: number;
+    escolaNumber: string;
     caixaItem: CaixaItem[]; // Relacionamento com ItemTamanho
     createdAt?: Date;
     updatedAt?: Date;

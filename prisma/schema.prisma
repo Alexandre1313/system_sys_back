@@ -119,14 +119,15 @@ model Grade {
 }
 
 model Caixa {
-  id          Int         @id @default(autoincrement())
-  grade       Grade       @relation(fields: [gradeId], references: [id])
-  gradeId     Int
-  escolaCaixa String
-  caixaNumber String
-  caixaItem   CaixaItem[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id           Int         @id @default(autoincrement())
+  grade        Grade       @relation(fields: [gradeId], references: [id])
+  gradeId      Int
+  escolaCaixa  String
+  escolaNumber String
+  caixaNumber  String
+  caixaItem    CaixaItem[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   @@unique([gradeId, caixaNumber]) // Garante que cada caixa tenha um número único dentro da mesma grade
 }
@@ -151,6 +152,8 @@ model GradeItem {
   itemTamanhoId      Int
   quantidade         Int // Quantidade total a ser expedida
   quantidadeExpedida Int // Quantidade já expedida
+  qtyPCaixa          Int         @default(0)
+  isCount            Boolean     @default(true)
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 }
