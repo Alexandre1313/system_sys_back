@@ -25,6 +25,21 @@ export class GradePrisma {
     return gradeSalva; // Retorne o grade salva
   }
 
+  // Atualiza apenas a propriedade "finalizada" para true dentro de uma transação
+  async finalizarGrade(id: number): Promise<Grade> {
+    return await this.prisma.$transaction(async (prisma) => {
+      try {
+        const gradeAtualizada = await prisma.grade.update({
+          where: { id },
+          data: { finalizada: true },
+        });
+        return gradeAtualizada;
+      } catch (error) {
+        throw new Error(`Erro ao atualizar a grade: ${error.message}`);
+      }
+    });
+  }
+
   async obter(): Promise<Grade[]> {
     const grades = await this.prisma.grade.findMany();
     return grades;
@@ -34,7 +49,7 @@ export class GradePrisma {
     const grade = await this.prisma.grade.findUnique({ where: { id } });
     return (grade as Grade) ?? null;
   }
-  
+
   async excluir(id: number): Promise<void> {
     try {
       // Tente excluir a grade com o ID fornecido

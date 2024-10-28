@@ -4,7 +4,7 @@ import { Grade } from '@core/index';
 
 @Controller('grades')
 export class GradeController {
-  constructor(private readonly repo: GradePrisma) {}
+  constructor(private readonly repo: GradePrisma) { }
 
   // Salvar ou criar uma grade
   @Post()
@@ -14,6 +14,20 @@ export class GradeController {
       return await this.repo.salvar(grade);
     } catch (error) {
       throw new BadRequestException('Erro ao salvar a grade: ' + error.message);
+    }
+  }
+
+  // Finalizar uma grade
+  @Post('/finalizar')
+  @HttpCode(HttpStatus.OK)
+  async finalizarGrade(@Body() grade: Omit<Grade, 'createdAt' | 'updatedAt'>): Promise<Grade> {
+    try {
+      if (!grade.id) {
+        throw new BadRequestException('O ID da grade é obrigatório.');
+      }
+      return await this.repo.finalizarGrade(grade.id);
+    } catch (error) {
+      throw new BadRequestException('Erro ao finalizar a grade: ' + error.message);
     }
   }
 

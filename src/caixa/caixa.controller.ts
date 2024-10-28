@@ -6,14 +6,14 @@ import { Caixa } from '@core/index';
 export class CaixaController {
   constructor(private readonly repo: CaixaPrisma) {}
 
-  // Salvar ou criar um código de barras
+  // Salvar ou criar uma caixa
   @Post('/inserir')
   @HttpCode(HttpStatus.CREATED)
   async salvarCaixa(@Body() caixa: Omit<Caixa, 'createdAt' | 'updatedAt'>): Promise<Caixa> {
     try {
       return await this.repo.inserirCaixaEItens(caixa);
     } catch (error) {
-      throw new BadRequestException('Erro ao salvar o ccaixa: ' + error.message);
+      throw new BadRequestException('Erro ao salvar o caixa: ' + error.message);
     }
   }  
 }
