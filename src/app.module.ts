@@ -11,6 +11,7 @@ import { UsuarioModule } from './usuario/usuario.module';
 import { EstoqueModule } from './estoque/estoque.module';
 import { GradeModule } from './grade/grade.module';
 import { GradeItemModule } from './gradeItem/gradeItem.module';
+import { CaixaModule } from './caixa/caixa.module';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { GradeItemModule } from './gradeItem/gradeItem.module';
     UsuarioModule,
     EstoqueModule,
     GradeModule,
-    GradeItemModule
+    GradeItemModule,
+    CaixaModule
   ],
   controllers: [AppController],
   providers: [AppService],

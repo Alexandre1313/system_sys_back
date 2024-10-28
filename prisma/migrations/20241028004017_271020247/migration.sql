@@ -110,6 +110,8 @@ CREATE TABLE "Caixa" (
     "id" SERIAL NOT NULL,
     "gradeId" INTEGER NOT NULL,
     "escolaCaixa" TEXT NOT NULL,
+    "escolaNumber" TEXT NOT NULL,
+    "projeto" TEXT NOT NULL,
     "caixaNumber" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

@@ -124,6 +124,7 @@ model Caixa {
   gradeId      Int
   escolaCaixa  String
   escolaNumber String
+  projeto      String
   caixaNumber  String
   caixaItem    CaixaItem[]
   createdAt    DateTime    @default(now())

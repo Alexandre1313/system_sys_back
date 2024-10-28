@@ -1,12 +1,15 @@
+import { GradeItem } from "@prisma/client";
 import CaixaItem from "./CaixaItem";
 
 export default interface Caixa {
     id?: number;
-    gradeId: number; // Código de barras único+
+    gradeId: number; 
     escolaCaixa: string;
-    caixaNumber: number;
+    caixaNumber: string;
     escolaNumber: string;
-    caixaItem: CaixaItem[]; // Relacionamento com ItemTamanho
+    projeto: string;
+    caixaItem: CaixaItem[]; 
+    itensGrade: GradeItem[];
     createdAt?: Date;
     updatedAt?: Date;
 }
