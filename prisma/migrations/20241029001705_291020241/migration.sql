@@ -127,6 +127,7 @@ CREATE TABLE "CaixaItem" (
     "itemGenero" TEXT NOT NULL,
     "itemTam" TEXT NOT NULL,
     "itemQty" INTEGER NOT NULL,
+    "itemTamanhoId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

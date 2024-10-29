@@ -134,15 +134,16 @@ model Caixa {
 }
 
 model CaixaItem {
-  id         Int      @id @default(autoincrement())
-  caixa      Caixa    @relation(fields: [caixaId], references: [id])
-  caixaId    Int
-  itemName   String
-  itemGenero String
-  itemTam    String
-  itemQty    Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  caixa         Caixa    @relation(fields: [caixaId], references: [id])
+  caixaId       Int
+  itemName      String
+  itemGenero    String
+  itemTam       String
+  itemQty       Int
+  itemTamanhoId Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model GradeItem {
