@@ -17,9 +17,11 @@ export class CaixaPrisma {
           data: {
             gradeId: +dadosDaCaixa.gradeId,
             escolaNumber: dadosDaCaixa.escolaNumber,
+            qtyCaixa: dadosDaCaixa.qtyCaixa,
             projeto: dadosDaCaixa.projeto,
             escolaCaixa: dadosDaCaixa.escolaCaixa,
             caixaNumber: dadosDaCaixa.caixaNumber,
+            
           },
         });
 

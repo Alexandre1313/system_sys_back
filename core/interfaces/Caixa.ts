@@ -8,6 +8,7 @@ export default interface Caixa {
     caixaNumber: string;
     escolaNumber: string;
     projeto: string;
+    qtyCaixa: number;
     caixaItem: CaixaItem[]; 
     itensGrade: GradeItem[];
     createdAt?: Date;
