@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { GradePrisma } from './grade.prisma';
-import { Grade } from '@core/index';
+import { FinalyGrade, Grade } from '@core/index';
 
 @Controller('grades')
 export class GradeController {
@@ -20,12 +20,12 @@ export class GradeController {
   // Finalizar uma grade
   @Post('/finalizar')
   @HttpCode(HttpStatus.OK)
-  async finalizarGrade(@Body() grade: Omit<Grade, 'createdAt' | 'updatedAt'>): Promise<Grade> {
+  async finalizarGrade(@Body() finalyGrade: FinalyGrade): Promise<Grade> {
     try {
-      if (!grade.id) {
+      if (!finalyGrade.id) {
         throw new BadRequestException('O ID da grade é obrigatório.');
       }
-      return await this.repo.finalizarGrade(grade.id);
+      return await this.repo.finalizarGrade(finalyGrade.id);
     } catch (error) {
       throw new BadRequestException('Erro ao finalizar a grade: ' + error.message);
     }

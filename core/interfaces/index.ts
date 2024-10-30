@@ -12,6 +12,7 @@ import TamanhoQuantidade from "./TamanhoQuantidade";
 import DataInserction from "./DataInserction";
 import Caixa from "./Caixa";
 import CaixaItem from "./CaixaItem";
+import FinalyGrade from "./FinalyGrade";
 
 export type { 
     Escola,
@@ -27,5 +28,6 @@ export type {
     TamanhoQuantidade,
     DataInserction,
     Caixa, 
-    CaixaItem
+    CaixaItem,
+    FinalyGrade
 }
