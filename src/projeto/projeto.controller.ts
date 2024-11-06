@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ProjetoPrisma } from './projeto.prisma';
-import { Projeto } from '@core/index';
+import { ProjectItems, Projeto } from '@core/index';
 
 @Controller('projetos')
 export class ProjetoController {
@@ -18,14 +18,24 @@ export class ProjetoController {
   }
 
   // Obter todos os projetos
-  @Get()
+ @Get()
   async obterProjetos(): Promise<Projeto[]> {
-    return this.repo.obter();
+  return this.repo.obter();
+  }
+
+  @Get('itens')
+  async getItems(): Promise<ProjectItems[]> {   
+    const projetoItems = await this.repo.getItemsProjects();
+    if (!projetoItems || projetoItems.length === 0) {
+      throw new NotFoundException(`Não foram encontrados itens para os projetos.`);
+    }
+    return projetoItems;
   }
 
   // Obter um projeto específico pelo ID
   @Get(':id')
   async obterProjeto(@Param('id') id: string): Promise<Projeto> {
+    
     const projeto = await this.repo.obterPorId(+id);
     if (!projeto) {
       throw new NotFoundException(`Projeto com ID ${id} não encontrado.`);
@@ -41,7 +51,7 @@ export class ProjetoController {
       throw new NotFoundException(`Projeto com ID ${id} e suas escolas não encontrado.`);
     }
     return projeto;
-  }
+  }  
 
   // Excluir um projeto específico pelo ID
   @Delete(':id')

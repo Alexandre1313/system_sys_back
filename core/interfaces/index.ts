@@ -13,6 +13,8 @@ import DataInserction from "./DataInserction";
 import Caixa from "./Caixa";
 import CaixaItem from "./CaixaItem";
 import FinalyGrade from "./FinalyGrade";
+import ItensProjects from "./ItensProject";
+import ProjectItems from "./ProjectItems";
 
 export type { 
     Escola,
@@ -29,5 +31,7 @@ export type {
     DataInserction,
     Caixa, 
     CaixaItem,
-    FinalyGrade
+    FinalyGrade,
+    ItensProjects,
+    ProjectItems
 }
