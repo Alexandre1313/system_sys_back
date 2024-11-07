@@ -1,4 +1,4 @@
-import { ProjectItems, Projeto } from '@core/index';
+import { ProjectItems, Projeto, ProjetosSimp } from '@core/index';
 import { Injectable } from '@nestjs/common';
 import { PrismaProvider } from 'src/db/prisma.provider';
 
@@ -25,12 +25,22 @@ export class ProjetoPrisma {
     return projetoSalvo; // Retorne o projeto salvo
   }
 
+  async obterProjetosSimp(): Promise<ProjetosSimp[]> {
+    const projetos: ProjetosSimp[] = await this.prisma.projeto.findMany({
+      select: {
+        id: true,
+        nome: true,
+      },
+    });
+    return projetos;
+  }
+
   async obter(): Promise<Projeto[]> {
     const projetos = await this.prisma.projeto.findMany();
     return projetos;
   }
 
-  async obterPorId(id: number): Promise<Projeto | null> {  
+  async obterPorId(id: number): Promise<Projeto | null> {
     const projeto = await this.prisma.projeto.findUnique({ where: { id } });
     return (projeto as Projeto) ?? null;
   }
@@ -65,9 +75,10 @@ export class ProjetoPrisma {
     }
   }
 
-  async getItemsProjects(): Promise<ProjectItems[]> {
+  async getItemsProjects(id: number): Promise<ProjectItems> {
     try {
-      const projetos = await this.prisma.projeto.findMany({
+      const projeto = await this.prisma.projeto.findUnique({
+        where: { id },
         select: {
           id: true,
           nome: true,
@@ -96,39 +107,33 @@ export class ProjetoPrisma {
             },
           },
         },
-        orderBy: {
-          nome: 'asc', // Ordena por ID do projeto
-        },
-      });
+      });      
 
-      console.log('Projetos encontrados: ', projetos);
-  
+      if (!projeto) return null; // Retorna null se o projeto não for encontrado
+
       // Transformação dos dados para a estrutura desejada
-      const resultado = projetos.map((projeto) => ({
+      const resultado = {
         id: projeto.id,
         nome: projeto.nome,
         itensProject: projeto.itens.flatMap((item) =>
           item.tamanhos.map((tamanho) => ({
-            id: tamanho.id,
+            id: tamanho.id,  // ID da relação ItemTamanho
             nome: tamanho.item.nome,
             tamanho: tamanho.tamanho.nome,
-            barcode: tamanho.barcode?.codigo || null, // Inclui barcode ou null se não existir
-          })),
+            barcode: tamanho.barcode?.codigo || null,
+          }))
         ),
-      }));
-  
+      };
+
       // Ordenar os itens por nome do item e depois pelo nome do tamanho
-      resultado.forEach((projeto) => {
-        projeto.itensProject.sort((a, b) => {
-          const itemCompare = a.nome.localeCompare(b.nome); // Comparar pelo nome do item
-          if (itemCompare !== 0) return itemCompare; // Se os nomes forem diferentes, retorna a comparação
-          return a.tamanho.localeCompare(b.tamanho); // Se os nomes forem iguais, comparar pelo tamanho
-        });
+      resultado.itensProject.sort((a, b) => {
+        const itemCompare = a.nome.localeCompare(b.nome);
+        return itemCompare !== 0 ? itemCompare : a.tamanho.localeCompare(b.tamanho);
       });
-  
-      return resultado;
-    } catch (error) {      
-      throw new Error('Erro ao tentar obter itens dos projetos. Por favor, tente novamente.');
+
+      return resultado; // Retorna o objeto diretamente
+    } catch (error) {
+      throw new Error('Erro ao tentar obter itens do projeto. Por favor, tente novamente.');
     }
   }
 

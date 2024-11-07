@@ -15,6 +15,7 @@ import CaixaItem from "./CaixaItem";
 import FinalyGrade from "./FinalyGrade";
 import ItensProjects from "./ItensProject";
 import ProjectItems from "./ProjectItems";
+import ProjetosSimp from "./ProjetosSimp";
 
 export type { 
     Escola,
@@ -33,5 +34,6 @@ export type {
     CaixaItem,
     FinalyGrade,
     ItensProjects,
-    ProjectItems
+    ProjectItems,
+    ProjetosSimp
 }
