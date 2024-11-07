@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,12 +8,9 @@ generator erd {
   theme    = "forest"
 }
 
-// prisma/schema.prisma
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // uncomment next line if you use Prisma <5.10
-  // directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model Usuarios {
@@ -35,62 +26,62 @@ model Projeto {
   id        Int      @id @default(autoincrement())
   nome      String   @unique
   descricao String
-  escolas   Escola[] // Relacionamento com as Escolas
-  itens     Item[] // Relacionamento com os Itens do projeto
   url       String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  escolas   Escola[]
+  itens     Item[]
 }
 
 model Escola {
   id           Int      @id @default(autoincrement())
   numeroEscola String
   nome         String
-  projeto      Projeto  @relation(fields: [projetoId], references: [id])
-  projetoId    Int // Relacionamento com o Projeto
-  grades       Grade[] // Relacionamento com as Grades de Distribuição
+  projetoId    Int
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  projeto      Projeto  @relation(fields: [projetoId], references: [id])
+  grades       Grade[]
 
-  @@unique([projetoId, nome]) // Garante que o nome da escola é único por projeto   
+  @@unique([projetoId, nome])
 }
 
 model Item {
   id        Int           @id @default(autoincrement())
   nome      String
-  genero    Genero // Masculino, Feminino ou Unissex
-  projeto   Projeto       @relation(fields: [projetoId], references: [id])
+  genero    Genero
   projetoId Int
-  tamanhos  ItemTamanho[] // Relacionamento com tamanhos específicos
   url       String?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+  projeto   Projeto       @relation(fields: [projetoId], references: [id])
+  tamanhos  ItemTamanho[]
 
   @@unique([nome, projetoId, genero])
 }
 
 model Tamanho {
   id        Int           @id @default(autoincrement())
-  nome      String // Tamanho P, M, G, GG, etc.
-  itens     ItemTamanho[] // Itens que possuem esse tamanho
+  nome      String        @unique
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
-
-  @@unique([nome])
+  itens     ItemTamanho[]
 }
 
 model ItemTamanho {
-  id        Int         @id @default(autoincrement())
-  item      Item        @relation(fields: [itemId], references: [id])
-  itemId    Int
-  tamanho   Tamanho     @relation(fields: [tamanhoId], references: [id])
-  tamanhoId Int
-  barcode   Barcode? // Relacionamento com o código de barras único
-  estoque   Estoque? // Estoque desse item/tamanho (agora opcional)
-  url       String?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  GradeItem GradeItem[]
+  id         Int          @id @default(autoincrement())
+  itemId     Int
+  tamanhoId  Int
+  url        String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  barcode    Barcode?
+  estoque    Estoque?
+  GradeItem  GradeItem[]
+  item       Item         @relation(fields: [itemId], references: [id])
+  tamanho    Tamanho      @relation(fields: [tamanhoId], references: [id])
+  EntryInput EntryInput[]
+  OutInput   OutInput[]
 
   @@unique([itemId, tamanhoId])
 }
@@ -98,51 +89,50 @@ model ItemTamanho {
 model Barcode {
   id            Int         @id @default(autoincrement())
   codigo        String      @unique
-  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
-  itemTamanhoId Int         @unique // Corrigido para ser único
+  itemTamanhoId Int         @unique
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
 }
 
 model Estoque {
   id            Int         @id @default(autoincrement())
-  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
-  itemTamanhoId Int         @unique // Corrigido para ser único
-  quantidade    Int // Quantidade em estoque
+  itemTamanhoId Int         @unique
+  quantidade    Int
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
 }
 
 model Grade {
   id          Int         @id @default(autoincrement())
-  escola      Escola      @relation(fields: [escolaId], references: [id])
   escolaId    Int
-  itensGrade  GradeItem[] // Relacionamento com os itens dessa grade
-  gradeCaixas Caixa[]
-  finalizada  Boolean     @default(false) // Indica se a grade foi finalizada
+  finalizada  Boolean     @default(false)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  gradeCaixas Caixa[]
+  escola      Escola      @relation(fields: [escolaId], references: [id])
+  itensGrade  GradeItem[]
 }
 
 model Caixa {
   id           Int         @id @default(autoincrement())
-  grade        Grade       @relation(fields: [gradeId], references: [id])
   gradeId      Int
   escolaCaixa  String
   escolaNumber String
   projeto      String
   qtyCaixa     Int
   caixaNumber  String
-  caixaItem    CaixaItem[]
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  grade        Grade       @relation(fields: [gradeId], references: [id])
+  caixaItem    CaixaItem[]
 
-  @@unique([gradeId, caixaNumber]) // Garante que cada caixa tenha um número único dentro da mesma grade
+  @@unique([gradeId, caixaNumber])
 }
 
 model CaixaItem {
   id            Int      @id @default(autoincrement())
-  caixa         Caixa    @relation(fields: [caixaId], references: [id])
   caixaId       Int
   itemName      String
   itemGenero    String
@@ -151,20 +141,53 @@ model CaixaItem {
   itemTamanhoId Int
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  caixa         Caixa    @relation(fields: [caixaId], references: [id])
 }
 
 model GradeItem {
   id                 Int         @id @default(autoincrement())
-  grade              Grade       @relation(fields: [gradeId], references: [id])
   gradeId            Int
-  itemTamanho        ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
   itemTamanhoId      Int
-  quantidade         Int // Quantidade total a ser expedida
-  quantidadeExpedida Int // Quantidade já expedida
+  quantidade         Int
+  quantidadeExpedida Int
   qtyPCaixa          Int         @default(0)
   isCount            Boolean     @default(true)
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
+  grade              Grade       @relation(fields: [gradeId], references: [id])
+  itemTamanho        ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
+}
+
+model Embalagem {
+  id           Int          @id @default(autoincrement())
+  entryInput   EntryInput[]
+  nome         String       @unique @db.VarChar(200)
+  email        String       @unique
+  nomefantasia String?      @db.VarChar(200)
+  telefone     String?      @db.VarChar(15)
+  whats        String       @db.VarChar(15)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model EntryInput {
+  id            Int         @id @default(autoincrement())
+  embalagem     Embalagem   @relation(fields: [embalagemId], references: [id])
+  embalagemId   Int
+  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
+  itemTamanhoId Int
+  quantidade    Int
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model OutInput {
+  id            Int         @id @default(autoincrement())
+  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
+  itemTamanhoId Int
+  quantidade    Int
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 enum Genero {

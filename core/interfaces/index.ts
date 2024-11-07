@@ -16,6 +16,9 @@ import FinalyGrade from "./FinalyGrade";
 import ItensProjects from "./ItensProject";
 import ProjectItems from "./ProjectItems";
 import ProjetosSimp from "./ProjetosSimp";
+import OutInput from "./OutInput";
+import EntryInput from "./EntryInput";
+import Embalagem from "./Embalagem";
 
 export type { 
     Escola,
@@ -35,5 +38,8 @@ export type {
     FinalyGrade,
     ItensProjects,
     ProjectItems,
-    ProjetosSimp
+    ProjetosSimp,
+    OutInput,
+    EntryInput,
+    Embalagem
 }
