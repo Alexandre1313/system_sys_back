@@ -1,0 +1,7 @@
+GET http://localhost:4997/embalagem
+
+###
+GET http://localhost:4997/embalagem/1
+
+###
+DELETE http://localhost:4997/embalagem/3000

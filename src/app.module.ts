@@ -12,6 +12,7 @@ import { EstoqueModule } from './estoque/estoque.module';
 import { GradeModule } from './grade/grade.module';
 import { GradeItemModule } from './gradeItem/gradeItem.module';
 import { CaixaModule } from './caixa/caixa.module';
+import { EmbalagemModule } from './embalagem/embalagem.module';
 
 @Module({
   imports: [
@@ -25,7 +26,8 @@ import { CaixaModule } from './caixa/caixa.module';
     EstoqueModule,
     GradeModule,
     GradeItemModule,
-    CaixaModule
+    CaixaModule,
+    EmbalagemModule
   ],
   controllers: [AppController],
   providers: [AppService],
