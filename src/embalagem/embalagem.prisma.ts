@@ -49,10 +49,20 @@ export class EmbalagemPrisma {
         } catch (error) {
             throw new Error('Erro ao salvar embalagem: ' + error.message);
         }
-    }
+    }  
 
     async obter(): Promise<Embalagem[]> {
-        const embalagems = await this.prisma.embalagem.findMany();
-        return embalagems;
-    }
+        const embs: Embalagem[] = await this.prisma.embalagem.findMany({
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            whats: true
+          },
+          orderBy: {
+            nome: 'asc', 
+          },
+        });
+        return embs;
+    }  
 }

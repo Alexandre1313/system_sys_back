@@ -31,9 +31,12 @@ export class ProjetoPrisma {
         id: true,
         nome: true,
       },
+      orderBy: {
+        nome: 'asc', 
+      },
     });
     return projetos;
-  }
+  }  
 
   async obter(): Promise<Projeto[]> {
     const projetos = await this.prisma.projeto.findMany();
