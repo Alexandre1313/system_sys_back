@@ -21,7 +21,7 @@ export class CaixaPrisma {
             projeto: dadosDaCaixa.projeto,
             escolaCaixa: dadosDaCaixa.escolaCaixa,
             caixaNumber: dadosDaCaixa.caixaNumber,
-            
+
           },
         });
 
@@ -34,7 +34,7 @@ export class CaixaPrisma {
                 itemGenero: item.itemGenero,
                 itemTam: item.itemTam,
                 itemQty: item.itemQty,
-                itemTamanhoId: item.itemTamanhoId, 
+                itemTamanhoId: item.itemTamanhoId,
                 caixaId: novaCaixa.id,
               },
             });
@@ -51,7 +51,7 @@ export class CaixaPrisma {
           )
         );
 
-        // 4. Atualiza o estoque com base no `itemTamanhoId` em caixaItem
+        // 4. Atualiza o estoque com base no `itemTamanhoId` em caixaItem e insere as movimentações de saída
         await Promise.all(
           caixaItem.map(async (item) => {
             const { itemTamanhoId, itemQty } = item;
@@ -63,9 +63,19 @@ export class CaixaPrisma {
 
               const novaQuantidade = (estoqueAtual?.quantidade || 0) - itemQty;
 
+              // Atualiza o estoque
               await prisma.estoque.update({
                 where: { itemTamanhoId: itemTamanhoId },
                 data: { quantidade: novaQuantidade },
+              });
+
+              // Insere a movimentação de saída na tabela `OutInput`
+              await prisma.outInput.create({
+                data: {
+                  itemTamanhoId: itemTamanhoId,
+                  estoqueId: estoqueAtual.id,
+                  quantidade: itemQty,
+                },
               });
             }
           })
@@ -77,12 +87,12 @@ export class CaixaPrisma {
           caixaItem: itensCriados,
           itensGrade: [],
         };
-      },  
-      {
-        maxWait: 5000, // default: 2000
-        timeout: 10000, // default: 5000     
-      }    
-    );
+      },
+        {
+          maxWait: 5000, // default: 2000
+          timeout: 10000, // default: 5000     
+        }
+      );
       return result;
     } catch (error) {
       throw new Error('Erro ao inserir a caixa e itens no banco de dados.');

@@ -19,6 +19,7 @@ import ProjetosSimp from "./ProjetosSimp";
 import OutInput from "./OutInput";
 import EntryInput from "./EntryInput";
 import Embalagem from "./Embalagem";
+import DataInserctionUni from './DataInserctionUni'
 
 export type { 
     Escola,
@@ -41,5 +42,6 @@ export type {
     ProjetosSimp,
     OutInput,
     EntryInput,
-    Embalagem
+    Embalagem,
+    DataInserctionUni
 }

@@ -4,8 +4,8 @@ generator client {
 
 generator erd {
   provider = "prisma-erd-generator"
-  output   = "../ERD.png"
-  theme    = "forest"
+  output   = "../ERD.svg"
+  theme    = "dark"
 }
 
 datasource db {
@@ -77,11 +77,11 @@ model ItemTamanho {
   updatedAt  DateTime     @updatedAt
   barcode    Barcode?
   estoque    Estoque?
-  GradeItem  GradeItem[]
+  gradeItem  GradeItem[]
   item       Item         @relation(fields: [itemId], references: [id])
   tamanho    Tamanho      @relation(fields: [tamanhoId], references: [id])
-  EntryInput EntryInput[]
-  OutInput   OutInput[]
+  entryInput EntryInput[]
+  outInput   OutInput[]
 
   @@unique([itemId, tamanhoId])
 }
@@ -96,12 +96,14 @@ model Barcode {
 }
 
 model Estoque {
-  id            Int         @id @default(autoincrement())
-  itemTamanhoId Int         @unique
+  id            Int          @id @default(autoincrement())
+  itemTamanhoId Int          @unique
   quantidade    Int
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  entryInput    EntryInput[]
+  outInput      OutInput[]
+  itemTamanho   ItemTamanho  @relation(fields: [itemTamanhoId], references: [id])
 }
 
 model Grade {
@@ -162,7 +164,7 @@ model Embalagem {
   id           Int          @id @default(autoincrement())
   entryInput   EntryInput[]
   nome         String       @unique @db.VarChar(200)
-  email        String       @unique
+  email        String       @unique @db.VarChar(200)
   nomefantasia String?      @db.VarChar(200)
   telefone     String?      @db.VarChar(15)
   whats        String       @db.VarChar(15)
@@ -176,6 +178,8 @@ model EntryInput {
   embalagemId   Int
   itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
   itemTamanhoId Int
+  estoque       Estoque     @relation(fields: [estoqueId], references: [id])
+  estoqueId     Int
   quantidade    Int
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -185,6 +189,8 @@ model OutInput {
   id            Int         @id @default(autoincrement())
   itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
   itemTamanhoId Int
+  estoque       Estoque     @relation(fields: [estoqueId], references: [id])
+  estoqueId     Int
   quantidade    Int
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt

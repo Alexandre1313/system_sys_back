@@ -84,6 +84,7 @@ export class ProjetoPrisma {
           nome: true,
           itens: {
             select: {
+              genero: true, // Seleciona o campo de gênero
               tamanhos: {
                 select: {
                   id: true, // ID da relação ItemTamanho
@@ -107,7 +108,7 @@ export class ProjetoPrisma {
             },
           },
         },
-      });      
+      });
 
       if (!projeto) return null; // Retorna null se o projeto não for encontrado
 
@@ -119,16 +120,22 @@ export class ProjetoPrisma {
           item.tamanhos.map((tamanho) => ({
             id: tamanho.id,  // ID da relação ItemTamanho
             nome: tamanho.item.nome,
+            genero: item.genero, // Inclui o gênero na transformação
             tamanho: tamanho.tamanho.nome,
             barcode: tamanho.barcode?.codigo || null,
           }))
         ),
       };
 
-      // Ordenar os itens por nome do item e depois pelo nome do tamanho
+      // Ordenar os itens por nome do item, depois pelo gênero, e depois pelo nome do tamanho
       resultado.itensProject.sort((a, b) => {
         const itemCompare = a.nome.localeCompare(b.nome);
-        return itemCompare !== 0 ? itemCompare : a.tamanho.localeCompare(b.tamanho);
+        if (itemCompare !== 0) return itemCompare;
+
+        const generoCompare = a.genero.localeCompare(b.genero);
+        if (generoCompare !== 0) return generoCompare;
+
+        return a.tamanho.localeCompare(b.tamanho);
       });
 
       return resultado; // Retorna o objeto diretamente
