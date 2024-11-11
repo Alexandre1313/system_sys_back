@@ -101,6 +101,11 @@ export class ProjetoPrisma {
                       nome: true, // Nome do tamanho
                     },
                   },
+                  estoque: {
+                    select: {
+                      quantidade: true, // Código de barras (opcional)
+                    },
+                  },
                   barcode: {
                     select: {
                       codigo: true, // Código de barras (opcional)
@@ -125,6 +130,7 @@ export class ProjetoPrisma {
             nome: tamanho.item.nome,
             genero: item.genero, // Inclui o gênero na transformação
             tamanho: tamanho.tamanho.nome,
+            estoque: tamanho.estoque.quantidade,
             barcode: tamanho.barcode?.codigo || null,
           }))
         ),

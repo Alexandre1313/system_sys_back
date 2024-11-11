@@ -13,6 +13,7 @@ import { GradeModule } from './grade/grade.module';
 import { GradeItemModule } from './gradeItem/gradeItem.module';
 import { CaixaModule } from './caixa/caixa.module';
 import { EmbalagemModule } from './embalagem/embalagem.module';
+import { EntryInputModule } from './entryInput/entryinput.module';
 
 @Module({
   imports: [
@@ -27,7 +28,8 @@ import { EmbalagemModule } from './embalagem/embalagem.module';
     GradeModule,
     GradeItemModule,
     CaixaModule,
-    EmbalagemModule
+    EmbalagemModule,
+    EntryInputModule
   ],
   controllers: [AppController],
   providers: [AppService],
