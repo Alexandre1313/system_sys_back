@@ -21,6 +21,7 @@ import EntryInput from "./EntryInput";
 import Embalagem from "./Embalagem";
 import DataInserctionUni from './DataInserctionUni'
 import QtyEmbDay from "./QtyEmbDay";
+import Stock from "./Stock";
 
 export type { 
     Escola,
@@ -45,5 +46,6 @@ export type {
     EntryInput,
     Embalagem,
     DataInserctionUni,
-    QtyEmbDay
+    QtyEmbDay,
+    Stock
 }

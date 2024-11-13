@@ -4,5 +4,6 @@ export default interface ItensProjects {
     tamanho: string,
     genero: string,
     estoque: number,
+    estoqueId: number,
     barcode: string,   
 }
