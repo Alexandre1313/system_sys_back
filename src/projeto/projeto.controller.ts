@@ -23,6 +23,11 @@ export class ProjetoController {
   return this.repo.obter();
   }
 
+  @Get('projetosall')
+  async obterProjetosAll(): Promise<Projeto[]> {
+  return this.repo.obterAll();
+  }
+
   @Get('projetossimp')
   async getProjectSimp(): Promise<ProjetosSimp[]> {   
     const projetosimp: ProjetosSimp[] = await this.repo.obterProjetosSimp();

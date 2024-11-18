@@ -43,6 +43,11 @@ export class ProjetoPrisma {
     return projetos;
   }
 
+  async obterAll(): Promise<Projeto[]> {
+    const projetos = await this.prisma.projeto.findMany();
+    return projetos;
+  }
+
   async obterPorId(id: number): Promise<Projeto | null> {
     const projeto = await this.prisma.projeto.findUnique({ where: { id } });
     return (projeto as Projeto) ?? null;
