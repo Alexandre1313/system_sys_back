@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { EntryInputPrisma } from './entryinput.prisma';
-import { EntryInput, QtyEmbDay } from '@core/index';
+import { EntryInput, QtyEmbDay, StockGenerate } from '@core/index';
 
 @Controller('entradas')
 export class EntryInputController {
@@ -37,6 +37,17 @@ export class EntryInputController {
    @Get()
    async obterEntryInputs(): Promise<EntryInput[]> {
      return this.repo.obter();
-   }
+  }
+
+  // Salvar ou criar um EntryInput
+  @Post('gerarestoque')
+  @HttpCode(HttpStatus.CREATED)
+  async salvarQtyEmEstoque(@Body() stock: Omit<StockGenerate, 'createdAt' | 'updatedAt'>): Promise<EntryInput | null> {
+       try {
+           return await this.repo.inserirQtyNoEstoque(stock);
+       } catch (error) {
+           throw new BadRequestException('Erro ao atualizar o estoque: ' + error.message);
+       }
+  }
 
 }

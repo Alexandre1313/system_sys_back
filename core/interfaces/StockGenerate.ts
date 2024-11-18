@@ -1,6 +1,6 @@
-export default interface Stock {
+export default interface StockGenerate {
     embalagemId: number;
-    itemTamanhoid: number;
+    itemTamanhoId: number;
     estoqueId: number;
     quantidade: number;
 }
