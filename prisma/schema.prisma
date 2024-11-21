@@ -34,16 +34,80 @@ model Projeto {
 }
 
 model Escola {
-  id           Int      @id @default(autoincrement())
+  id           Int                @id @default(autoincrement())
   numeroEscola String
   nome         String
   projetoId    Int
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  projeto      Projeto  @relation(fields: [projetoId], references: [id])
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  projeto      Projeto            @relation(fields: [projetoId], references: [id])
   grades       Grade[]
+  address      AddressSchool[]
+  telefone     TelephonesSchool[]
 
   @@unique([projetoId, nome])
+}
+
+model TelephonesSchool {
+  id        Int      @id @default(autoincrement())
+  telefone  String   @db.VarChar(15)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  escolaId  Int
+  escola    Escola   @relation(fields: [escolaId], references: [id])
+}
+
+model AddressSchool {
+  id           Int      @id @default(autoincrement())
+  street       String
+  number       String?
+  complement   String?
+  neighborhood String
+  city         String?
+  state        String?
+  postalCode   String?
+  country      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  escolaId     Int
+  escola       Escola   @relation(fields: [escolaId], references: [id])
+}
+
+model Company {
+  id        Int                 @id @default(autoincrement())
+  nome      String              @unique @db.VarChar(200)
+  email     String              @unique @db.VarChar(200)
+  cnpj      String?             @unique @db.VarChar(18)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  address   AddressCompany[]
+  telefone  TelephonesCompany[]
+  Grade     Grade[]
+}
+
+model TelephonesCompany {
+  id        Int      @id @default(autoincrement())
+  telefone  String   @db.VarChar(15)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  companyId Int
+  company   Company  @relation(fields: [companyId], references: [id])
+}
+
+model AddressCompany {
+  id           Int      @id @default(autoincrement())
+  street       String
+  number       String?
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  postalCode   String
+  country      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  companyId    Int
+  company      Company  @relation(fields: [companyId], references: [id])
 }
 
 model Item {
@@ -77,11 +141,12 @@ model ItemTamanho {
   updatedAt  DateTime     @updatedAt
   barcode    Barcode?
   estoque    Estoque?
-  gradeItem  GradeItem[]
   item       Item         @relation(fields: [itemId], references: [id])
   tamanho    Tamanho      @relation(fields: [tamanhoId], references: [id])
   entryInput EntryInput[]
   outInput   OutInput[]
+  gradeItem  GradeItem[]
+  ops        Ops[]
 
   @@unique([itemId, tamanhoId])
 }
@@ -109,11 +174,13 @@ model Estoque {
 model Grade {
   id          Int         @id @default(autoincrement())
   escolaId    Int
+  escola      Escola      @relation(fields: [escolaId], references: [id])
+  companyId   Int
+  company     Company     @relation(fields: [companyId], references: [id])
   finalizada  Boolean     @default(false)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   gradeCaixas Caixa[]
-  escola      Escola      @relation(fields: [escolaId], references: [id])
   itensGrade  GradeItem[]
 }
 
@@ -194,6 +261,37 @@ model OutInput {
   quantidade    Int
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+}
+
+model Ops {
+  id            Int         @id @default(autoincrement())
+  op            String      @unique @db.VarChar(10)
+  quantidade    Int
+  seloImpresso  Boolean     @default(false)
+  faccao        Faccoes     @relation(fields: [faccaoId], references: [id])
+  faccaoId      Int
+  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
+  itemTamanhoId Int
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Faccoes {
+  id        Int                 @id @default(autoincrement())
+  nome      String              @unique @db.VarChar(200)
+  ops       Ops[]
+  telefone  TelephonesFaccoes[]
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+}
+
+model TelephonesFaccoes {
+  id        Int      @id @default(autoincrement())
+  telefone  String   @db.VarChar(15)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  faccaoId  Int
+  faaccao   Faccoes  @relation(fields: [faccaoId], references: [id])
 }
 
 enum Genero {

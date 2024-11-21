@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Company" ALTER COLUMN "cnpj" SET DATA TYPE VARCHAR(18);

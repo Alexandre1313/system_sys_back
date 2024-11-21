@@ -22,6 +22,9 @@ import Embalagem from "./Embalagem";
 import DataInserctionUni from './DataInserctionUni'
 import QtyEmbDay from "./QtyEmbDay";
 import StockGenerate from "./StockGenerate";
+import AddressCompany  from "./AddressCompany";
+import TelephonesCompany from "./TelephonesCompany";
+import Company from "./Company";
 
 export type { 
     Escola,
@@ -47,5 +50,8 @@ export type {
     Embalagem,
     DataInserctionUni,
     QtyEmbDay,
-    StockGenerate
+    StockGenerate,
+    AddressCompany,
+    Company,
+    TelephonesCompany,
 }
