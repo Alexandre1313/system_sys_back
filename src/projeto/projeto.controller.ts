@@ -46,6 +46,15 @@ export class ProjetoController {
     return projetoItems;
   }
 
+  @Get('datas/:id')
+  async getDates(@Param('id') id: string): Promise<Date[]> {   
+    const dates = await this.repo.getOptimizedUniqueGradeDatesByProject(+id);
+    if (!dates) {
+      throw new NotFoundException(`Não foram encontradas datas válidas.`);
+    }
+    return dates;
+  }  
+
   // Obter um projeto específico pelo ID
   @Get(':id')
   async obterProjeto(@Param('id') id: string): Promise<Projeto> {

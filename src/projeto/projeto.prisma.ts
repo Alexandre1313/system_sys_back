@@ -32,11 +32,11 @@ export class ProjetoPrisma {
         nome: true,
       },
       orderBy: {
-        nome: 'asc', 
+        nome: 'asc',
       },
     });
     return projetos;
-  }  
+  }
 
   async obter(): Promise<Projeto[]> {
     const projetos = await this.prisma.projeto.findMany();
@@ -158,6 +158,50 @@ export class ProjetoPrisma {
     } catch (error) {
       throw new Error('Erro ao tentar obter itens do projeto. Por favor, tente novamente.');
     }
-  }
+  }  
+ 
+  async getOptimizedUniqueGradeDatesByProject(projectId: number): Promise<Date[]> {
+    if (!projectId) {
+      console.error('ID do projeto é inválido.');
+      return []; // Retorna um array vazio se o ID for inválido
+    }
+  
+    try {
+      const topEscola = await this.prisma.escola.findFirst({
+        where: {
+          projetoId: projectId,
+        },
+        orderBy: {
+          grades: {
+            _count: 'desc',
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+  
+      if (!topEscola) {
+        console.warn(`Nenhuma escola encontrada para o projeto ${projectId}.`);
+        return [];
+      }
+  
+      const uniqueDates = await this.prisma.grade.findMany({
+        where: {
+          escolaId: topEscola.id,
+        },
+        select: {
+          createdAt: true,
+        },
+        distinct: ['createdAt'],
+      });
+  
+      return uniqueDates.map((grade) => grade.createdAt);
+    } catch (error) {
+      // Loga o erro no console
+      console.error(`Erro ao buscar as datas únicas das grades para o projeto ${projectId}:`, error);
+      return []; // Garante que um array vazio será retornado em caso de falha
+    }
+  }  
 
 }
