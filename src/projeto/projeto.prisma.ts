@@ -1,6 +1,7 @@
-import { ProjectItems, Projeto, ProjetosSimp } from '@core/index';
+import { GradesRomaneio, ProjectItems, Projeto, ProjetosSimp } from '@core/index';
 import { Injectable } from '@nestjs/common';
 import { PrismaProvider } from 'src/db/prisma.provider';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProjetoPrisma {
@@ -158,15 +159,16 @@ export class ProjetoPrisma {
     } catch (error) {
       throw new Error('Erro ao tentar obter itens do projeto. Por favor, tente novamente.');
     }
-  }  
- 
+  }
+
   async getOptimizedUniqueGradeDatesByProject(projectId: number): Promise<Date[]> {
     if (!projectId) {
       console.error('ID do projeto é inválido.');
       return []; // Retorna um array vazio se o ID for inválido
     }
-  
+
     try {
+      // Obter a escola com mais grades do projeto
       const topEscola = await this.prisma.escola.findFirst({
         where: {
           projetoId: projectId,
@@ -180,28 +182,154 @@ export class ProjetoPrisma {
           id: true,
         },
       });
-  
+
       if (!topEscola) {
         console.warn(`Nenhuma escola encontrada para o projeto ${projectId}.`);
         return [];
       }
+
+      // Buscar datas únicas ignorando horas, mas retornando o campo completo
+      const uniqueDates = await this.prisma.$queryRaw<
+        { createdAt: Date }[] // Retornando o campo original do banco
+      >(
+        Prisma.sql`
+        SELECT DISTINCT ON (DATE("createdAt")) "createdAt"
+        FROM "Grade"
+        WHERE "escolaId" = ${topEscola.id}
+        ORDER BY DATE("createdAt"), "createdAt"
+      `
+      );
+
+      // Retorna as datas completas exatamente como estão no banco
+      return uniqueDates.map((row) => row.createdAt);
+    } catch (error) {
+      console.error(`Erro ao buscar as datas únicas das grades para o projeto ${projectId}:`, error);
+      return [];
+    }
+  }
+
+  async getFormattedGradesByDateAndProject(projectId: number, dateStr: string): Promise<GradesRomaneio[]> {
+    if (!projectId || !dateStr) {
+      console.error("Projeto ID ou data inválidos.");
+      return [];
+    }
   
-      const uniqueDates = await this.prisma.grade.findMany({
+    try {
+      // Converte a string para um objeto Date
+      const startOfDay = new Date(dateStr);
+      startOfDay.setUTCHours(0, 0, 0, 0);
+  
+      const endOfDay = new Date(dateStr);
+      endOfDay.setUTCHours(23, 59, 59, 999);
+  
+      // Busca as grades
+      const grades = await this.prisma.grade.findMany({
         where: {
-          escolaId: topEscola.id,
+          escola: {
+            projetoId: projectId,
+          },
+          createdAt: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+          finalizada: false,
         },
-        select: {
-          createdAt: true,
+        include: {
+          escola: {
+            include: {
+              address: true,
+              telefone: true,  // Incluindo telefones da escola
+              projeto: true,
+            },
+          },
+          company: {
+            include: {
+              address: true,
+              telefone: true,  // Incluindo telefones da empresa
+              // O email está no próprio modelo 'Company'
+            },
+          },
+          gradeCaixas: {
+            include: {
+              caixaItem: true,  // Incluindo itens de cada caixa
+            },
+          },
+          itensGrade: {
+            include: {
+              itemTamanho: {
+                include: {
+                  item: true,
+                  tamanho: true,
+                },
+              },
+            },
+          },
         },
-        distinct: ['createdAt'],
       });
   
-      return uniqueDates.map((grade) => grade.createdAt);
+      // Formatação das grades
+      const formattedGrades: GradesRomaneio[] = grades.map((grade) => {
+        // Inclui nome do item em tamanhosEQuantidades
+        const tamanhosEQuantidades = grade.itensGrade.map((itemGrade) => ({
+          item: itemGrade.itemTamanho.item.nome, // Nome do item específico
+          genero: itemGrade.itemTamanho.item.genero,
+          tamanho: itemGrade.itemTamanho.tamanho.nome, // Nome do tamanho
+          quantidade: itemGrade.quantidadeExpedida,   // Quantidade expedida
+        }));
+  
+        // Adicionando o array de caixas (com seus itens)
+        const caixas = grade.gradeCaixas.map((caixa) => ({
+          caixaNumber: caixa.caixaNumber,  // Número da caixa
+          qtyCaixa: caixa.qtyCaixa,        // Quantidade na caixa
+          caixaItems: caixa.caixaItem.map((item) => ({
+            itemName: item.itemName,      // Nome do item na caixa
+            itemGenero: item.itemGenero,  // Gênero do item
+            itemTam: item.itemTam,        // Tamanho do item
+            itemQty: item.itemQty,        // Quantidade do item
+          })),
+        }));
+  
+        return {
+          company: grade.company.nome,
+          projectname: grade.escola.projeto?.nome || "",
+          escola: grade.escola.nome,
+          numeroEscola: grade.escola.numeroEscola || "",  // Número da escola
+          telefoneCompany: grade.company.telefone?.map(tel => tel.telefone).join(', ') || "",  // Telefones da empresa
+          emailCompany: grade.company.email || "",   // E-mail da empresa (agora no modelo Company)
+          telefoneEscola: grade.escola.telefone?.map(tel => tel.telefone).join(', ') || "", // Telefones da escola
+          enderecoschool: {
+            rua: grade.escola.address[0]?.street || "",
+            numero: grade.escola.address[0]?.number || "",
+            complemento: grade.escola.address[0]?.complement || "",
+            bairro: grade.escola.address[0]?.neighborhood || "",
+            cidade: grade.escola.address[0]?.city || "",
+            estado: grade.escola.address[0]?.state || "",
+            postalCode: grade.escola.address[0]?.postalCode || "",
+            country: grade.escola.address[0]?.country || "",
+          },
+          tamanhosQuantidades: tamanhosEQuantidades, // Informações de tamanhos e quantidades
+          caixas: caixas,  // Array com as caixas e seus itens
+          enderecocompany: {
+            rua: grade.company.address[0]?.street || "",
+            numero: grade.company.address[0]?.number || "",
+            complemento: grade.company.address[0]?.complement || "",
+            bairro: grade.company.address[0]?.neighborhood || "",
+            cidade: grade.company.address[0]?.city || "",
+            estado: grade.company.address[0]?.state || "",
+            postalCode: grade.company.address[0]?.postalCode || "",
+            country: grade.company.address[0]?.country || "",
+          },
+        };
+      });
+  
+      return formattedGrades;
     } catch (error) {
-      // Loga o erro no console
-      console.error(`Erro ao buscar as datas únicas das grades para o projeto ${projectId}:`, error);
-      return []; // Garante que um array vazio será retornado em caso de falha
+      console.error(
+        `Erro ao buscar grades para o projeto ${projectId} na data ${dateStr}:`,
+        error
+      );
+      return [];
     }
-  }  
+  }
 
 }

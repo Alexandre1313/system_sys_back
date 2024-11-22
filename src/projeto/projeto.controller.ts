@@ -4,7 +4,7 @@ import { ProjectItems, Projeto, ProjetosSimp } from '@core/index';
 
 @Controller('projetos')
 export class ProjetoController {
-  constructor(private readonly repo: ProjetoPrisma) {}
+  constructor(private readonly repo: ProjetoPrisma) { }
 
   // Salvar ou criar um projeto
   @Post()
@@ -18,18 +18,18 @@ export class ProjetoController {
   }
 
   // Obter todos os projetos
- @Get()
+  @Get()
   async obterProjetos(): Promise<Projeto[]> {
-  return this.repo.obter();
+    return this.repo.obter();
   }
 
   @Get('projetosall')
   async obterProjetosAll(): Promise<Projeto[]> {
-  return this.repo.obterAll();
+    return this.repo.obterAll();
   }
 
   @Get('projetossimp')
-  async getProjectSimp(): Promise<ProjetosSimp[]> {   
+  async getProjectSimp(): Promise<ProjetosSimp[]> {
     const projetosimp: ProjetosSimp[] = await this.repo.obterProjetosSimp();
     if (!projetosimp) {
       throw new NotFoundException(`Não foram encontrados projetos.`);
@@ -37,8 +37,25 @@ export class ProjetoController {
     return projetosimp;
   }
 
+  // Obter grades por data
+  @Get('roman/:projectId/:dateStr')
+  async obterEntryInputsTotal(
+    @Param('projectId') projectId: string,
+    @Param('dateStr') dateStr: string,
+  ): Promise<any[]> {
+    const grades = await this.repo.getFormattedGradesByDateAndProject(
+      +projectId,
+      dateStr,
+    );
+
+    if (!grades) {
+      throw new NotFoundException(`Entradas não encontradas.`);
+    }
+    return grades;
+  }
+
   @Get('itens/:id')
-  async getItems(@Param('id') id: string): Promise<ProjectItems> {   
+  async getItems(@Param('id') id: string): Promise<ProjectItems> {
     const projetoItems = await this.repo.getItemsProjects(+id);
     if (!projetoItems) {
       throw new NotFoundException(`Não foram encontrados itens para os projetos.`);
@@ -47,18 +64,18 @@ export class ProjetoController {
   }
 
   @Get('datas/:id')
-  async getDates(@Param('id') id: string): Promise<Date[]> {   
+  async getDates(@Param('id') id: string): Promise<Date[]> {
     const dates = await this.repo.getOptimizedUniqueGradeDatesByProject(+id);
     if (!dates) {
       throw new NotFoundException(`Não foram encontradas datas válidas.`);
     }
     return dates;
-  }  
+  }
 
   // Obter um projeto específico pelo ID
   @Get(':id')
   async obterProjeto(@Param('id') id: string): Promise<Projeto> {
-    
+
     const projeto = await this.repo.obterPorId(+id);
     if (!projeto) {
       throw new NotFoundException(`Projeto com ID ${id} não encontrado.`);
@@ -74,7 +91,7 @@ export class ProjetoController {
       throw new NotFoundException(`Projeto com ID ${id} e suas escolas não encontrado.`);
     }
     return projeto;
-  }  
+  }
 
   // Excluir um projeto específico pelo ID
   @Delete(':id')
