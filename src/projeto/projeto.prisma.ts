@@ -290,6 +290,7 @@ export class ProjetoPrisma {
         }));
   
         return {
+          isPrint: grade.finalizada,
           company: grade.company.nome,
           projectname: grade.escola.projeto?.nome || "",
           escola: grade.escola.nome,
@@ -297,6 +298,7 @@ export class ProjetoPrisma {
           telefoneCompany: grade.company.telefone?.map(tel => tel.telefone).join(', ') || "",  // Telefones da empresa
           emailCompany: grade.company.email || "",   // E-mail da empresa (agora no modelo Company)
           telefoneEscola: grade.escola.telefone?.map(tel => tel.telefone).join(', ') || "", // Telefones da escola
+          create:grade.createdAt,
           enderecoschool: {
             rua: grade.escola.address[0]?.street || "",
             numero: grade.escola.address[0]?.number || "",
@@ -320,6 +322,12 @@ export class ProjetoPrisma {
             country: grade.company.address[0]?.country || "",
           },
         };
+      });
+
+      formattedGrades.sort((a, b) => {
+        const numeroA = parseInt(a.numeroEscola, 10) || 0; // Converte para número ou usa 0 como fallback
+        const numeroB = parseInt(b.numeroEscola, 10) || 0;
+        return numeroA - numeroB; // Ordem crescente
       });
   
       return formattedGrades;

@@ -1,4 +1,5 @@
 export default interface GradesRomaneio {
+    isPrint: boolean;
     company: string;
     projectname: string;
     escola: string;
@@ -6,6 +7,7 @@ export default interface GradesRomaneio {
     telefoneCompany: string;
     emailCompany: string;
     telefoneEscola: string;
+    create: Date;
     enderecoschool: {
       rua: string;
       numero: string;
