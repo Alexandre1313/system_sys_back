@@ -5,6 +5,7 @@ export default interface OutInput {
   itemTamanho?: ItemTamanho;    
   itemTamanhoId: number; 
   quantidade: number; 
+  userId?: number;
   createdAt?: Date;   
   updatedAt?: Date;
 }

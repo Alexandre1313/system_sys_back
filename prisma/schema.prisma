@@ -14,12 +14,15 @@ datasource db {
 }
 
 model Usuarios {
-  id        Int      @id @default(autoincrement())
-  nome      String
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         Int          @id @default(autoincrement())
+  nome       String
+  email      String       @unique
+  password   String
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  Caixa      Caixa[]
+  EntryInput EntryInput[]
+  OutInput   OutInput[]
 }
 
 model Projeto {
@@ -111,15 +114,16 @@ model AddressCompany {
 }
 
 model Item {
-  id        Int           @id @default(autoincrement())
-  nome      String
-  genero    Genero
-  projetoId Int
-  url       String?
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  projeto   Projeto       @relation(fields: [projetoId], references: [id])
-  tamanhos  ItemTamanho[]
+  id         Int           @id @default(autoincrement())
+  nome       String
+  genero     Genero
+  projetoId  Int
+  url        String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  composicao String?
+  projeto    Projeto       @relation(fields: [projetoId], references: [id])
+  tamanhos   ItemTamanho[]
 
   @@unique([nome, projetoId, genero])
 }
@@ -180,6 +184,7 @@ model Grade {
   finalizada  Boolean     @default(false)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  tipo        String?
   gradeCaixas Caixa[]
   itensGrade  GradeItem[]
 }
@@ -194,6 +199,8 @@ model Caixa {
   caixaNumber  String
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  usuario      Usuarios?   @relation(fields: [userId], references: [id])
+  userId       Int?
   grade        Grade       @relation(fields: [gradeId], references: [id])
   caixaItem    CaixaItem[]
 
@@ -247,6 +254,8 @@ model EntryInput {
   itemTamanhoId Int
   estoque       Estoque     @relation(fields: [estoqueId], references: [id])
   estoqueId     Int
+  usuario       Usuarios?   @relation(fields: [userId], references: [id])
+  userId        Int?
   quantidade    Int
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -258,6 +267,8 @@ model OutInput {
   itemTamanhoId Int
   estoque       Estoque     @relation(fields: [estoqueId], references: [id])
   estoqueId     Int
+  usuario       Usuarios?   @relation(fields: [userId], references: [id])
+  userId        Int?
   quantidade    Int
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt

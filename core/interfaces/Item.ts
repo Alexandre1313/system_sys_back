@@ -8,6 +8,7 @@ export default interface Item {
     genero: Genero; // Masculino, Feminino ou Unissex
     projetoId: number; // Relacionamento com o Projeto
     projeto?: Projeto; // Relacionamento opcional com o Projeto
+    composicao?: string;
     tamanhos?: ItemTamanho[]; // Relacionamento com tamanhos específicos
     url: string
     createdAt?: Date;

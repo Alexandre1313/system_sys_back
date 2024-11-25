@@ -8,6 +8,7 @@ export default interface EntryInput {
     itemTamanho?: ItemTamanho;
     itemTamanhoId: number;
     quantidade: number;
+    userId?: number;
     createdAt?: Date;
     updatedAt?: Date;
 }

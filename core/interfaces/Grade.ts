@@ -9,6 +9,7 @@ export default interface Grade {
     company?: Company; 
     escolaId: number; 
     escola?: Escola; 
+    tipo?: string;
     itensGrade?: GradeItem[]; // Relacionamento com os itens dessa grade
     gradeCaixas?: Caixa[];
     finalizada?: boolean; // Se a grade foi finalizada ou não

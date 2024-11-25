@@ -11,6 +11,7 @@ export default interface Caixa {
     qtyCaixa: number;
     caixaItem: CaixaItem[]; 
     itensGrade: GradeItem[];
+    userId?: number;
     createdAt?: Date;
     updatedAt?: Date;
 }

@@ -7,7 +7,7 @@ export class UsuarioPrisma {
   constructor(readonly prisma: PrismaProvider) { }
 
   async salvar(usuario: Usuarios): Promise<Usuarios> {
-    const { id, ...dadosDoUsuario } = usuario;
+    const { id, entryInput, caixa, outInput, ...dadosDoUsuario } = usuario;
 
     const usuarioSalvo = await this.prisma.usuarios.upsert({
       where: {

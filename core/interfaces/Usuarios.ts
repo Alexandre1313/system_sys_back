@@ -1,3 +1,7 @@
+import Caixa from "./Caixa";
+import EntryInput from "./EntryInput";
+import OutInput from "./OutInput";
+
 export default interface Usuarios {
     id?: number;
     nome: string;
@@ -5,4 +9,7 @@ export default interface Usuarios {
     password: string;
     createdAt?: Date;
     updatedAt?: Date;
+    caixa?:      Caixa[];
+    entryInput?: EntryInput[];
+    outInput?:   OutInput[];
 }
