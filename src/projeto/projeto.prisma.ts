@@ -302,6 +302,7 @@ export class ProjetoPrisma {
         }));
   
         return {
+          id: grade.id,
           isPrint: grade.finalizada,
           company: grade.company.nome,
           projectname: grade.escola.projeto?.nome || "",

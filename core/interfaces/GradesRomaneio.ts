@@ -1,4 +1,5 @@
 export default interface GradesRomaneio {
+    id: number;
     isPrint: boolean;
     company: string;
     projectname: string;
