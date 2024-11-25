@@ -232,7 +232,7 @@ export class ProjetoPrisma {
             gte: startOfDay,
             lte: endOfDay,
           },
-          finalizada: false,
+          //finalizada: true || false,
         },
         include: {
           escola: {
