@@ -60,9 +60,9 @@ export class EscolaPrisma {
             include: {
                 projeto: true,
                 grades: {
-                    take: 50, // Limitar a 50 grades
+                    take: 6, // Limitar a 6 grades
                     orderBy: {
-                        createdAt: 'asc', // Ordenar por data de criação, mais recentes primeiro
+                        createdAt: 'desc', // Ordenar por data de criação, mais recentes primeiro
                     },
                     include: {
                         itensGrade: {
@@ -119,13 +119,43 @@ export class EscolaPrisma {
                                 },
                             },
                         },
-
                     },
                 },
             },
-        })
-        return escolaComGrades
-    }
+        });
+    
+        // Processar e ordenar os dados
+        escolaComGrades.grades.forEach((grade) => {
+            // Ordena os itensGrade
+            grade.itensGrade = grade.itensGrade.sort((a, b) => {
+                // Ordenar por item.nome e item.genero
+                if (a.itemTamanho.item.nome !== b.itemTamanho.item.nome) {
+                    return a.itemTamanho.item.nome.localeCompare(b.itemTamanho.item.nome);
+                }
+                if (a.itemTamanho.item.genero !== b.itemTamanho.item.genero) {
+                    return a.itemTamanho.item.genero.localeCompare(b.itemTamanho.item.genero);
+                }
+    
+                // Ordenar os tamanhos
+                const sortTamanho = (tamanho: string): number => {
+                    const numericRegex = /^\d+$/; // Verifica se é numérico
+                    const sizeOrder = ['PP', 'P', 'M', 'G', 'GG', 'EG', 'EGG', 'XGG', 'EXG']; // Ordem para tamanhos literais
+    
+                    if (numericRegex.test(tamanho)) {
+                        return parseInt(tamanho, 10); // Valores numéricos
+                    } else if (sizeOrder.includes(tamanho)) {
+                        return sizeOrder.indexOf(tamanho) + 1000; // Literais com peso fixo após numéricos
+                    } else {
+                        return tamanho.charCodeAt(0) + 2000; // Outros tamanhos
+                    }
+                };
+    
+                return sortTamanho(a.itemTamanho.tamanho.nome) - sortTamanho(b.itemTamanho.tamanho.nome);
+            });
+        });
+    
+        return escolaComGrades;
+    }    
 
     async excluir(id: number): Promise<void> {
         try {

@@ -276,6 +276,18 @@ export class ProjetoPrisma {
           tamanho: itemGrade.itemTamanho.tamanho.nome, // Nome do tamanho
           quantidade: itemGrade.quantidadeExpedida,   // Quantidade expedida
         }));
+
+        tamanhosEQuantidades.sort((a, b) => {
+          // Comparar 'item' primeiro
+          if (a.item < b.item) return -1;
+          if (a.item > b.item) return 1;
+      
+          // Se os 'items' forem iguais, comparar 'genero'
+          if (a.genero < b.genero) return -1;
+          if (a.genero > b.genero) return 1;
+      
+          return 0; // São iguais em ambos os critérios
+      });
   
         // Adicionando o array de caixas (com seus itens)
         const caixas = grade.gradeCaixas.map((caixa) => ({
