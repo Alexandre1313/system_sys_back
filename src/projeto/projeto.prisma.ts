@@ -305,6 +305,7 @@ export class ProjetoPrisma {
           id: grade.id,
           isPrint: grade.finalizada,
           company: grade.company.nome,
+          cnpjCompany: grade.company.cnpj,
           projectname: grade.escola.projeto?.nome || "",
           escola: grade.escola.nome,
           numeroEscola: grade.escola.numeroEscola || "",  // Número da escola

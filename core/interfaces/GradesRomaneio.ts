@@ -2,6 +2,7 @@ export default interface GradesRomaneio {
     id: number;
     isPrint: boolean;
     company: string;
+    cnpjCompany: string;
     projectname: string;
     escola: string;
     numeroEscola: string;
