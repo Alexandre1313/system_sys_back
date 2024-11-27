@@ -290,17 +290,7 @@ export class ProjetoPrisma {
       });
   
         // Adicionando o array de caixas (com seus itens)
-        const caixas = grade.gradeCaixas.map((caixa) => ({
-          caixaNumber: caixa.caixaNumber,  // Número da caixa
-          qtyCaixa: caixa.qtyCaixa,        // Quantidade na caixa
-          caixaItems: caixa.caixaItem.map((item) => ({
-            itemName: item.itemName,      // Nome do item na caixa
-            itemGenero: item.itemGenero,  // Gênero do item
-            itemTam: item.itemTam,        // Tamanho do item
-            itemQty: item.itemQty,        // Quantidade do item
-          })),
-        }));
-  
+        const caixas = grade.gradeCaixas;  
         return {
           id: grade.id,
           isPrint: grade.finalizada,

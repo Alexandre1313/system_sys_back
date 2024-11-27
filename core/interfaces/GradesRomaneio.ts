@@ -1,3 +1,5 @@
+import { Caixa } from "@prisma/client";
+
 export default interface GradesRomaneio {
     id: number;
     isPrint: boolean;
@@ -27,16 +29,7 @@ export default interface GradesRomaneio {
       tamanho: string;
       quantidade: number;
     }[];
-    caixas: {
-      caixaNumber: string;
-      qtyCaixa: number;
-      caixaItems: {
-        itemName: string;
-        itemGenero: string;
-        itemTam: string;
-        itemQty: number;
-      }[];
-    }[];
+    caixas: Caixa[];
     enderecocompany: {
       rua: string;
       numero: string;
