@@ -26,11 +26,11 @@ export default function utilities2(caminhoPlanilha: string = 'core/utils/distgra
       const linha = worksheet[i];
 
       // Extração dos dados fixos da linha (número da escola, nome da escola, etc.)
-      const numeroEscola = String(linha[2]).toUpperCase();
-      const escola = String(linha[1]).toUpperCase();
-      const projeto = String(linha[0]).toUpperCase();
-      const item = String(linha[3]).toUpperCase();
-      const genero = String(linha[4]).toUpperCase();
+      const numeroEscola = String(linha[2]).toUpperCase().trim();
+      const escola = String(linha[1]).toUpperCase().trim();
+      const projeto = String(linha[0]).toUpperCase().trim();
+      const item = String(linha[3]).toUpperCase().trim();
+      const genero = String(linha[4]).toUpperCase().trim();
 
       // Cria um array para armazenar os tamanhos e quantidades
       const tamanhos: TamanhoQuantidade[] = [];
@@ -43,7 +43,7 @@ export default function utilities2(caminhoPlanilha: string = 'core/utils/distgra
           // Verifica se a quantidade é um número válido, ou seja, maior que 0
           if (quantidade !== undefined && quantidade !== null && !isNaN(quantidade) && quantidade > 0) {
               tamanhos.push({
-                  tamanho: String(tamanho).toUpperCase(),
+                  tamanho: String(tamanho).toUpperCase().trim(),
                   quantidade: Number(quantidade)
               });
           }

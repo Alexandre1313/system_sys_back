@@ -150,11 +150,12 @@ async function seed2() {
         }
 
         const dados = utilities2();
-        const confirmation = await askQuestion('Você deseja iniciar a inserção de dados no BD? (Y/N) ');
+        const confirmation = await askQuestion('Você deseja iniciar a inserção de grades poli no BD? (Y/N) ');
 
         if (confirmation !== 'Y') {
+            console.clear();
             console.log('Inserção abortada pelo usuário.');
-            return;
+            return; // Sai da função se o usuário não quiser continuar
         }
 
         await inserirDadosNoBanco(dados);

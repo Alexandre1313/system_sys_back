@@ -21,11 +21,11 @@ export default function utilities(caminhoPlanilha: string = 'core/utils/distribu
   // Percorrer cada linha da planilha, começando pela segunda (índice 1)
   for (let i = 1; i < worksheet.length; i++) {
       const linha = worksheet[i];
-      const numeroEscola = String(linha[0]).toUpperCase();
-      const escola = String(linha[1]).toUpperCase();
-      const projeto = String(linha[2]).toUpperCase();
-      const item = String(linha[3]).toUpperCase();
-      const genero = String(linha[4]).toUpperCase();
+      const numeroEscola = String(linha[0]).toUpperCase().trim();
+      const escola = String(linha[1]).toUpperCase().trim();
+      const projeto = String(linha[2]).toUpperCase().trim();
+      const item = String(linha[3]).toUpperCase().trim();
+      const genero = String(linha[4]).toUpperCase().trim();
 
       const tamanhos: TamanhoQuantidade[] = [];
 
@@ -37,7 +37,7 @@ export default function utilities(caminhoPlanilha: string = 'core/utils/distribu
           // Verificar se a quantidade é um número válido, ou seja, maior que 0
           if (quantidade !== undefined && quantidade !== null && !isNaN(quantidade) && quantidade > 0) {
               tamanhos.push({
-                  tamanho: String(tamanho).toUpperCase(),
+                  tamanho: String(tamanho).toUpperCase().trim(),
                   quantidade: Number(quantidade)
               });
           }

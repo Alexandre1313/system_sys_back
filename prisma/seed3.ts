@@ -1,12 +1,12 @@
 import { Genero, PrismaClient } from '@prisma/client';
-import utilities from '../core/utils/utilities';
-import { DataInserction } from '@core/interfaces';
+import { ItemsInserction } from '@core/interfaces';
 import * as readline from 'readline';
+import insertItems from '../core/utils/insertItems';
 
 const prisma = new PrismaClient();
 
 // Função para perguntar ao usuário
-const askQuestion = (question) => {
+const askQuestion = (question: string) => {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -18,9 +18,9 @@ const askQuestion = (question) => {
     }));
 };
 
-async function seed() {
+async function seed3() {
     try {
-        async function inserirDadosNoBanco(dados: DataInserction[]) {
+        async function inserirDadosNoBanco(dados: ItemsInserction[]) {
             let barcodeCounter = 0; // Contador para gerar barcodes (de 000 a 999)
 
             // Recupera o último barcode do banco de dados, se houver
@@ -32,10 +32,11 @@ async function seed() {
                 barcodeCounter = parseInt(lastBarcode.codigo, 10) + 1; // Continua a contagem a partir do último barcode
             }
 
-            console.log('Iniciando a inserção de dados...'); // Mensagem de confirmação no início da inserção
+            console.log('Iniciando a inserção de dados...');
 
+            // Itera sobre cada dado da planilha
             for (const dado of dados) {
-                console.log('Inserindo dados:', dado); // Exibe os dados que estão sendo inseridos
+                console.log('Inserindo dados:', dado);
 
                 // 1. Criar ou conectar ao Projeto
                 const projeto = await prisma.projeto.upsert({
@@ -45,16 +46,7 @@ async function seed() {
                 });
                 console.log('Projeto inserido/atualizado:', projeto);
 
-                const escola = await prisma.escola.upsert({
-                    where: {
-                        projetoId_nome: { projetoId: projeto.id, nome: dado.escola },
-                    },
-                    update: {},
-                    create: { numeroEscola: dado.numeroEscola, nome: dado.escola, projetoId: projeto.id },
-                });
-                console.log('Escola inserida/atualizada:', escola);
-
-                // 3. Criar ou conectar ao Item (com gênero)
+                // 2. Criar ou conectar ao Item (com gênero)
                 const item = await prisma.item.upsert({
                     where: {
                         nome_projetoId_genero: {
@@ -72,37 +64,28 @@ async function seed() {
                 });
                 console.log('Item inserido/atualizado:', item);
 
-                const grade = await prisma.grade.create({
-                    data: {
-                        escolaId: escola.id,
-                        finalizada: false,
-                        companyId: 2,
-                    },
-                });
-                console.log('Grade criada:', grade);
+                // 3. Para cada Tamanho
+                for (const tamanho of dado.tamanhos) {
+                    console.log('Inserindo tamanho:', tamanho); // Log para cada tamanho
 
-                // 4. Para cada par Tamanho/Quantidade na planilha
-                for (const tamanhoQtd of dado.tamanhos) {
-                    console.log('Inserindo tamanho e quantidade:', tamanhoQtd); // Log para cada tamanho e quantidade
-
-                    // 4.1. Criar ou conectar ao Tamanho
-                    const tamanho = await prisma.tamanho.upsert({
-                        where: { nome: String(tamanhoQtd.tamanho) },
+                    // 3.1. Criar ou conectar ao Tamanho
+                    const tamanhoObj = await prisma.tamanho.upsert({
+                        where: { nome: String(tamanho) },
                         update: {},
-                        create: { nome: String(tamanhoQtd.tamanho) },
+                        create: { nome: String(tamanho) },
                     });
-                    console.log('Tamanho inserido/atualizado:', tamanho);
+                    console.log('Tamanho inserido/atualizado:', tamanhoObj);
 
-                    // 4.2. Verificar se o ItemTamanho já existe
+                    // 3.2. Verificar se o ItemTamanho já existe
                     let itemTamanho = await prisma.itemTamanho.findUnique({
-                        where: { itemId_tamanhoId: { itemId: item.id, tamanhoId: tamanho.id } },
+                        where: { itemId_tamanhoId: { itemId: item.id, tamanhoId: tamanhoObj.id } },
                     });
 
                     if (!itemTamanho) {
-                        // 4.3. Criar o ItemTamanho (se não existir)
+                        // 3.3. Criar o ItemTamanho (se não existir)
                         itemTamanho = await prisma.itemTamanho.create({
                             data: {
-                                tamanhoId: tamanho.id,
+                                tamanhoId: tamanhoObj.id,
                                 itemId: item.id,
                             },
                         });
@@ -119,7 +102,7 @@ async function seed() {
                         });
                         console.log('Barcode criado:', barcode);
 
-                        // 4.5. Criar um registro de Estoque com quantidade 0
+                        // 3.4. Criar um registro de Estoque com quantidade 0
                         await prisma.estoque.create({
                             data: {
                                 itemTamanhoId: itemTamanho.id,
@@ -128,29 +111,20 @@ async function seed() {
                         });
                     }
 
-                    // 4.6. Sempre criar Grade e GradeItem, mesmo se o ItemTamanho já existir
-                    await prisma.gradeItem.create({
-                        data: {
-                            gradeId: grade.id,
-                            itemTamanhoId: itemTamanho.id,
-                            quantidade: tamanhoQtd.quantidade,
-                            quantidadeExpedida: 0
-                        },
-                    });
-                    console.log('GradeItem criada:', {
-                        gradeId: grade.id,
-                        itemTamanhoId: itemTamanho.id,
-                        quantidade: tamanhoQtd.quantidade,
-                    });
+                    console.log('Inserção de estoque e barcode concluída para o item e tamanho:', itemTamanho);
                 }
-                console.clear(); // Limpa o console após criar o objeto
+
+                console.clear(); // Limpa o console após processar os dados
             }
-            console.log('Inserção de dados concluída!'); // Mensagem final após concluir a inserção
+
+            console.log('Inserção de dados concluída!');
         }
 
-        const dados = utilities();
+        // Obter dados da planilha
+        const dados = insertItems();
 
-        const confirmation = await askQuestion('Você deseja iniciar a inserção de grades unicas no BD? (Y/N) ');
+        // Perguntar ao usuário se deseja continuar
+        const confirmation = await askQuestion('Você deseja iniciar a inserção de itens no BD? (Y/N) ');
 
         if (confirmation !== 'Y') {
             console.clear();
@@ -158,9 +132,9 @@ async function seed() {
             return; // Sai da função se o usuário não quiser continuar
         }
 
-        console.clear(); // Limpa o console após processar a planilha
+        console.clear(); // Limpa o console após a confirmação do usuário
 
-        // Chama a função para inserir dados no banco
+        // Chama a função para inserir os dados no banco
         await inserirDadosNoBanco(dados);
 
     } catch (error) {
@@ -170,4 +144,4 @@ async function seed() {
     }
 }
 
-seed();
+seed3();
