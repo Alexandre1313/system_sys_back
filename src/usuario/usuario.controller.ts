@@ -1,10 +1,20 @@
 import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { UsuarioPrisma } from './usuario.prisma';
-import { Usuarios } from '@core/index';
+import { Login, Usuarios } from '@core/index';
 
 @Controller('usuarios')
 export class UsuarioController {
   constructor(private readonly repo: UsuarioPrisma) {}
+
+   // Login
+   @Post('/login')   
+   async obterPorEmail(@Body() credentials: Login): Promise<Usuarios | null> {
+     try {
+       return await this.repo.searchCredentials(credentials);
+     } catch (error) {
+       throw new BadRequestException('Erro ao buscar credenciais: ' + error.message);
+     }
+   }
 
   // Salvar ou criar um usuário
   @Post()

@@ -27,6 +27,7 @@ import TelephonesCompany from "./TelephonesCompany";
 import Company from "./Company";
 import GradesRomaneio from "./GradesRomaneio";
 import ItemsInserction from "./ItemsInserction";
+import Login from "./Login";
 
 export type { 
     Escola,
@@ -57,5 +58,6 @@ export type {
     Company,
     TelephonesCompany,
     GradesRomaneio,
-    ItemsInserction
+    ItemsInserction,
+    Login,
 }

@@ -1,10 +1,18 @@
-import { Usuarios } from '@core/index';
+import { Login, Usuarios } from '@core/index';
 import { Injectable } from '@nestjs/common';
 import { PrismaProvider } from 'src/db/prisma.provider';
 
 @Injectable()
 export class UsuarioPrisma {
   constructor(readonly prisma: PrismaProvider) { }
+
+  async searchCredentials(credentials: Login): Promise<Usuarios | null> {
+    const { email } = credentials;
+    const credenciais = await this.prisma.usuarios.findUnique({
+      where:{ email }
+    });
+    return credenciais || null;
+  }
 
   async salvar(usuario: Usuarios): Promise<Usuarios> {
     const { id, entryInput, caixa, outInput, ...dadosDoUsuario } = usuario;
