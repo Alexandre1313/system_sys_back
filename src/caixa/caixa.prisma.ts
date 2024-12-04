@@ -7,7 +7,7 @@ export class CaixaPrisma {
   constructor(private readonly prisma: PrismaProvider) { }
 
   async inserirCaixaEItens(caixaData: Caixa): Promise<Caixa> {
-    const { caixaItem, itensGrade, ...dadosDaCaixa } = caixaData;
+    const { caixaItem, itensGrade, userId, ...dadosDaCaixa } = caixaData;
 
     try {
       // Usa uma transação Prisma para garantir atomicidade
@@ -21,7 +21,7 @@ export class CaixaPrisma {
             projeto: dadosDaCaixa.projeto,
             escolaCaixa: dadosDaCaixa.escolaCaixa,
             caixaNumber: dadosDaCaixa.caixaNumber,
-
+            userId: userId,
           },
         });
 
@@ -75,6 +75,7 @@ export class CaixaPrisma {
                   itemTamanhoId: itemTamanhoId,
                   estoqueId: estoqueAtual.id,
                   quantidade: itemQty,
+                  userId: userId,
                 },
               });
             }
