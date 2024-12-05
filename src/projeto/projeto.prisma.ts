@@ -93,13 +93,14 @@ export class ProjetoPrisma {
           nome: true,
           itens: {
             select: {
-              genero: true, // Seleciona o campo de gênero
+              genero: true, // Seleciona o campo de gênero             
               tamanhos: {
                 select: {
                   id: true, // ID da relação ItemTamanho
                   item: {
                     select: {
                       nome: true, // Nome do item
+                      composicao: true,
                     },
                   },
                   tamanho: {
@@ -136,6 +137,7 @@ export class ProjetoPrisma {
             id: tamanho.id,  // ID da relação ItemTamanho
             nome: tamanho.item.nome,
             genero: item.genero, // Inclui o gênero na transformação
+            composicao: tamanho.item.composicao,
             tamanho: tamanho.tamanho.nome,
             estoqueId: tamanho.estoque.id,
             estoque: tamanho.estoque.quantidade,
