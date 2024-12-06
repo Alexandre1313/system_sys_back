@@ -81,9 +81,8 @@ export class EntryInputPrisma {
         };
     }
 
-    async inserirQtyNoEstoque(stock: StockGenerate): Promise<EntryInput | null> {
-        console.log(stock)
-        const { embalagemId, itemTamanhoId, estoqueId, quantidade } = stock;
+    async inserirQtyNoEstoque(stock: StockGenerate): Promise<EntryInput | null> {        
+        const { embalagemId, itemTamanhoId, estoqueId, userId, quantidade } = stock;
 
         try {
             // Usa uma transação Prisma para garantir atomicidade
@@ -114,6 +113,7 @@ export class EntryInputPrisma {
                         itemTamanhoId,
                         estoqueId,
                         quantidade,
+                        userId,
                     },
                 });
 
