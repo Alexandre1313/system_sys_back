@@ -1,7 +1,7 @@
-import { GradesRomaneio, ProjectItems, Projeto, ProjetosSimp } from '@core/index';
+import { GradesRomaneio, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
 import { Injectable } from '@nestjs/common';
-import { PrismaProvider } from 'src/db/prisma.provider';
 import { Prisma } from '@prisma/client';
+import { PrismaProvider } from 'src/db/prisma.provider';
 
 @Injectable()
 export class ProjetoPrisma {
@@ -346,5 +346,104 @@ export class ProjetoPrisma {
       return [];
     }
   }
+
+// Função para buscar os itens e somar as entradas e saídas
+async getProjetoItensComEntradasSaidas(projetoId: number): Promise<ProjetoStockItems | null> {
+  try {
+    // Função para ordenar tamanhos
+    const ordenarTamanhos = (tamanhos: string[]) => {
+      const numTamanhos = tamanhos.filter(tamanho => /^[0-9]+$/.test(tamanho)); // Filtra tamanhos numéricos
+      const letraTamanhos = tamanhos.filter(tamanho => !/^[0-9]+$/.test(tamanho)); // Filtra tamanhos com letras
+
+      numTamanhos.sort((a, b) => parseInt(a) - parseInt(b)); // Ordena tamanhos numéricos
+      letraTamanhos.sort((a, b) => {
+        const ordem = ['P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
+        return ordem.indexOf(a) - ordem.indexOf(b);
+      });
+
+      return [...numTamanhos, ...letraTamanhos];
+    };
+
+    // Buscando o projeto
+    const projeto = await this.prisma.projeto.findUnique({
+      where: { id: projetoId },
+      include: {
+        itens: {
+          include: {
+            tamanhos: {
+              include: {
+                tamanho: true,
+                entryInput: {
+                  select: {
+                    quantidade: true,
+                  },
+                },
+                outInput: {
+                  select: {
+                    quantidade: true,
+                  },
+                },
+                estoque: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Se o projeto não for encontrado, retorna null
+    if (!projeto) {
+      return null;
+    }
+
+    // Mapeando os itens e tamanhos
+    const itensComEntradasSaidas = projeto.itens.map((item) => {
+      const tamanhosComSomas = item.tamanhos.map((itemTamanho) => {
+        // Soma das entradas e saídas
+        const somaEntradas = itemTamanho.entryInput.reduce((total, entry) => total + entry.quantidade, 0);
+        const somaSaidas = itemTamanho.outInput.reduce((total, out) => total + out.quantidade, 0);
+
+        // Estoque
+        const estoque = itemTamanho.estoque ? itemTamanho.estoque.quantidade : 0;
+
+        return {
+          tamanho: itemTamanho.tamanho.nome,
+          estoque,
+          entradas: somaEntradas,
+          saidas: somaSaidas,
+        };
+      });
+
+      // Ordenando tamanhos por critérios específicos
+      const tamanhosOrdenados = ordenarTamanhos(
+        item.tamanhos.map((itemTamanho) => itemTamanho.tamanho.nome)
+      );
+
+      return {
+        nome: item.nome,
+        genero: item.genero,
+        tamanhos: tamanhosOrdenados.map(tamanho => {
+          const tamanhoData = tamanhosComSomas.find(t => t.tamanho === tamanho);
+          return tamanhoData ? tamanhoData : {
+            tamanho,
+            entradas: 0,
+            saidas: 0,
+            estoque: 0,
+          };
+        }),
+      };
+    });
+
+    return {
+      projetoId: projeto.id,
+      nome: projeto.nome,
+      itens: itensComEntradasSaidas,
+    };
+  } catch (error) {
+    // Captura e exibe o erro
+    console.error('Erro ao buscar projeto e itens:', error);
+    return null;
+  }
+}
 
 }
