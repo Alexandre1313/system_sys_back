@@ -7,8 +7,7 @@ export class CaixaPrisma {
   constructor(private readonly prisma: PrismaProvider) { }
 
   async inserirCaixaEItens(caixaData: Caixa): Promise<Caixa> {
-    const { caixaItem, itensGrade, userId, ...dadosDaCaixa } = caixaData;
-
+    const { caixaItem, itensGrade, userId, ...dadosDaCaixa } = caixaData;    
     try {
       // Usa uma transação Prisma para garantir atomicidade
       const result = await this.prisma.$transaction(async (prisma) => {
@@ -91,7 +90,7 @@ export class CaixaPrisma {
       },
         {
           maxWait: 5000, // default: 2000
-          timeout: 10000, // default: 5000     
+          timeout: 20000, // default: 5000     
         }
       );
       return result;
