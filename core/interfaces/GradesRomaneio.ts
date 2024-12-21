@@ -27,6 +27,7 @@ export default interface GradesRomaneio {
       item: string;
       genero: string;
       tamanho: string;
+      composicao: string;
       quantidade: number;
     }[];
     caixas: Caixa[];

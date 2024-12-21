@@ -261,7 +261,7 @@ export class ProjetoPrisma {
               itemTamanho: {
                 include: {
                   item: true,
-                  tamanho: true,
+                  tamanho: true,                  
                 },
               },
             },
@@ -274,6 +274,7 @@ export class ProjetoPrisma {
         // Inclui nome do item em tamanhosEQuantidades
         const tamanhosEQuantidades = grade.itensGrade.map((itemGrade) => ({
           item: itemGrade.itemTamanho.item.nome, // Nome do item específico
+          composicao: itemGrade.itemTamanho.item.composicao,
           genero: itemGrade.itemTamanho.item.genero,
           tamanho: itemGrade.itemTamanho.tamanho.nome, // Nome do tamanho
           quantidade: itemGrade.quantidadeExpedida,   // Quantidade expedida
