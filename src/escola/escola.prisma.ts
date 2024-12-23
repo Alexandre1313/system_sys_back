@@ -91,30 +91,106 @@ export class EscolaPrisma {
     async getGradesWithItemsAndStock(id: number) {
         const escolaComGrades = await this.prisma.escola.findUnique({
             where: { id },
-            include: {
-                projeto: true,
+            select: {
+                id: true,
+                numeroEscola: true,
+                nome: true,
+                projetoId: true,
+                projeto: {
+                    select: {
+                        id: true,
+                        nome: true,
+                        descricao: true,
+                        url: true,
+                    },
+                },
                 grades: {
-                    include: {
+                    select: {
+                        id: true,
+                        tipo: true,
+                        finalizada: true,
+                        companyId: true,
+                        escolaId: true,
+                        company: {
+                            select: {
+                                id: true,
+                                nome: true,
+                                email: true,
+                                cnpj: true,
+                            },
+                        },
                         gradeCaixas: {
-                            include: {
-                                caixaItem: true,
-                            }
+                            select: {
+                                id: true,
+                                gradeId: true,
+                                escolaCaixa: true,
+                                escolaNumber: true,
+                                projeto: true,
+                                qtyCaixa: true,
+                                caixaNumber: true,
+                                userId: true,
+                                caixaItem: {
+                                    select: {
+                                        id: true,
+                                        itemName: true,
+                                        itemGenero: true,
+                                        itemTam: true,
+                                        itemQty: true,
+                                        caixaId: true,
+                                        itemTamanhoId: true,
+                                    },
+                                },
+                            },
                         },
                         itensGrade: {
-                            include: {
+                            select: {
+                                id: true,
+                                quantidade: true,
+                                quantidadeExpedida: true,
+                                qtyPCaixa: true,
+                                isCount: true,
+                                itemTamanhoId: true,
                                 itemTamanho: {
-                                    include: {
-                                        item: true, // Inclui os detalhes do item
-                                        tamanho: true, // Inclui os detalhes do tamanho                         
-                                        estoque: true, // Inclui o estoque associado a este item/tamanho
-                                        barcode: true
+                                    select: {
+                                        id: true,
+                                        itemId: true,
+                                        tamanhoId: true,
+                                        barcode: {
+                                            select: {
+                                                id: true,
+                                                codigo: true,
+                                                itemTamanhoId: true,
+                                            },
+                                        },
+                                        estoque: {
+                                            select: {
+                                                id: true,
+                                                quantidade: true,
+                                                itemTamanhoId: true,
+                                            },
+                                        },
+                                        item: {
+                                            select: {
+                                                id: true,
+                                                nome: true,
+                                                genero: true,
+                                                composicao: true,
+                                                projetoId: true,
+                                            },
+                                        },
+                                        tamanho: {
+                                            select: {
+                                                id: true,
+                                                nome: true,
+                                            },
+                                        },
                                     },
                                 },
                             },
                             orderBy: {
-                                itemTamanho: { // Primeiro ordena os itens pelo nome
+                                itemTamanho: {
                                     item: {
-                                        nome: 'asc', // Ordena os itens pelo nome
+                                        nome: 'asc',
                                     },
                                 },
                             },
@@ -123,7 +199,7 @@ export class EscolaPrisma {
                 },
             },
         });
-    
+
         // Processar e ordenar os dados
         escolaComGrades.grades.forEach((grade) => {
             // Ordena os itensGrade
@@ -135,12 +211,12 @@ export class EscolaPrisma {
                 if (a.itemTamanho.item.genero !== b.itemTamanho.item.genero) {
                     return a.itemTamanho.item.genero.localeCompare(b.itemTamanho.item.genero);
                 }
-    
+
                 // Ordenar os tamanhos
                 const sortTamanho = (tamanho: string): number => {
                     const numericRegex = /^\d+$/; // Verifica se é numérico
                     const sizeOrder = ['PP', 'P', 'M', 'G', 'GG', 'EG', 'EGG', 'XGG', 'EXG']; // Ordem para tamanhos literais
-    
+
                     if (numericRegex.test(tamanho)) {
                         return parseInt(tamanho, 10); // Valores numéricos
                     } else if (sizeOrder.includes(tamanho)) {
@@ -149,13 +225,13 @@ export class EscolaPrisma {
                         return tamanho.charCodeAt(0) + 2000; // Outros tamanhos
                     }
                 };
-    
+
                 return sortTamanho(a.itemTamanho.tamanho.nome) - sortTamanho(b.itemTamanho.tamanho.nome);
             });
         });
-    
+
         return escolaComGrades;
-    }    
+    }
 
     async excluir(id: number): Promise<void> {
         try {
