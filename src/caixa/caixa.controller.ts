@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
-import { CaixaPrisma } from './Caixa.prisma';
 import { Caixa } from '@core/index';
+import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { CaixaPrisma } from './Caixa.prisma';
 
 @Controller('caixas')
 export class CaixaController {
