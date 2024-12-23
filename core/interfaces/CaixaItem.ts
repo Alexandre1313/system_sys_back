@@ -1,11 +1,11 @@
 export default interface CaixaItem {
     id?: number;
-    caixaId: number; // Código de barras único
-    itemName: string; // Relacionamento com ItemTamanho
+    caixaId: number; 
+    itemName: string; 
     itemGenero: string;
     itemTam: string;
     itemQty: number;
     itemTamanhoId: number;
     createdAt?: Date;
-    updatedAt?: Date;   
+    updatedAt?: Date;
 }

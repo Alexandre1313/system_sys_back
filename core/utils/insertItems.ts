@@ -21,7 +21,7 @@ export default function insertItems(caminhoPlanilha: string = 'core/utils/cadast
   // Percorrer cada linha da planilha, começando pela segunda (índice 1)
   for (let i = 1; i < worksheet.length; i++) {
     const linha = worksheet[i];
-    
+
     // Extrair dados gerais e garantir que estão em maiúsculas
     const projeto = String(linha[0]).toUpperCase().trim();
     const item = String(linha[1]).toUpperCase().trim();

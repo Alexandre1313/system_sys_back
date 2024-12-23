@@ -15,7 +15,7 @@ export default function utilities2(caminhoPlanilha: string = 'core/utils/distgra
 
   // Se a planilha estiver vazia, retorna um array vazio
   if (worksheet.length === 0) {
-      return dadosProcessados;
+    return dadosProcessados;
   }
 
   // A primeira linha (cabeçalho) contém os tamanhos
@@ -23,76 +23,76 @@ export default function utilities2(caminhoPlanilha: string = 'core/utils/distgra
 
   // Percorre as linhas da planilha, começando pela segunda linha (índice 1)
   for (let i = 1; i < worksheet.length; i++) {
-      const linha = worksheet[i];
+    const linha = worksheet[i];
 
-      // Extração dos dados fixos da linha (número da escola, nome da escola, etc.)
-      const numeroEscola = String(linha[2]).toUpperCase().trim();
-      const escola = String(linha[1]).toUpperCase().trim();
-      const projeto = String(linha[0]).toUpperCase().trim();
-      const item = String(linha[3]).toUpperCase().trim();
-      const genero = String(linha[4]).toUpperCase().trim();
+    // Extração dos dados fixos da linha (número da escola, nome da escola, etc.)
+    const numeroEscola = String(linha[2]).toUpperCase().trim();
+    const escola = String(linha[1]).toUpperCase().trim();
+    const projeto = String(linha[0]).toUpperCase().trim();
+    const item = String(linha[3]).toUpperCase().trim();
+    const genero = String(linha[4]).toUpperCase().trim();
 
-      // Cria um array para armazenar os tamanhos e quantidades
-      const tamanhos: TamanhoQuantidade[] = [];
+    // Cria um array para armazenar os tamanhos e quantidades
+    const tamanhos: TamanhoQuantidade[] = [];
 
-      // Percorre as colunas de tamanhos (a partir da 5ª coluna)
-      for (let j = 5; j < linha.length; j++) {
-          const quantidade = linha[j];
-          const tamanho = headerRow[j]; // O valor do cabeçalho é o tamanho (ex: 2, 4, P, M, etc)
+    // Percorre as colunas de tamanhos (a partir da 5ª coluna)
+    for (let j = 5; j < linha.length; j++) {
+      const quantidade = linha[j];
+      const tamanho = headerRow[j]; // O valor do cabeçalho é o tamanho (ex: 2, 4, P, M, etc)
 
-          // Verifica se a quantidade é um número válido, ou seja, maior que 0
-          if (quantidade !== undefined && quantidade !== null && !isNaN(quantidade) && quantidade > 0) {
-              tamanhos.push({
-                  tamanho: String(tamanho).toUpperCase().trim(),
-                  quantidade: Number(quantidade)
-              });
-          }
+      // Verifica se a quantidade é um número válido, ou seja, maior que 0
+      if (quantidade !== undefined && quantidade !== null && !isNaN(quantidade) && quantidade > 0) {
+        tamanhos.push({
+          tamanho: String(tamanho).toUpperCase().trim(),
+          quantidade: Number(quantidade)
+        });
+      }
+    }
+
+    // Só adiciona o registro se houver tamanhos válidos
+    if (tamanhos.length > 0) {
+      // Verifica se o projeto já existe na lista de dadosProcessados
+      let projetoExistente = dadosProcessados.find(p => p.projeto === projeto);
+
+      if (!projetoExistente) {
+        // Se o projeto não existe, cria um novo
+        projetoExistente = {
+          projeto: projeto,
+          escolas: []
+        };
+        dadosProcessados.push(projetoExistente);
       }
 
-      // Só adiciona o registro se houver tamanhos válidos
-      if (tamanhos.length > 0) {
-          // Verifica se o projeto já existe na lista de dadosProcessados
-          let projetoExistente = dadosProcessados.find(p => p.projeto === projeto);
+      // Verifica se a escola já existe dentro do projeto
+      let escolaExistente = projetoExistente.escolas.find(e => e.numeroEscola === numeroEscola);
 
-          if (!projetoExistente) {
-              // Se o projeto não existe, cria um novo
-              projetoExistente = {
-                  projeto: projeto,
-                  escolas: []
-              };
-              dadosProcessados.push(projetoExistente);
-          }
-
-          // Verifica se a escola já existe dentro do projeto
-          let escolaExistente = projetoExistente.escolas.find(e => e.numeroEscola === numeroEscola);
-
-          if (!escolaExistente) {
-              // Se a escola não existe, cria uma nova
-              escolaExistente = {
-                  nome: escola,
-                  numeroEscola: numeroEscola,
-                  itens: []
-              };
-              projetoExistente.escolas.push(escolaExistente);
-          }
-
-          // Agora, para cada item, cria um objeto com tamanhos específicos
-          // Cria ou atualiza o item dentro da escola
-          let itemExistente = escolaExistente.itens.find(i => i.nome === item && i.genero === genero);
-
-          if (!itemExistente) {
-              // Se o item não existe, cria um novo
-              itemExistente = {
-                  nome: item,
-                  genero: genero,
-                  tamanhos: []
-              };
-              escolaExistente.itens.push(itemExistente);
-          }
-
-          // Adiciona os tamanhos e quantidades ao item
-          itemExistente.tamanhos.push(...tamanhos);
+      if (!escolaExistente) {
+        // Se a escola não existe, cria uma nova
+        escolaExistente = {
+          nome: escola,
+          numeroEscola: numeroEscola,
+          itens: []
+        };
+        projetoExistente.escolas.push(escolaExistente);
       }
+
+      // Agora, para cada item, cria um objeto com tamanhos específicos
+      // Cria ou atualiza o item dentro da escola
+      let itemExistente = escolaExistente.itens.find(i => i.nome === item && i.genero === genero);
+
+      if (!itemExistente) {
+        // Se o item não existe, cria um novo
+        itemExistente = {
+          nome: item,
+          genero: genero,
+          tamanhos: []
+        };
+        escolaExistente.itens.push(itemExistente);
+      }
+
+      // Adiciona os tamanhos e quantidades ao item
+      itemExistente.tamanhos.push(...tamanhos);
+    }
   }
 
   // Agora criamos a estrutura de saída no formato desejado, com o projeto, escolas, e itens

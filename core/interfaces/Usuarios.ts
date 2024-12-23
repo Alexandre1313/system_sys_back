@@ -9,7 +9,7 @@ export default interface Usuarios {
     password: string;
     createdAt?: Date;
     updatedAt?: Date;
-    caixa?:      Caixa[];
+    caixa?: Caixa[];
     entryInput?: EntryInput[];
-    outInput?:   OutInput[];
+    outInput?: OutInput[];
 }

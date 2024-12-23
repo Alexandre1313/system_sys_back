@@ -6,5 +6,5 @@ export default interface ItensProjects {
     genero: string,
     estoque: number,
     estoqueId: number,
-    barcode: string,   
+    barcode: string,
 }

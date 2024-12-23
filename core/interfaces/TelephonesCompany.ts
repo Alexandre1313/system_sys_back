@@ -1,7 +1,7 @@
 export default interface TelephonesCompany {
-    id?: number;   
-    telefone:  string;
+    id?: number;
+    telefone: string;
     createdAt?: Date;
     updatedAt?: Date;
-    companyId: number;   
+    companyId: number;
 }

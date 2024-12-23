@@ -6,5 +6,5 @@ export default interface DataInserction {
     projeto: string;
     item: string;
     genero: string;
-    tamanhos: TamanhoQuantidade[]; 
+    tamanhos: TamanhoQuantidade[];
 }

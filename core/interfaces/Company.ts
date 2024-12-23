@@ -8,8 +8,8 @@ export default interface Company {
     email: string;
     cnpj?: string;
     createdAt?: Date;
-    updatedAt?: Date;  
-    address?:   AddressCompany[];
-    telefone?:  TelephonesCompany[];
-    Grade?:     Grade[];  
+    updatedAt?: Date;
+    address?: AddressCompany[];
+    telefone?: TelephonesCompany[];
+    Grade?: Grade[];
 }

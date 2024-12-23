@@ -1,4 +1,4 @@
-export default interface ProjetosSimp{
+export default interface ProjetosSimp {
     id: number;
     nome: string;
 }

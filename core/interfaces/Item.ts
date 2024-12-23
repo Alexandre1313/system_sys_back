@@ -5,11 +5,11 @@ import Projeto from "./Projeto";
 export default interface Item {
     id?: number;
     nome: string;
-    genero: Genero; // Masculino, Feminino ou Unissex
-    projetoId: number; // Relacionamento com o Projeto
-    projeto?: Projeto; // Relacionamento opcional com o Projeto
+    genero: Genero;
+    projetoId: number;
+    projeto?: Projeto;
     composicao?: string;
-    tamanhos?: ItemTamanho[]; // Relacionamento com tamanhos específicos
+    tamanhos?: ItemTamanho[];
     url: string
     createdAt?: Date;
     updatedAt?: Date;
