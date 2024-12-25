@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ProjetoPrisma } from './projeto.prisma';
-import { ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
+import { GradeOpenBySchool, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
 
 @Controller('projetos')
 export class ProjetoController {
@@ -62,6 +62,15 @@ export class ProjetoController {
     }
     return projetoItems;
   }
+
+  @Get('statusgrades/:id')
+  async getItemsGradesStatus(@Param('id') id: string): Promise<GradeOpenBySchool[]> {
+    const projetoItems = await this.repo.getOpenGradesBySchool(+id);
+    if (!projetoItems) {
+      throw new NotFoundException(`Não foram encontrados itens para os projetos.`);
+    }
+    return projetoItems;
+  }  
 
   @Get('saldos/:id')
   async getItemsEntyInputStock(@Param('id') id: string): Promise<ProjetoStockItems | null> {

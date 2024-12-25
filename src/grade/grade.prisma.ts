@@ -48,7 +48,7 @@ export class GradePrisma {
   async obterPorId(id: number): Promise<Grade | null> {
     const grade = await this.prisma.grade.findUnique({ where: { id } });
     return (grade as Grade) ?? null;
-  }
+  }  
 
   async excluir(id: number): Promise<void> {
     try {

@@ -1,4 +1,4 @@
-import { GradesRomaneio, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
+import { GradeOpenBySchool, GradesRomaneio, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaProvider } from 'src/db/prisma.provider';
@@ -215,15 +215,15 @@ export class ProjetoPrisma {
       console.error("Projeto ID ou data inválidos.");
       return [];
     }
-  
+
     try {
       // Converte a string para um objeto Date
       const startOfDay = new Date(dateStr);
       startOfDay.setUTCHours(0, 0, 0, 0);
-  
+
       const endOfDay = new Date(dateStr);
       endOfDay.setUTCHours(23, 59, 59, 999);
-  
+
       // Busca as grades
       const grades = await this.prisma.grade.findMany({
         where: {
@@ -261,14 +261,14 @@ export class ProjetoPrisma {
               itemTamanho: {
                 include: {
                   item: true,
-                  tamanho: true,                  
+                  tamanho: true,
                 },
               },
             },
           },
         },
       });
-  
+
       // Formatação das grades
       const formattedGrades: GradesRomaneio[] = grades.map((grade) => {
         // Inclui nome do item em tamanhosEQuantidades
@@ -284,16 +284,16 @@ export class ProjetoPrisma {
           // Comparar 'item' primeiro
           if (a.item < b.item) return -1;
           if (a.item > b.item) return 1;
-      
+
           // Se os 'items' forem iguais, comparar 'genero'
           if (a.genero < b.genero) return -1;
           if (a.genero > b.genero) return 1;
-      
+
           return 0; // São iguais em ambos os critérios
-      });
-  
+        });
+
         // Adicionando o array de caixas (com seus itens)
-        const caixas = grade.gradeCaixas;  
+        const caixas = grade.gradeCaixas;
         return {
           id: grade.id,
           isPrint: grade.finalizada,
@@ -306,7 +306,7 @@ export class ProjetoPrisma {
           telefoneCompany: grade.company.telefone?.map(tel => tel.telefone).join(', ') || "",  // Telefones da empresa
           emailCompany: grade.company.email || "",   // E-mail da empresa (agora no modelo Company)
           telefoneEscola: grade.escola.telefone?.map(tel => tel.telefone).join(', ') || "", // Telefones da escola
-          create:grade.createdAt,
+          create: grade.createdAt,
           enderecoschool: {
             rua: grade.escola.address[0]?.street || "",
             numero: grade.escola.address[0]?.number || "",
@@ -337,7 +337,7 @@ export class ProjetoPrisma {
         const numeroB = parseInt(b.numeroEscola, 10) || 0;
         return numeroA - numeroB; // Ordem crescente
       });
-  
+
       return formattedGrades;
     } catch (error) {
       console.error(
@@ -348,103 +348,190 @@ export class ProjetoPrisma {
     }
   }
 
-// Função para buscar os itens e somar as entradas e saídas
-async getProjetoItensComEntradasSaidas(projetoId: number): Promise<ProjetoStockItems | null> {
-  try {
-    // Função para ordenar tamanhos
-    const ordenarTamanhos = (tamanhos: string[]) => {
-      const numTamanhos = tamanhos.filter(tamanho => /^[0-9]+$/.test(tamanho)); // Filtra tamanhos numéricos
-      const letraTamanhos = tamanhos.filter(tamanho => !/^[0-9]+$/.test(tamanho)); // Filtra tamanhos com letras
+  // Função para buscar os itens e somar as entradas e saídas
+  async getProjetoItensComEntradasSaidas(projetoId: number): Promise<ProjetoStockItems | null> {
+    try {
+      // Função para ordenar tamanhos
+      const ordenarTamanhos = (tamanhos: string[]) => {
+        const numTamanhos = tamanhos.filter(tamanho => /^[0-9]+$/.test(tamanho)); // Filtra tamanhos numéricos
+        const letraTamanhos = tamanhos.filter(tamanho => !/^[0-9]+$/.test(tamanho)); // Filtra tamanhos com letras
 
-      numTamanhos.sort((a, b) => parseInt(a) - parseInt(b)); // Ordena tamanhos numéricos
-      letraTamanhos.sort((a, b) => {
-        const ordem = ['P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
-        return ordem.indexOf(a) - ordem.indexOf(b);
-      });
+        numTamanhos.sort((a, b) => parseInt(a) - parseInt(b)); // Ordena tamanhos numéricos
+        letraTamanhos.sort((a, b) => {
+          const ordem = ['P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
+          return ordem.indexOf(a) - ordem.indexOf(b);
+        });
 
-      return [...numTamanhos, ...letraTamanhos];
-    };
+        return [...numTamanhos, ...letraTamanhos];
+      };
 
-    // Buscando o projeto
-    const projeto = await this.prisma.projeto.findUnique({
-      where: { id: projetoId },
-      include: {
-        itens: {
-          include: {
-            tamanhos: {
-              include: {
-                tamanho: true,
-                entryInput: {
-                  select: {
-                    quantidade: true,
+      // Buscando o projeto
+      const projeto = await this.prisma.projeto.findUnique({
+        where: { id: projetoId },
+        include: {
+          itens: {
+            include: {
+              tamanhos: {
+                include: {
+                  tamanho: true,
+                  entryInput: {
+                    select: {
+                      quantidade: true,
+                    },
                   },
-                },
-                outInput: {
-                  select: {
-                    quantidade: true,
+                  outInput: {
+                    select: {
+                      quantidade: true,
+                    },
                   },
+                  estoque: true,
                 },
-                estoque: true,
               },
             },
           },
         },
-      },
-    });
+      });
 
-    // Se o projeto não for encontrado, retorna null
-    if (!projeto) {
-      return null;
-    }
+      // Se o projeto não for encontrado, retorna null
+      if (!projeto) {
+        return null;
+      }
 
-    // Mapeando os itens e tamanhos
-    const itensComEntradasSaidas = projeto.itens.map((item) => {
-      const tamanhosComSomas = item.tamanhos.map((itemTamanho) => {
-        // Soma das entradas e saídas
-        const somaEntradas = itemTamanho.entryInput.reduce((total, entry) => total + entry.quantidade, 0);
-        const somaSaidas = itemTamanho.outInput.reduce((total, out) => total + out.quantidade, 0);
+      // Mapeando os itens e tamanhos
+      const itensComEntradasSaidas = projeto.itens.map((item) => {
+        const tamanhosComSomas = item.tamanhos.map((itemTamanho) => {
+          // Soma das entradas e saídas
+          const somaEntradas = itemTamanho.entryInput.reduce((total, entry) => total + entry.quantidade, 0);
+          const somaSaidas = itemTamanho.outInput.reduce((total, out) => total + out.quantidade, 0);
 
-        // Estoque
-        const estoque = itemTamanho.estoque ? itemTamanho.estoque.quantidade : 0;
+          // Estoque
+          const estoque = itemTamanho.estoque ? itemTamanho.estoque.quantidade : 0;
+
+          return {
+            tamanho: itemTamanho.tamanho.nome,
+            estoque,
+            entradas: somaEntradas,
+            saidas: somaSaidas,
+          };
+        });
+
+        // Ordenando tamanhos por critérios específicos
+        const tamanhosOrdenados = ordenarTamanhos(
+          item.tamanhos.map((itemTamanho) => itemTamanho.tamanho.nome)
+        );
 
         return {
-          tamanho: itemTamanho.tamanho.nome,
-          estoque,
-          entradas: somaEntradas,
-          saidas: somaSaidas,
+          nome: item.nome,
+          genero: item.genero,
+          tamanhos: tamanhosOrdenados.map(tamanho => {
+            const tamanhoData = tamanhosComSomas.find(t => t.tamanho === tamanho);
+            return tamanhoData ? tamanhoData : {
+              tamanho,
+              entradas: 0,
+              saidas: 0,
+              estoque: 0,
+            };
+          }),
         };
       });
 
-      // Ordenando tamanhos por critérios específicos
-      const tamanhosOrdenados = ordenarTamanhos(
-        item.tamanhos.map((itemTamanho) => itemTamanho.tamanho.nome)
-      );
-
       return {
-        nome: item.nome,
-        genero: item.genero,
-        tamanhos: tamanhosOrdenados.map(tamanho => {
-          const tamanhoData = tamanhosComSomas.find(t => t.tamanho === tamanho);
-          return tamanhoData ? tamanhoData : {
-            tamanho,
-            entradas: 0,
-            saidas: 0,
-            estoque: 0,
-          };
-        }),
+        projetoId: projeto.id,
+        nome: projeto.nome,
+        itens: itensComEntradasSaidas,
       };
-    });
-
-    return {
-      projetoId: projeto.id,
-      nome: projeto.nome,
-      itens: itensComEntradasSaidas,
-    };
-  } catch (error) {
-    // Captura e exibe o erro
-    console.error('Erro ao buscar projeto e itens:', error);
-    return null;
+    } catch (error) {
+      // Captura e exibe o erro
+      console.error('Erro ao buscar projeto e itens:', error);
+      return null;
+    }
   }
-}
+
+  async getOpenGradesBySchool(projetoId: number): Promise<GradeOpenBySchool[]> {
+    try {
+      const projeto = await this.prisma.projeto.findUnique({
+        where: {
+          id: projetoId,
+        },
+        include: {
+          escolas: {
+            include: {
+              grades: {
+                where: {
+                  finalizada: false,
+                },
+                take: 2, // Limitar a 2 grades mais recentes
+                orderBy: {
+                  createdAt: 'desc',
+                },
+                include: {
+                  escola: true, // Incluindo os dados da Escola
+                  gradeCaixas: {
+                    include: {
+                      caixaItem: true, // Incluindo os itens das caixas
+                    },
+                  },
+                  itensGrade: {
+                    include: {
+                      itemTamanho: {
+                        include: {
+                          item: true, // Incluindo detalhes do Item
+                          tamanho: true, // Incluindo o Tamanho
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+  
+      // Verificar se o projeto existe
+      if (!projeto) {
+        return [];
+      }
+  
+      // Processar as grades e caixas
+      const result: GradeOpenBySchool[] = projeto.escolas.flatMap((escola) => {
+        return escola.grades.map((grade) => {
+          const itens = grade.itensGrade.map((itemGrade) => {
+            const caixas = grade.gradeCaixas.flatMap((caixa) =>
+              caixa.caixaItem.filter(
+                (caixaItem) => caixaItem.itemTamanhoId === itemGrade.itemTamanho.id
+              )
+            );
+  
+            const quantidadeExpedida = caixas.reduce((sum, caixaItem) => sum + caixaItem.itemQty, 0);
+  
+            // Definir o status de expedição com os valores restritos
+            const statusExpedicao: "Concluído" | "Pendente" = quantidadeExpedida >= itemGrade.quantidade ? "Concluído" : "Pendente";
+  
+            return {
+              gradeId: grade.id,
+              itemNome: itemGrade.itemTamanho.item.nome,
+              tamanho: itemGrade.itemTamanho.tamanho.nome,
+              quantidadePrevista: itemGrade.quantidade,
+              quantidadeExpedida,
+              quantidadeRestante: itemGrade.quantidade - quantidadeExpedida,
+              statusExpedicao,  // Garantir que este valor seja restrito a "Concluído" ou "Pendente"
+            };
+          });
+  
+          return {
+            escolaNome: grade.escola.nome,
+            itens,
+          };
+        });
+      });
+  
+      return result;
+  
+    } catch (error) {      
+      console.error('Erro ao obter os dados das grades:', error);
+      throw new Error('Erro ao tentar obter as grades. Por favor, tente novamente.');
+    }
+  }  
 
 }
