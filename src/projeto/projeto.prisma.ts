@@ -168,47 +168,29 @@ export class ProjetoPrisma {
       console.error('ID do projeto é inválido.');
       return []; // Retorna um array vazio se o ID for inválido
     }
-
+  
     try {
-      // Obter a escola com mais grades do projeto
-      const topEscola = await this.prisma.escola.findFirst({
-        where: {
-          projetoId: projectId,
-        },
-        orderBy: {
-          grades: {
-            _count: 'desc',
-          },
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      if (!topEscola) {
-        console.warn(`Nenhuma escola encontrada para o projeto ${projectId}.`);
-        return [];
-      }
-
-      // Buscar datas únicas ignorando horas, mas retornando o campo completo
+      // Buscar as 13 datas mais recentes de inserção de grades para o projeto
       const uniqueDates = await this.prisma.$queryRaw<
-        { createdAt: Date }[] // Retornando o campo original do banco
+        { createdAt: Date }[] // Retorna o campo completo de createdAt
       >(
         Prisma.sql`
-        SELECT DISTINCT ON (DATE("createdAt")) "createdAt"
+        SELECT DISTINCT ON (DATE("Grade"."createdAt")) "Grade"."createdAt"
         FROM "Grade"
-        WHERE "escolaId" = ${topEscola.id}
-        ORDER BY DATE("createdAt") DESC, "createdAt" DESC
+        INNER JOIN "Escola" ON "Grade"."escolaId" = "Escola"."id"
+        WHERE "Escola"."projetoId" = ${projectId}
+        ORDER BY DATE("Grade"."createdAt") DESC, "Grade"."createdAt" DESC
+        LIMIT 13
       `
       );
-
-      // Retorna as datas completas exatamente como estão no banco
+  
+      // Retorna as 13 datas mais recentes como estão no banco de dados
       return uniqueDates.map((row) => row.createdAt);
     } catch (error) {
       console.error(`Erro ao buscar as datas únicas das grades para o projeto ${projectId}:`, error);
       return [];
     }
-  }
+  }  
 
   async getFormattedGradesByDateAndProject(projectId: number, dateStr: string): Promise<GradesRomaneio[]> {
     if (!projectId || !dateStr) {
