@@ -39,20 +39,22 @@ export class ProjetoController {
 
   // Obter grades por data
   @Get('roman/:projectId/:dateStr')
-  async obterEntryInputsTotal(
-    @Param('projectId') projectId: string,
-    @Param('dateStr') dateStr: string,
-  ): Promise<any[]> {
-    const grades = await this.repo.getFormattedGradesByDateAndProject(
-      +projectId,
-      dateStr,
-    );
-
+  async obterEntryInputsTotal(@Param('projectId') projectId: string, @Param('dateStr') dateStr: string): Promise<any[]> {
+    const grades = await this.repo.getFormattedGradesByDateAndProject(+projectId, dateStr);
     if (!grades) {
       throw new NotFoundException(`Entradas não encontradas.`);
     }
     return grades;
   }
+
+  @Get('statusgrades/:id/:dateStr')
+  async getItemsGradesStatus(@Param('id') id: string, @Param('dateStr') dateStr: string): Promise<GradeOpenBySchool[]> {
+    const projetoItems = await this.repo.getOpenGradesBySchool(+id, dateStr);
+    if (!projetoItems) {
+      throw new NotFoundException(`Não foram encontrados itens para os projetos.`);
+    }
+    return projetoItems;
+  }  
 
   @Get('itens/:id')
   async getItems(@Param('id') id: string): Promise<ProjectItems> {
@@ -61,16 +63,7 @@ export class ProjetoController {
       throw new NotFoundException(`Não foram encontrados itens para os projetos.`);
     }
     return projetoItems;
-  }
-
-  @Get('statusgrades/:id')
-  async getItemsGradesStatus(@Param('id') id: string): Promise<GradeOpenBySchool[]> {
-    const projetoItems = await this.repo.getOpenGradesBySchool(+id);
-    if (!projetoItems) {
-      throw new NotFoundException(`Não foram encontrados itens para os projetos.`);
-    }
-    return projetoItems;
-  }  
+  } 
 
   @Get('saldos/:id')
   async getItemsEntyInputStock(@Param('id') id: string): Promise<ProjetoStockItems | null> {

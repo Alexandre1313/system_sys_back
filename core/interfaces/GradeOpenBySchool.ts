@@ -1,7 +1,9 @@
 export default interface GradeOpenBySchool {
+    projetoName: string;
     escolaNome: string;
+    data: string;
     itens: {
-        gradeId: number;
+        gradeId: number;        
         itemNome: string;
         tamanho: string;
         quantidadePrevista: number;

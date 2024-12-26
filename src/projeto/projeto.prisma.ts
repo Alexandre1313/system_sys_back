@@ -1,4 +1,4 @@
-import { GradeOpenBySchool, GradesRomaneio, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
+import { convertSPTime, GradeOpenBySchool, GradesRomaneio, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaProvider } from 'src/db/prisma.provider';
@@ -198,7 +198,7 @@ export class ProjetoPrisma {
         SELECT DISTINCT ON (DATE("createdAt")) "createdAt"
         FROM "Grade"
         WHERE "escolaId" = ${topEscola.id}
-        ORDER BY DATE("createdAt"), "createdAt"
+        ORDER BY DATE("createdAt") DESC, "createdAt" DESC
       `
       );
 
@@ -447,8 +447,20 @@ export class ProjetoPrisma {
     }
   }
 
-  async getOpenGradesBySchool(projetoId: number): Promise<GradeOpenBySchool[]> {
+  async getOpenGradesBySchool(projetoId: number, dateStr: string): Promise<GradeOpenBySchool[]> {
+    if (!projetoId || !dateStr) {
+      console.error("Projeto ID ou data inválidos.");
+      return [];
+    }
+
     try {
+      // Converte a string para um objeto Date
+      const startOfDay = new Date(dateStr);
+      startOfDay.setUTCHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(dateStr);
+      endOfDay.setUTCHours(23, 59, 59, 999);
+
       const projeto = await this.prisma.projeto.findUnique({
         where: {
           id: projetoId,
@@ -458,11 +470,10 @@ export class ProjetoPrisma {
             include: {
               grades: {
                 where: {
-                  finalizada: false,
-                },
-                take: 2, // Limitar a 2 grades mais recentes
-                orderBy: {
-                  createdAt: 'desc',
+                  createdAt: {
+                    gte: startOfDay,
+                    lte: endOfDay,
+                  },
                 },
                 include: {
                   escola: true, // Incluindo os dados da Escola
@@ -487,12 +498,27 @@ export class ProjetoPrisma {
           },
         },
       });
-  
+
       // Verificar se o projeto existe
       if (!projeto) {
         return [];
       }
-  
+
+      // Função para ordenar tamanhos
+      const ordenarTamanhos = (tamanhos: string[]): string[] => {
+        const numTamanhos = tamanhos.filter(tamanho => /^[0-9]+$/.test(tamanho)); // Filtra tamanhos numéricos
+        const letraTamanhos = tamanhos.filter(tamanho => !/^[0-9]+$/.test(tamanho)); // Filtra tamanhos com letras
+
+        // Ordena tamanhos numéricos (convertendo para inteiro)
+        numTamanhos.sort((a, b) => parseInt(a) - parseInt(b));
+
+        // Ordena tamanhos com letras conforme a ordem desejada
+        const ordem = ['P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
+        letraTamanhos.sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b));
+
+        return [...numTamanhos, ...letraTamanhos];
+      };
+
       // Processar as grades e caixas
       const result: GradeOpenBySchool[] = projeto.escolas.flatMap((escola) => {
         return escola.grades.map((grade) => {
@@ -502,15 +528,15 @@ export class ProjetoPrisma {
                 (caixaItem) => caixaItem.itemTamanhoId === itemGrade.itemTamanho.id
               )
             );
-  
+
             const quantidadeExpedida = caixas.reduce((sum, caixaItem) => sum + caixaItem.itemQty, 0);
-  
+
             // Definir o status de expedição com os valores restritos
             const statusExpedicao: "Concluído" | "Pendente" = quantidadeExpedida >= itemGrade.quantidade ? "Concluído" : "Pendente";
-  
+
             return {
               gradeId: grade.id,
-              itemNome: itemGrade.itemTamanho.item.nome,
+              itemNome: `${itemGrade.itemTamanho.item.nome} / ${itemGrade.itemTamanho.item.genero}`,
               tamanho: itemGrade.itemTamanho.tamanho.nome,
               quantidadePrevista: itemGrade.quantidade,
               quantidadeExpedida,
@@ -518,20 +544,34 @@ export class ProjetoPrisma {
               statusExpedicao,  // Garantir que este valor seja restrito a "Concluído" ou "Pendente"
             };
           });
-  
+
+          // Ordenando os itens
+          itens.sort((a, b) => {
+            // Primeiro ordenar pelo nome do item (itemNome)
+            if (a.itemNome < b.itemNome) return -1;
+            if (a.itemNome > b.itemNome) return 1;
+
+            // Se os nomes forem iguais, ordenar pelo tamanho usando a função ordenarTamanhos
+            const tamanhos = [a.tamanho, b.tamanho];
+            const tamanhosOrdenados = ordenarTamanhos(tamanhos);
+            return tamanhosOrdenados.indexOf(a.tamanho) - tamanhosOrdenados.indexOf(b.tamanho);
+          });
+
           return {
+            projetoName: projeto.nome,
             escolaNome: grade.escola.nome,
+            data: convertSPTime(String(grade.createdAt)),
             itens,
           };
         });
       });
-  
+
       return result;
-  
-    } catch (error) {      
+
+    } catch (error) {
       console.error('Erro ao obter os dados das grades:', error);
       throw new Error('Erro ao tentar obter as grades. Por favor, tente novamente.');
     }
-  }  
+  }
 
 }
