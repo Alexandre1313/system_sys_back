@@ -541,7 +541,7 @@ export class ProjetoPrisma {
 
           return {
             projetoName: projeto.nome,
-            escolaNome: grade.escola.nome,
+            escolaNome: `${grade.escola.nome} - ${grade.escola.numeroEscola}`,
             data: convertSPTime(String(grade.createdAt)),
             itens,
           };
