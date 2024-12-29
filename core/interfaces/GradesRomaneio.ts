@@ -12,7 +12,7 @@ export default interface GradesRomaneio {
   telefoneCompany: string;
   emailCompany: string;
   telefoneEscola: string;
-  create: Date;
+  create: string;
   enderecoschool: {
     rua: string;
     numero: string;

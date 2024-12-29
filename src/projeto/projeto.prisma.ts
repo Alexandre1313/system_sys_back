@@ -288,7 +288,7 @@ export class ProjetoPrisma {
           telefoneCompany: grade.company.telefone?.map(tel => tel.telefone).join(', ') || "",  // Telefones da empresa
           emailCompany: grade.company.email || "",   // E-mail da empresa (agora no modelo Company)
           telefoneEscola: grade.escola.telefone?.map(tel => tel.telefone).join(', ') || "", // Telefones da escola
-          create: grade.createdAt,
+          create: convertSPTime(String(grade.createdAt)),
           enderecoschool: {
             rua: grade.escola.address[0]?.street || "",
             numero: grade.escola.address[0]?.number || "",
