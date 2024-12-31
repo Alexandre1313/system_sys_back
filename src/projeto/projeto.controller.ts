@@ -48,10 +48,11 @@ export class ProjetoController {
   }
 
   @Get('statusgrades/:id/:dateStr')
-  async getItemsGradesStatus(@Param('id') id: string, @Param('dateStr') dateStr: string): Promise<GradeOpenBySchool[]> {
+  async getItemsGradesStatus(@Param('id') id: string, @Param('dateStr') dateStr: string): Promise<GradeOpenBySchool[] | null> {
     const projetoItems = await this.repo.getOpenGradesBySchool(+id, dateStr);
     if (!projetoItems) {
-      throw new NotFoundException(`Não foram encontrados itens para os projetos.`);
+      console.log(`Não foram encontrados itens para os projetos.`);
+      return null;
     }
     return projetoItems;
   }  
