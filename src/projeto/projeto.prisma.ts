@@ -429,10 +429,10 @@ export class ProjetoPrisma {
     }
   }
 
-  async getOpenGradesBySchool(projetoId: number, dateStr: string): Promise<GradeOpenBySchool[]> {
+  async getOpenGradesBySchool(projetoId: number, dateStr: string): Promise<GradeOpenBySchool[] | null> {
     if (!projetoId || !dateStr) {
       console.error("Projeto ID ou data inválidos.");
-      return [];
+      return null;
     }
 
     try {
@@ -483,7 +483,7 @@ export class ProjetoPrisma {
 
       // Verificar se o projeto existe
       if (!projeto) {
-        return [];
+        return null;
       }
 
       // Função para ordenar tamanhos
