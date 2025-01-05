@@ -1,7 +1,7 @@
-export default interface TelephonesCompany {
+export default interface TelephonesSchool {
     id?: number;
     telefone: string;
     createdAt?: Date;
     updatedAt?: Date;
-    companyId?: number;
+    escolaId?: number;
 }

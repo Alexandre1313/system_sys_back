@@ -72,7 +72,7 @@ model AddressSchool {
   country      String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  escolaId     Int
+  escolaId     Int      @unique
   escola       Escola   @relation(fields: [escolaId], references: [id])
 }
 

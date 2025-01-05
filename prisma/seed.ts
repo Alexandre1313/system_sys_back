@@ -76,7 +76,7 @@ async function seed() {
                     data: {
                         escolaId: escola.id,
                         finalizada: false,
-                        companyId: 2,
+                        companyId: 999,
                     },
                 });
                 console.log('Grade criada:', grade);

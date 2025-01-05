@@ -23,7 +23,8 @@
     "seed": "npx ts-node prisma/seed.ts",
     "seeduni": "npx ts-node prisma/seed2.ts",
     "seeditems": "npx ts-node prisma/seed3.ts",
-    "seeduser": "npx ts-node prisma/seeduser.ts"
+    "seeduser": "npx ts-node prisma/seeduser.ts",
+    "seedend": "npx ts-node prisma/seedEndereco.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
