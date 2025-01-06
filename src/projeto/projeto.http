@@ -10,6 +10,13 @@ GET http://localhost:4997/projetos/comescolas/1
 GET http://localhost:4997/projetos/itens
 
 ###
+GET http://localhost:4997/projetos/saldos/3
+
+###
+GET http://localhost:4997/projetos/statusgrades/2/2024-12-14T01:06:28.410Z
+
+
+###
 DELETE http://localhost:4997/projetos/29
 
 
