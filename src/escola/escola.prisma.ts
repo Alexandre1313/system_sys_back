@@ -94,6 +94,7 @@ export class EscolaPrisma {
             select: {
                 id: true,
                 numeroEscola: true,
+                numberJoin: true,
                 nome: true,
                 projetoId: true,
                 projeto: {
@@ -125,6 +126,7 @@ export class EscolaPrisma {
                                 gradeId: true,
                                 escolaCaixa: true,
                                 escolaNumber: true,
+                                numberJoin: true,
                                 projeto: true,
                                 qtyCaixa: true,
                                 caixaNumber: true,
