@@ -48,10 +48,11 @@ async function seed2() {
                         where: {
                             projetoId_nome: { projetoId: projeto.id, nome: escolaData.nome },
                         },
-                        update: {},
+                        update: { numberJoin: escolaData.numberJoin, },
                         create: {
                             numeroEscola: escolaData.numeroEscola,
                             nome: escolaData.nome,
+                            numberJoin: escolaData.numberJoin,
                             projetoId: projeto.id,
                         },
                     });

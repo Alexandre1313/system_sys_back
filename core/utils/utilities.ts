@@ -2,6 +2,13 @@ import { DataInserction, TamanhoQuantidade } from "@core/interfaces";
 import * as XLSX from 'xlsx';
 
 export default function utilities(caminhoPlanilha: string = 'core/utils/distribuicao.xlsx'): DataInserction[] {
+    function tratarValor(valor: any, valorPadrao: string | null = null): string | null {
+        if (valor === undefined || valor === null || String(valor).trim() === "") {
+          return valorPadrao;
+        }
+        return String(valor).toUpperCase().trim();
+    }
+    
     const workbook = XLSX.readFile(caminhoPlanilha);
     const sheetName = workbook.SheetNames[0];
 
@@ -26,11 +33,12 @@ export default function utilities(caminhoPlanilha: string = 'core/utils/distribu
         const projeto = String(linha[2]).toUpperCase().trim();
         const item = String(linha[3]).toUpperCase().trim();
         const genero = String(linha[4]).toUpperCase().trim();
+        const numberJoin = tratarValor(linha[5]);
 
         const tamanhos: TamanhoQuantidade[] = [];
 
         // Processar as colunas de tamanhos a partir da quinta coluna
-        for (let j = 5; j < linha.length; j++) {
+        for (let j = 6; j < linha.length; j++) {
             const quantidade = linha[j];
             const tamanho = headerRow[j]; // O valor do cabeçalho é o tamanho (ex: 2, 4, P, M, etc)
 
@@ -48,6 +56,7 @@ export default function utilities(caminhoPlanilha: string = 'core/utils/distribu
             dadosProcessados.push({
                 numeroEscola: numeroEscola,
                 escola: escola,
+                numberJoin: numberJoin,
                 projeto: projeto,
                 item: item,
                 genero: genero,

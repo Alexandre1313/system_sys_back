@@ -7,6 +7,7 @@ export default interface Caixa {
     escolaCaixa: string;
     caixaNumber: string;
     escolaNumber: string;
+    numberJoin: string;
     projeto: string;
     qtyCaixa: number;
     caixaItem: CaixaItem[];

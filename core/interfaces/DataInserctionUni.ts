@@ -3,6 +3,7 @@ export default interface DataInserctionUni {
     escolas: {
         nome: string;
         numeroEscola: string;
+        numberJoin: string,
         itens: {
             nome: string;
             genero: 'MASCULINO' | 'FEMININO' | 'UNISSEX';

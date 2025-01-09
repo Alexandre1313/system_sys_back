@@ -285,6 +285,7 @@ export class ProjetoPrisma {
           escola: grade.escola.nome,
           tipo: grade.tipo,
           numeroEscola: grade.escola.numeroEscola || "",  // Número da escola
+          numberJoin: grade.escola.numberJoin, 
           telefoneCompany: grade.company.telefone?.map(tel => tel.telefone).join(', ') || "",  // Telefones da empresa
           emailCompany: grade.company.email || "",   // E-mail da empresa (agora no modelo Company)
           telefoneEscola: grade.escola.telefone?.map(tel => tel.telefone).join(', ') || "", // Telefones da escola

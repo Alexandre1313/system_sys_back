@@ -2,6 +2,13 @@ import { DataInserctionUni, TamanhoQuantidade } from "@core/interfaces";
 import * as XLSX from 'xlsx';
 
 export default function utilities2(caminhoPlanilha: string = 'core/utils/distgradeunificada.xlsx'): DataInserctionUni[] {
+  function tratarValor(valor: any, valorPadrao: string | null = null): string | null {
+    if (valor === undefined || valor === null || String(valor).trim() === "") {
+      return valorPadrao;
+    }
+    return String(valor).toUpperCase().trim();
+  }
+  
   // Lê o arquivo Excel
   const workbook = XLSX.readFile(caminhoPlanilha);
 
@@ -31,12 +38,13 @@ export default function utilities2(caminhoPlanilha: string = 'core/utils/distgra
     const projeto = String(linha[0]).toUpperCase().trim();
     const item = String(linha[3]).toUpperCase().trim();
     const genero = String(linha[4]).toUpperCase().trim();
+    const numberJoin = tratarValor(linha[5]);
 
     // Cria um array para armazenar os tamanhos e quantidades
     const tamanhos: TamanhoQuantidade[] = [];
 
     // Percorre as colunas de tamanhos (a partir da 5ª coluna)
-    for (let j = 5; j < linha.length; j++) {
+    for (let j = 6; j < linha.length; j++) {
       const quantidade = linha[j];
       const tamanho = headerRow[j]; // O valor do cabeçalho é o tamanho (ex: 2, 4, P, M, etc)
 
@@ -64,13 +72,14 @@ export default function utilities2(caminhoPlanilha: string = 'core/utils/distgra
       }
 
       // Verifica se a escola já existe dentro do projeto
-      let escolaExistente = projetoExistente.escolas.find(e => e.numeroEscola === numeroEscola);
+      let escolaExistente = projetoExistente.escolas.find((e: any) => e.numeroEscola === numeroEscola);
 
       if (!escolaExistente) {
         // Se a escola não existe, cria uma nova
         escolaExistente = {
           nome: escola,
           numeroEscola: numeroEscola,
+          numberJoin: numberJoin,
           itens: []
         };
         projetoExistente.escolas.push(escolaExistente);
@@ -103,6 +112,7 @@ export default function utilities2(caminhoPlanilha: string = 'core/utils/distgra
         return {
           nome: escola.nome,
           numeroEscola: escola.numeroEscola,
+          numberJoin: escola.numberJoin,
           itens: escola.itens.map(item => {
             return {
               nome: item.nome,

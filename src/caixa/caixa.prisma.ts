@@ -16,6 +16,7 @@ export class CaixaPrisma {
           data: {
             gradeId: +dadosDaCaixa.gradeId,
             escolaNumber: dadosDaCaixa.escolaNumber,
+            numberJoin: dadosDaCaixa.numberJoin,
             qtyCaixa: dadosDaCaixa.qtyCaixa,
             projeto: dadosDaCaixa.projeto,
             escolaCaixa: dadosDaCaixa.escolaCaixa,

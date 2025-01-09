@@ -39,6 +39,7 @@ model Projeto {
 model Escola {
   id           Int                @id @default(autoincrement())
   numeroEscola String
+  numberJoin   String
   nome         String
   projetoId    Int
   createdAt    DateTime           @default(now())
@@ -193,7 +194,8 @@ model Caixa {
   id           Int         @id @default(autoincrement())
   gradeId      Int
   escolaCaixa  String
-  escolaNumber String
+  escolaNumber String  
+  numberJoin   String?
   projeto      String
   qtyCaixa     Int
   caixaNumber  String

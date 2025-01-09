@@ -48,9 +48,9 @@ async function seed() {
                 const escola = await prisma.escola.upsert({
                     where: {
                         projetoId_nome: { projetoId: projeto.id, nome: dado.escola },
-                    },
-                    update: {},
-                    create: { numeroEscola: dado.numeroEscola, nome: dado.escola, projetoId: projeto.id },
+                    },                    
+                    update: { numberJoin: dado.numberJoin, },
+                    create: { numeroEscola: dado.numeroEscola, numberJoin: dado.numberJoin, nome: dado.escola, projetoId: projeto.id },
                 });
                 console.log('Escola inserida/atualizada:', escola);
 
