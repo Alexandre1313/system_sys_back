@@ -515,7 +515,8 @@ export class ProjetoPrisma {
             const quantidadeExpedida = caixas.reduce((sum, caixaItem) => sum + caixaItem.itemQty, 0);
 
             // Definir o status de expedição com os valores restritos
-            const statusExpedicao: "Concluído" | "Pendente" = quantidadeExpedida >= itemGrade.quantidade ? "Concluído" : "Pendente";
+            const statusExpedicao: "Concluído" | "Pendente" | "Inicializado" = quantidadeExpedida == itemGrade.quantidade ? 
+            "Concluído" : quantidadeExpedida == 0 ? "Pendente" : "Inicializado";
 
             return {
               gradeId: grade.id,
@@ -524,7 +525,7 @@ export class ProjetoPrisma {
               quantidadePrevista: itemGrade.quantidade,
               quantidadeExpedida,
               quantidadeRestante: itemGrade.quantidade - quantidadeExpedida,
-              statusExpedicao,  // Garantir que este valor seja restrito a "Concluído" ou "Pendente"
+              statusExpedicao,  // Garantir que este valor seja restrito a "Concluído" ou "Pendente" ou "Inicializado"
             };
           });
 

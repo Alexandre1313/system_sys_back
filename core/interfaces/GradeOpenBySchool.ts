@@ -9,6 +9,6 @@ export default interface GradeOpenBySchool {
         quantidadePrevista: number;
         quantidadeExpedida: number;
         quantidadeRestante: number;
-        statusExpedicao: 'Concluído' | 'Pendente';
+        statusExpedicao: 'Concluído' | 'Pendente' | 'Inicializado';
     }[];
 }
