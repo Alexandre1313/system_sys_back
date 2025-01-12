@@ -44,7 +44,7 @@ async function seedEndereco() {
           console.log(`\nVerificando escola: ${escolaData.nome}`);
           const escola = await prisma.escola.findUnique({
             where: {
-              projetoId_nome: { projetoId: projeto.id, nome: escolaData.nome },
+               id: escolaData.id ,
             },
           });
 

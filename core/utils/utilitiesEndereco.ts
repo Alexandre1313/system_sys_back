@@ -21,30 +21,32 @@ export default function utilitiesEndereco(caminhoPlanilha: string = 'core/utils/
     return dadosProcessados;
   }
 
-  // Processa cada linha, ignorando o cabeçalho (índice 0)
-  for (let i = 1; i < linhasValidas.length; i++) {
-    function tratarValor(valor: any, valorPadrao: string | null = null): string | null {
-      if (valor === undefined || valor === null || String(valor).trim() === "") {
-        return valorPadrao;
-      }
-      return String(valor).toUpperCase().trim();
+  function tratarValor(valor: any, valorPadrao: string | null = null): string | null {
+    if (valor === undefined || valor === null || String(valor).trim() === "") {
+      return valorPadrao;
     }
+    return String(valor).toUpperCase().trim();
+  }
+
+  // Processa cada linha, ignorando o cabeçalho (índice 0)
+  for (let i = 1; i < linhasValidas.length; i++) {   
 
     // Iterando pelas linhas
     const linha = linhasValidas[i];
 
     const projeto = tratarValor(linha[0]);
-    const nomeEscola = tratarValor(linha[1]);
+    const id = parseInt(tratarValor(linha[1]));
     const numeroEscola = tratarValor(linha[2]);
-    const telefone = tratarValor(linha[3]);
-    const street = tratarValor(linha[4]);
-    const number = tratarValor(linha[5]);
-    const complement = tratarValor(linha[6]);
-    const neighborhood = tratarValor(linha[7]);
-    const postalCode = tratarValor(linha[8]);
-    const city = tratarValor(linha[9], null); // Se vazio, será null
-    const state = tratarValor(linha[10]);
-    const country = tratarValor(linha[11], "BRASIL"); // Default: "BRASIL"
+    const nomeEscola = tratarValor(linha[3]);
+    const telefone = tratarValor(linha[4]);
+    const street = tratarValor(linha[5]);
+    const number = tratarValor(linha[6]);
+    const complement = tratarValor(linha[7]);
+    const neighborhood = tratarValor(linha[8]);
+    const postalCode = tratarValor(linha[9]);
+    const city = tratarValor(linha[10], null); // Se vazio, será null
+    const state = tratarValor(linha[11]);
+    const country = tratarValor(linha[12], "BRASIL"); // Default: "BRASIL"
 
     // Cria os objetos conforme as interfaces
     const endereco: AddressSchool = {
@@ -75,6 +77,7 @@ export default function utilitiesEndereco(caminhoPlanilha: string = 'core/utils/
 
     // Adiciona a escola no projeto
     projetoExistente.escolas.push({
+      id: id,
       nome: nomeEscola,
       numeroEscola,
       endereco,
