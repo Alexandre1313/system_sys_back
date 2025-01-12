@@ -60,11 +60,20 @@ export class ProjetoPrisma {
         id: id,
       },
       include: {
-        escolas: true,
+        escolas: {
+          include: {
+            grades: {
+              orderBy: {
+                createdAt: 'desc', // Ordena pela data de criação da grade (as mais recentes primeiro)
+              },
+              take: 2, // Limita a 2 grades mais recentes              
+            },
+          },
+        },
       },
     });
   }
-
+  
   async excluir(id: number): Promise<void> {
     try {
       // Tente excluir o item com o ID fornecido
@@ -168,7 +177,7 @@ export class ProjetoPrisma {
       console.error('ID do projeto é inválido.');
       return []; // Retorna um array vazio se o ID for inválido
     }
-  
+
     try {
       // Buscar as 13 datas mais recentes de inserção de grades para o projeto
       const uniqueDates = await this.prisma.$queryRaw<
@@ -183,14 +192,14 @@ export class ProjetoPrisma {
         LIMIT 13
       `
       );
-  
+
       // Retorna as 13 datas mais recentes como estão no banco de dados
       return uniqueDates.map((row) => row.createdAt);
     } catch (error) {
       console.error(`Erro ao buscar as datas únicas das grades para o projeto ${projectId}:`, error);
       return [];
     }
-  }  
+  }
 
   async getFormattedGradesByDateAndProject(projectId: number, dateStr: string): Promise<GradesRomaneio[]> {
     if (!projectId || !dateStr) {
@@ -285,7 +294,7 @@ export class ProjetoPrisma {
           escola: grade.escola.nome,
           tipo: grade.tipo,
           numeroEscola: grade.escola.numeroEscola || "",  // Número da escola
-          numberJoin: grade.escola.numberJoin, 
+          numberJoin: grade.escola.numberJoin,
           telefoneCompany: grade.company.telefone?.map(tel => tel.telefone).join(', ') || "",  // Telefones da empresa
           emailCompany: grade.company.email || "",   // E-mail da empresa (agora no modelo Company)
           telefoneEscola: grade.escola.telefone?.map(tel => tel.telefone).join(', ') || "", // Telefones da escola
@@ -515,8 +524,8 @@ export class ProjetoPrisma {
             const quantidadeExpedida = caixas.reduce((sum, caixaItem) => sum + caixaItem.itemQty, 0);
 
             // Definir o status de expedição com os valores restritos
-            const statusExpedicao: "Concluído" | "Pendente" | "Inicializado" = quantidadeExpedida == itemGrade.quantidade ? 
-            "Concluído" : quantidadeExpedida == 0 ? "Pendente" : "Inicializado";
+            const statusExpedicao: "Concluído" | "Pendente" | "Inicializado" = quantidadeExpedida == itemGrade.quantidade ?
+              "Concluído" : quantidadeExpedida == 0 ? "Pendente" : "Inicializado";
 
             return {
               gradeId: grade.id,
