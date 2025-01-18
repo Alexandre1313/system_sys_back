@@ -29,7 +29,7 @@ export default function utilitiesEndereco(caminhoPlanilha: string = 'core/utils/
   }
 
   // Processa cada linha, ignorando o cabeçalho (índice 0)
-  for (let i = 1; i < linhasValidas.length; i++) {   
+  for (let i = 1; i < linhasValidas.length; i++) {
 
     // Iterando pelas linhas
     const linha = linhasValidas[i];
@@ -75,14 +75,16 @@ export default function utilitiesEndereco(caminhoPlanilha: string = 'core/utils/
       dadosProcessados.push(projetoExistente);
     }
 
-    // Adiciona a escola no projeto
-    projetoExistente.escolas.push({
-      id: id,
-      nome: nomeEscola,
-      numeroEscola,
-      endereco,
-      telefone: telefoneObj,
-    });
+    if (street) {
+      // Adiciona a escola no projeto
+      projetoExistente.escolas.push({
+        id: id,
+        nome: nomeEscola,
+        numeroEscola,
+        endereco,
+        telefone: telefoneObj,
+      });
+    }
   }
 
   console.dir(dadosProcessados, { depth: null, maxArrayLength: null });
