@@ -2,6 +2,7 @@ import { Caixa } from "@prisma/client";
 import Company from "./Company";
 import Escola from "./Escola";
 import GradeItem from "./GradeItem";
+import { Status } from "./Status";
 
 export default interface Grade {
   id?: number;
@@ -13,6 +14,7 @@ export default interface Grade {
   itensGrade?: GradeItem[];
   gradeCaixas?: Caixa[];
   finalizada?: boolean;
+  status?: Status;
   createdAt?: Date;
   updatedAt?: Date;
 }

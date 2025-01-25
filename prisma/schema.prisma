@@ -186,6 +186,7 @@ model Grade {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   tipo        String?
+  status      Status?     @default(PRONTA)
   gradeCaixas Caixa[]
   itensGrade  GradeItem[]
 }
@@ -311,4 +312,11 @@ enum Genero {
   MASCULINO
   FEMININO
   UNISSEX
+}
+
+enum Status {
+  PRONTA
+  EXPEDIDA
+  IMPRESSA
+  DESPACHADA
 }
