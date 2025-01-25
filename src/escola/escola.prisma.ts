@@ -254,7 +254,7 @@ export class EscolaPrisma {
     }
   }
 
-  async buscarDadosEscola(escolaId: number): Promise<EscolaGradesItems | null> {
+  async buscarDadosEscolaByItemsAndGrades(escolaId: number): Promise<EscolaGradesItems | null> {
     try {
       const escola = await this.prisma.escola.findUnique({
         where: { id: escolaId },

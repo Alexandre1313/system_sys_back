@@ -1,10 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Escola, EscolaGradesItems } from '@core/index';
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, Post } from '@nestjs/common';
 import { EscolaPrisma } from './escola.prisma';
-import { Escola } from '@core/index';
 
 @Controller('escolas')
 export class EscolaController {
-  constructor(private readonly repo: EscolaPrisma) {}
+  constructor(private readonly repo: EscolaPrisma) { }
 
   // Salvar ou criar uma escola
   @Post()
@@ -45,12 +45,22 @@ export class EscolaController {
 
   // Obter grade itemns de uma escola específica
   @Get('escolagrades/:id')
-    async obterEscolaGrade(@Param('id') id: string): Promise<any> {
-      const escolagrade = await this.repo.getGradesWithItemsAndStock(+id);
-      if(!escolagrade){
-        throw new NotFoundException(`Escola grade com ID ${id} não encontrada.`)
-      }
-      return escolagrade;
+  async obterEscolaGrade(@Param('id') id: string): Promise<any> {
+    const escolagrade = await this.repo.getGradesWithItemsAndStock(+id);
+    if (!escolagrade) {
+      throw new NotFoundException(`Escola grade com ID ${id} não encontrada.`)
+    }
+    return escolagrade;
+  }
+
+  // Obter grade itemns de uma escola específica
+  @Get('escolagradesByItems/:id')
+  async obterEscolaGradeByItemsAndGrdes(@Param('id') id: string): Promise<EscolaGradesItems | []> {
+    const escolagradeItems = await this.repo.buscarDadosEscolaByItemsAndGrades(+id);
+    if (!escolagradeItems) {
+      throw new NotFoundException(`Escola grade com ID ${id} não encontrada.`)
+    }
+    return escolagradeItems || [];
   }
 
   // Excluir uma escola específica pelo ID
