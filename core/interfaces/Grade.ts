@@ -1,8 +1,8 @@
-import { Caixa } from "@prisma/client";
+import Caixa from "./Caixa";
 import Company from "./Company";
 import Escola from "./Escola";
 import GradeItem from "./GradeItem";
-import { Status } from "./Status";
+import { Status } from "@prisma/client";
 
 export default interface Grade {
   id?: number;

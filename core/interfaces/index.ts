@@ -1,4 +1,5 @@
 import AddressCompany from "./AddressCompany";
+import AddressSchool from "./AddressSchool ";
 import Barcode from "./Barcode";
 import Caixa from "./Caixa";
 import CaixaItem from "./CaixaItem";
@@ -6,12 +7,15 @@ import Company from "./Company";
 import DataInserction from "./DataInserction";
 import DataInserctionUni from './DataInserctionUni';
 import Embalagem from "./Embalagem";
+import EnderecoInserction from "./EnderecoInserction";
 import EntryInput from "./EntryInput";
 import Escola from "./Escola";
+import EscolaGradesItems from "./EscolaGradesItems";
 import Estoque from "./Estoque";
 import FinalyGrade from "./FinalyGrade";
 import Grade from "./Grade";
 import GradeItem from "./GradeItem";
+import GradeOpenBySchool from "./GradeOpenBySchool";
 import GradesRomaneio from "./GradesRomaneio";
 import Item from "./Item";
 import ItemsInserction from "./ItemsInserction";
@@ -28,16 +32,13 @@ import StockGenerate from "./StockGenerate";
 import Tamanho from "./Tamanho";
 import TamanhoQuantidade from "./TamanhoQuantidade";
 import TelephonesCompany from "./TelephonesCompany";
-import Usuarios from "./Usuarios";
-import GradeOpenBySchool from "./GradeOpenBySchool";
-import AddressSchool from "./AddressSchool ";
 import TelephonesSchool from "./TelephonesSchool";
-import EnderecoInserction from "./EnderecoInserction";
+import Usuarios from "./Usuarios";
+
 export type {
-    AddressCompany, Barcode, Caixa,
-    CaixaItem, Company, DataInserction, DataInserctionUni, Embalagem, EntryInput, Escola,
-    Estoque, FinalyGrade, Grade, GradeItem, GradesRomaneio, Item, ItemsInserction, ItemTamanho, 
-    ItensProjects, Login, OutInput, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems, QtyEmbDay,
-    StockGenerate, Tamanho, TamanhoQuantidade, TelephonesCompany, Usuarios, GradeOpenBySchool, AddressSchool, TelephonesSchool,
-    EnderecoInserction
+    AddressCompany, AddressSchool, Barcode, Caixa,
+    CaixaItem, Company, DataInserction, DataInserctionUni, Embalagem, EnderecoInserction, EntryInput, Escola,     
+    EscolaGradesItems, Estoque, FinalyGrade, Grade, GradeItem, GradeOpenBySchool, GradesRomaneio, Item, ItemsInserction, 
+    ItemTamanho, ItensProjects, Login, OutInput, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems, QtyEmbDay,
+    StockGenerate, Tamanho, TamanhoQuantidade, TelephonesCompany, TelephonesSchool, Usuarios
 };
