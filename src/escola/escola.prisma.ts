@@ -268,6 +268,10 @@ export class EscolaPrisma {
             },
           },
           grades: {
+            take: 8, // Limita a 10 grades mais recentes
+            orderBy: {
+              createdAt: 'desc', // Ordena as grades pela data de criação, mais recente primeiro
+            },
             include: {
               company: {
                 select: {
@@ -288,8 +292,6 @@ export class EscolaPrisma {
                   projeto: true,
                   qtyCaixa: true,
                   userId: true,
-                },
-                include: {
                   caixaItem: {
                     select: {
                       id: true,
@@ -299,7 +301,7 @@ export class EscolaPrisma {
                       itemTam: true,
                       itemQty: true,
                       itemTamanhoId: true,
-                    }
+                    },
                   },
                 },
               },
@@ -348,6 +350,28 @@ export class EscolaPrisma {
         return null;
       }
 
+      // Função para mapear o status para um valor numérico para facilitar a ordenação
+      const statusPriority = (status: string) => {
+        switch (status) {
+          case 'PRONTA': return 1;
+          case 'EXPEDIDA': return 2;
+          case 'IMPRESSA': return 3;
+          case 'DESPACHADA': return 4;
+          default: return 5;  // Caso haja um status desconhecido
+        }
+      };
+
+      // Ordenando as grades: primeiro por status, depois por data (assumindo que a data de criação é um campo na grade)
+      const sortedGrades = escola.grades
+        .sort((a, b) => {
+          const statusDiff = statusPriority(a.status) - statusPriority(b.status);
+          if (statusDiff !== 0) {
+            return statusDiff;
+          }
+          // Se os status forem iguais, ordene por data de criação (assumindo que existe um campo "createdAt")
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(); // Mais recente primeiro
+        });
+
       // Montando a estrutura do retorno
       const resultado: EscolaGradesItems = {
         id: escola.id,
@@ -357,9 +381,9 @@ export class EscolaPrisma {
         projetoId: escola.projeto.id,
         projeto: {
           id: escola.projeto.id,
-          nome: escola.projeto.nome,         
+          nome: escola.projeto.nome,
         },
-        grades: escola.grades.map(grade => ({
+        grades: sortedGrades.map(grade => ({
           id: grade.id,
           tipo: grade.tipo,
           finalizada: grade.finalizada,
@@ -410,7 +434,7 @@ export class EscolaPrisma {
               barcode: item.itemTamanho.barcode.codigo,
               barcodeId: item.itemTamanho.barcode.id,
               estoque: item.itemTamanho.estoque.quantidade,
-              estoqueId: item.itemTamanho.estoque.id,             
+              estoqueId: item.itemTamanho.estoque.id,
             },
           })),
         })),

@@ -45,7 +45,7 @@ export class EscolaController {
 
   // Obter grade itemns de uma escola específica
   @Get('escolagrades/:id')
-  async obterEscolaGrade(@Param('id') id: string): Promise<any> {
+  async obterEscolaGrade(@Param('id') id: string): Promise<any> {    
     const escolagrade = await this.repo.getGradesWithItemsAndStock(+id);
     if (!escolagrade) {
       throw new NotFoundException(`Escola grade com ID ${id} não encontrada.`)
@@ -55,12 +55,13 @@ export class EscolaController {
 
   // Obter grade itemns de uma escola específica
   @Get('escolagradesByItems/:id')
-  async obterEscolaGradeByItemsAndGrdes(@Param('id') id: string): Promise<EscolaGradesItems | []> {
+  async obterEscolaGradeByItemsAndGrades(@Param('id') id: string): Promise<EscolaGradesItems | null> {  
     const escolagradeItems = await this.repo.buscarDadosEscolaByItemsAndGrades(+id);
     if (!escolagradeItems) {
-      throw new NotFoundException(`Escola grade com ID ${id} não encontrada.`)
+      throw new NotFoundException(`Escola grade e items com ID ${id} não encontrada.`)
     }
-    return escolagradeItems || [];
+    console.log(escolagradeItems)
+    return escolagradeItems || null;
   }
 
   // Excluir uma escola específica pelo ID

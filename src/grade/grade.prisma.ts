@@ -1,5 +1,6 @@
 import { Grade } from '@core/index';
 import { Injectable } from '@nestjs/common';
+import { GradeItem, Status } from '@prisma/client';
 import { PrismaProvider } from 'src/db/prisma.provider';
 
 @Injectable()
@@ -46,9 +47,9 @@ export class GradePrisma {
   }
 
   async obterPorId(id: number): Promise<Grade | null> {
-    const grade = await this.prisma.grade.findUnique({ where: { id } });
+    const grade = await this.prisma.grade.findUnique({ where: { id }, include: { itensGrade: true } });
     return (grade as Grade) ?? null;
-  }  
+  }
 
   async excluir(id: number): Promise<void> {
     try {
@@ -68,4 +69,128 @@ export class GradePrisma {
       }
     }
   }
+
+  async replicarGrade(id: number): Promise<Grade | null> {
+    return await this.prisma.$transaction(
+      async (prisma) => {
+        const grade = await prisma.grade.findUnique({
+          where: { id },
+          include: { itensGrade: true },
+        });
+
+        if (!grade || grade.status !== "PRONTA") {       
+          return null;
+        }
+
+        let itemsParaCriarNovaGrade: GradeItem[] = [];
+        let houveAjuste = false;
+
+        // Verifica se existe algum item com quantidadeExpedida > 0
+        const algumItemExpedido = grade.itensGrade.some(
+          (item) => item.quantidadeExpedida > 0
+        );
+
+        if (!algumItemExpedido) {          
+          return null;
+        }
+
+        // Ajuste e coleta de itens para a nova grade
+        for (const item of grade.itensGrade) {
+          const quantidadeRestante = item.quantidade - item.quantidadeExpedida;
+
+          if (quantidadeRestante > 0 && algumItemExpedido) {
+            // Adiciona o item na nova grade com a quantidade restante
+            itemsParaCriarNovaGrade.push({
+              ...item,
+              quantidade: quantidadeRestante,
+              quantidadeExpedida: 0, // Início sem nada expedido
+            });
+
+            // Atualiza o item original para igualar quantidade e quantidadeExpedida
+            await prisma.gradeItem.update({
+              where: { id: item.id },
+              data: { quantidade: item.quantidadeExpedida },
+            });
+
+            houveAjuste = true;
+          } 
+
+          if (algumItemExpedido && item.quantidadeExpedida === 0) {
+            // Exclui o item se quantidadeExpedida for igual a 0 e algum item já foi expedido
+            await prisma.gradeItem.delete({
+              where: { id: item.id },
+            });
+          }
+        }
+
+        // Finaliza a grade original apenas se houve ajuste
+        if (houveAjuste) {
+          await prisma.grade.update({
+            where: { id: grade.id },
+            data: {
+              finalizada: true,
+              status: 'EXPEDIDA' as Status,
+            },
+          });
+        }
+
+        // Criação de nova grade, se necessário
+        if (itemsParaCriarNovaGrade.length > 0 && houveAjuste) {
+          const novaGrade: Grade = {
+            companyId: grade.companyId,
+            escolaId: grade.escolaId,
+            finalizada: false,
+            status: 'PRONTA' as Status,
+            itensGrade: itemsParaCriarNovaGrade,
+          };
+
+          const { itensGrade, ...dadosDaGrade } = novaGrade;
+
+          // Cria a nova grade
+          const gradeReplicada = await prisma.grade.create({
+            data: {
+              escolaId: dadosDaGrade.escolaId,
+              companyId: dadosDaGrade.companyId,
+              finalizada: dadosDaGrade.finalizada,
+              status: dadosDaGrade.status as Status,
+            },
+          });
+
+          // Adiciona os itens à nova grade
+          if (itensGrade.length > 0) {
+            await Promise.all(
+              itensGrade.map(async (item) => {
+                await prisma.gradeItem.create({
+                  data: {
+                    gradeId: gradeReplicada.id,
+                    itemTamanhoId: item.itemTamanhoId,
+                    quantidade: item.quantidade,
+                    quantidadeExpedida: item.quantidadeExpedida,
+                  },
+                });
+              })
+            );
+          }
+
+          // Retorna a nova grade com os itens criados
+          const novaGradeComItens = await prisma.grade.findUnique({
+            where: { id: gradeReplicada.id },
+            include: {
+              itensGrade: true,
+            },
+          });
+
+          return novaGradeComItens as Grade;
+        }
+
+        // Caso não haja itens para replicar, retorna null
+        return null;
+      },
+      {
+        maxWait: 10000, // Tempo máximo para aguardar o início da transação
+        timeout: 20000, // Tempo máximo para execução da transação
+      }
+    );
+  }
+
 }

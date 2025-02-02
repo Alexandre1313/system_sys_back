@@ -31,6 +31,23 @@ export class GradeController {
     }
   }
 
+  @Post('/ajustar/:id')
+  @HttpCode(HttpStatus.OK)
+  async ajustarGrade(@Param('id') id: string): Promise<Grade | null> {
+    try {
+      if (!id) {
+        throw new BadRequestException('O ID da grade é obrigatório.');
+      }     
+      const novaGrade = await this.repo.replicarGrade(+id);
+      if (!novaGrade) {
+        throw new NotFoundException('Nenhuma nova grade foi criada. Verifique os dados da grade original.');
+      }
+      return novaGrade; 
+    } catch (error) {
+      throw new BadRequestException('Erro ao ajustar a grade: ' + error.message);
+    }
+  }
+
   // Obter todas as grades
   @Get()
   async obterGrades(): Promise<Grade[]> {
@@ -39,7 +56,7 @@ export class GradeController {
 
   // Obter uma grade específica pelo ID
   @Get(':id')
-  async obterGrade(@Param('id') id: string): Promise<Grade> {
+  async obterGrade(@Param('id') id: string): Promise<Grade | null> {
     const grade = await this.repo.obterPorId(+id);
     if (!grade) {
       throw new NotFoundException(`Grade com ID ${id} não encontrada.`);

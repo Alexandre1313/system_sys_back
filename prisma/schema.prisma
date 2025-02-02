@@ -39,7 +39,7 @@ model Projeto {
 model Escola {
   id           Int                @id @default(autoincrement())
   numeroEscola String
-  numberJoin   String
+  numberJoin   String?
   nome         String
   projetoId    Int
   createdAt    DateTime           @default(now())
@@ -186,7 +186,7 @@ model Grade {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   tipo        String?
-  status      Status?     @default(PRONTA)
+  status      Status     @default(PRONTA)
   gradeCaixas Caixa[]
   itensGrade  GradeItem[]
 }
