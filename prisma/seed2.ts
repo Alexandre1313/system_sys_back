@@ -63,7 +63,7 @@ async function seed2() {
                         data: {
                             escolaId: escola.id,
                             finalizada: false,
-                            companyId: 999992,
+                            companyId: 2666666666,
                             //createdAt: "2025-01-30T19:39:00.739Z", 
                             //updatedAt: "2025-01-30T19:39:00.739Z" 
                         },
