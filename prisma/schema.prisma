@@ -186,16 +186,17 @@ model Grade {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   tipo        String?
-  status      Status     @default(PRONTA)
+  status      Status      @default(PRONTA)
   gradeCaixas Caixa[]
   itensGrade  GradeItem[]
+  OutInput    OutInput[]
 }
 
 model Caixa {
   id           Int         @id @default(autoincrement())
   gradeId      Int
   escolaCaixa  String
-  escolaNumber String  
+  escolaNumber String
   numberJoin   String?
   projeto      String
   qtyCaixa     Int
@@ -268,6 +269,8 @@ model OutInput {
   id            Int         @id @default(autoincrement())
   itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
   itemTamanhoId Int
+  grade         Grade?       @relation(fields: [gradeId], references: [id])
+  gradeId       Int?
   estoque       Estoque     @relation(fields: [estoqueId], references: [id])
   estoqueId     Int
   usuario       Usuarios?   @relation(fields: [userId], references: [id])
