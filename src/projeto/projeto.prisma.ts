@@ -66,7 +66,7 @@ export class ProjetoPrisma {
               orderBy: {
                 createdAt: 'desc', // Ordena pela data de criação da grade (as mais recentes primeiro)
               },
-              take: 2, // Limita a 2 grades mais recentes              
+              take: 10, // Limita a 10 grades mais recentes              
             },
           },
         },
