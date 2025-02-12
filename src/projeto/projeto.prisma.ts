@@ -73,7 +73,7 @@ export class ProjetoPrisma {
       },
     });
   }
-  
+
   async excluir(id: number): Promise<void> {
     try {
       // Tente excluir o item com o ID fornecido
@@ -565,6 +565,101 @@ export class ProjetoPrisma {
       console.error('Erro ao obter os dados das grades:', error);
       throw new Error('Erro ao tentar obter as grades. Por favor, tente novamente.');
     }
+  }
+
+  async getProjetoComResumoExpedicao(projetoId: number) {
+    const projeto = await this.prisma.projeto.findUnique({
+      where: { id: projetoId },
+      select: {
+        nome: true,
+        escolas: {
+          where: {
+            grades: { some: { status: "EXPEDIDA" } },
+          },
+          select: {
+            id: true,
+            nome: true,
+            numeroEscola: true,
+            numberJoin: true,
+            grades: {
+              where: { status: "EXPEDIDA" },
+              select: {
+                id: true,
+                itensGrade: {
+                  select: {
+                    quantidadeExpedida: true,
+                    itemTamanho: {
+                      select: {
+                        item: { select: { nome: true } },
+                        tamanho: { select: { nome: true } },
+                      },
+                    },
+                  },
+                },
+                gradeCaixas: { select: { id: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!projeto) return null;
+
+    let totalGeralItens = 0;
+    let totalGeralCaixas = 0;
+
+    const resultadoFormatado = {
+      nomeProjeto: projeto.nome,
+      escolas: projeto.escolas.map((escola) => {
+        let totalEscolaItens = 0;
+        let totalCaixasEscola = 0;
+
+        const gradesFormatadas = escola.grades.map((grade) => {
+          let itensPorTamanho: Record<string, Record<string, number>> = {};
+          let totalGradeItens = 0;
+
+          grade.itensGrade.forEach((itemGrade) => {
+            const itemNome = itemGrade.itemTamanho.item.nome;
+            const tamanhoNome = itemGrade.itemTamanho.tamanho.nome;
+            const quantidade = itemGrade.quantidadeExpedida;
+
+            if (!itensPorTamanho[itemNome]) {
+              itensPorTamanho[itemNome] = {};
+            }
+            itensPorTamanho[itemNome][tamanhoNome] =
+              (itensPorTamanho[itemNome][tamanhoNome] || 0) + quantidade;
+
+            totalGradeItens += quantidade;
+          });
+
+          totalEscolaItens += totalGradeItens;
+          totalCaixasEscola += grade.gradeCaixas.length;
+
+          return {
+            idGrade: grade.id,
+            itens: itensPorTamanho,
+            totalGradeItens,
+          };
+        });
+
+        totalGeralItens += totalEscolaItens;
+        totalGeralCaixas += totalCaixasEscola;
+
+        return {
+          nome: escola.nome,
+          numeroEscola: escola.numeroEscola,
+          numberJoin: escola.numberJoin,
+          grades: gradesFormatadas,
+          totalEscolaItens,
+          totalCaixasEscola,
+        };
+      }),
+      totalGeralItens,
+      totalGeralCaixas,
+    };
+
+    return resultadoFormatado;
   }
 
 }

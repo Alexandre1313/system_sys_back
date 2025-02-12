@@ -66,6 +66,15 @@ export class ProjetoController {
     return projetoItems;
   } 
 
+  @Get('resumeexped/:id')
+  async getExpeditionResume(@Param('id') id: string): Promise<any> {
+    const resume = await this.repo.getProjetoComResumoExpedicao(+id);
+    if (!resume) {
+      throw new NotFoundException(`Não foram encontrados dados referente ao projeto.`);
+    }
+    return resume;
+  } 
+
   @Get('saldos/:id')
   async getItemsEntyInputStock(@Param('id') id: string): Promise<ProjetoStockItems | null> {
     const saldos = await this.repo.getProjetoItensComEntradasSaidas(+id);
