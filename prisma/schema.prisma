@@ -207,6 +207,7 @@ model Caixa {
   userId       Int?
   grade        Grade       @relation(fields: [gradeId], references: [id])
   caixaItem    CaixaItem[]
+  OutInput     OutInput[]
 
   @@unique([gradeId, caixaNumber])
 }
@@ -269,8 +270,10 @@ model OutInput {
   id            Int         @id @default(autoincrement())
   itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
   itemTamanhoId Int
-  grade         Grade?       @relation(fields: [gradeId], references: [id])
+  grade         Grade?      @relation(fields: [gradeId], references: [id])
   gradeId       Int?
+  caixa         Caixa?      @relation(fields: [caixaId], references: [id])
+  caixaId       Int?
   estoque       Estoque     @relation(fields: [estoqueId], references: [id])
   estoqueId     Int
   usuario       Usuarios?   @relation(fields: [userId], references: [id])

@@ -77,6 +77,7 @@ export class CaixaPrisma {
                   quantidade: itemQty,
                   userId: userId,
                   gradeId: +dadosDaCaixa.gradeId,
+                  caixaId: novaCaixa.id,
                 },
               });
             }

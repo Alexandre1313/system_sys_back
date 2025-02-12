@@ -1,4 +1,4 @@
-import { Grade } from '@core/index';
+import { FinalyGrade, Grade } from '@core/index';
 import { Injectable } from '@nestjs/common';
 import { GradeItem, Status } from '@prisma/client';
 import { PrismaProvider } from 'src/db/prisma.provider';
@@ -27,12 +27,13 @@ export class GradePrisma {
   }
 
   // Atualiza apenas a propriedade "finalizada" para true dentro de uma transação
-  async finalizarGrade(id: number): Promise<Grade> {
+  async finalizarGrade(finalyGrade: FinalyGrade): Promise<Grade> {
+    const { id, finalizada, status } = finalyGrade;
     return await this.prisma.$transaction(async (prisma) => {
       try {
         const gradeAtualizada = await prisma.grade.update({
           where: { id },
-          data: { finalizada: true },
+          data: { finalizada: finalizada, status: status },
         });
         return gradeAtualizada;
       } catch (error) {

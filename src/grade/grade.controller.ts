@@ -25,7 +25,7 @@ export class GradeController {
       if (!finalyGrade.id) {
         throw new BadRequestException('O ID da grade é obrigatório.');
       }
-      return await this.repo.finalizarGrade(finalyGrade.id);
+      return await this.repo.finalizarGrade(finalyGrade);
     } catch (error) {
       throw new BadRequestException('Erro ao finalizar a grade: ' + error.message);
     }
