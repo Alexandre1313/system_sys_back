@@ -7,7 +7,7 @@ export class CaixaPrisma {
   constructor(private readonly prisma: PrismaProvider) { }
 
   async inserirCaixaEItens(caixaData: Caixa): Promise<Caixa> {
-    const { caixaItem, itensGrade, userId, ...dadosDaCaixa } = caixaData;    
+    const { caixaItem, itensGrade, userId, ...dadosDaCaixa } = caixaData;
     try {
       // Usa uma transação Prisma para garantir atomicidade
       const result = await this.prisma.$transaction(async (prisma) => {
@@ -41,14 +41,28 @@ export class CaixaPrisma {
           })
         );
 
-        // 3. Atualiza os itens da grade com a nova quantidade expedida
         await Promise.all(
-          itensGrade.map((item) =>
-            prisma.gradeItem.update({
+          itensGrade.map(async (item) => {
+            // Busca o item antes da atualização
+            const itemDB = await prisma.gradeItem.findUnique({
+              where: { id: item.id }
+            });
+
+            if (!itemDB) {
+              throw new Error(`Item com ID ${item.id} não encontrado.`);
+            }
+
+            // Verifica se a quantidade expedida não ultrapassa o limite permitido
+            if (item.quantidadeExpedida > itemDB.quantidade) {
+              throw new Error(`A quantidade expedida (${item.quantidadeExpedida}) não pode ser maior que a quantidade solicitada (${itemDB.quantidade}) para o item ${item.id}.`);
+            }
+
+            // Atualiza o item na grade
+            return prisma.gradeItem.update({
               where: { id: item.id },
               data: { quantidadeExpedida: item.quantidadeExpedida },
-            })
-          )
+            });
+          })
         );
 
         // 4. Atualiza o estoque com base no `itemTamanhoId` em caixaItem e insere as movimentações de saída
