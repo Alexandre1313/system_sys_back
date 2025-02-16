@@ -62,9 +62,9 @@ async function seed2() {
                     const grade = await prisma.grade.create({
                         data: {
                             escolaId: escola.id,                          
-                            companyId: 2222222,
-                            //createdAt: "2025-02-12T11:39:00.739Z", 
-                            //updatedAt: "2025-02-12T11:39:00.739Z", 
+                            companyId: 699999,
+                            createdAt: "2025-02-17T11:39:00.739Z", 
+                            updatedAt: "2025-02-17T11:39:00.739Z", 
                         },
                     });
                     console.log(`Grade (ID: ${grade.id}) criada.`);
