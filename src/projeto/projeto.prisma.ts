@@ -567,99 +567,97 @@ export class ProjetoPrisma {
     }
   }
 
-  async getProjetoComResumoExpedicao(projetoId: number) {
-    const projeto = await this.prisma.projeto.findUnique({
-      where: { id: projetoId },
-      select: {
-        nome: true,
-        escolas: {
-          where: {
-            grades: { some: { status: "EXPEDIDA" } },
-          },
-          select: {
-            id: true,
-            nome: true,
-            numeroEscola: true,
-            numberJoin: true,
+  async getProjetoComResumoExpedicao(): Promise<GradesRomaneio[]> {
+    const projectsWithGrades = await this.prisma.projeto.findMany({
+      include: {
+        escolas: {  
+          include: {
             grades: {
               where: { status: "EXPEDIDA" },
-              select: {
-                id: true,
-                itensGrade: {
-                  select: {
-                    quantidadeExpedida: true,
-                    itemTamanho: {
-                      select: {
-                        item: { select: { nome: true } },
-                        tamanho: { select: { nome: true } },
-                      },
-                    },
-                  },
+              include: {
+                company: {
+                  include: {
+                    address: true,
+                    telefone: true
+                  }
                 },
-                gradeCaixas: { select: { id: true } },
-              },
-            },
-          },
-        },
-      },
+                itensGrade: {
+                  include: {
+                    itemTamanho: {
+                      include: {
+                        item: true,
+                        tamanho: true
+                      }
+                    }
+                  }
+                },
+                gradeCaixas: true,
+                escola: {
+                  include: {
+                    address: true,
+                    telefone: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     });
 
-    if (!projeto) return null;
+    if (!projectsWithGrades || projectsWithGrades.length === 0) {
+      return [];
+    }
 
-    let totalGeralItens = 0;
-    let totalGeralCaixas = 0;
-
-    const resultadoFormatado = {
-      nomeProjeto: projeto.nome,
-      escolas: projeto.escolas.map((escola) => {
-        let totalEscolaItens = 0;
-        let totalCaixasEscola = 0;
-
-        const gradesFormatadas = escola.grades.map((grade) => {
-          let itensPorTamanho: Record<string, Record<string, number>> = {};
-          let totalGradeItens = 0;
-
-          grade.itensGrade.forEach((itemGrade) => {
-            const itemNome = itemGrade.itemTamanho.item.nome;
-            const tamanhoNome = itemGrade.itemTamanho.tamanho.nome;
-            const quantidade = itemGrade.quantidadeExpedida;
-
-            if (!itensPorTamanho[itemNome]) {
-              itensPorTamanho[itemNome] = {};
-            }
-            itensPorTamanho[itemNome][tamanhoNome] =
-              (itensPorTamanho[itemNome][tamanhoNome] || 0) + quantidade;
-
-            totalGradeItens += quantidade;
-          });
-
-          totalEscolaItens += totalGradeItens;
-          totalCaixasEscola += grade.gradeCaixas.length;
-
-          return {
-            idGrade: grade.id,
-            itens: itensPorTamanho,
-            totalGradeItens,
-          };
-        });
-
-        totalGeralItens += totalEscolaItens;
-        totalGeralCaixas += totalCaixasEscola;
-
-        return {
-          nome: escola.nome,
+    const formattedData = projectsWithGrades.flatMap((projeto) =>
+      projeto.escolas?.flatMap((escola) => 
+        escola.grades.map((grade) => ({
+          id: grade.id,
+          isPrint: grade.status === "IMPRESSA",
+          company: grade.company.nome,
+          cnpjCompany: grade.company.cnpj || "",
+          projectname: projeto.nome,
+          escola: escola.nome,
+          tipo: grade.tipo,
           numeroEscola: escola.numeroEscola,
-          numberJoin: escola.numberJoin,
-          grades: gradesFormatadas,
-          totalEscolaItens,
-          totalCaixasEscola,
-        };
-      }),
-      totalGeralItens,
-      totalGeralCaixas,
-    };
+          numberJoin: escola.numberJoin || "",
+          telefoneCompany: grade.company.telefone.map((t) => t.telefone).join(", "),
+          emailCompany: grade.company.email,
+          telefoneEscola: escola.telefone.map((t) => t.telefone).join(", "),
+          create: grade.createdAt.toISOString(),
+          enderecoschool: escola.address.length > 0 ? {
+            rua: escola.address[0].street || "",
+            numero: escola.address[0].number || "",
+            complemento: escola.address[0].complement || "",
+            bairro: escola.address[0].neighborhood || "",
+            cidade: escola.address[0].city || "",
+            estado: escola.address[0].state || "",
+            postalCode: escola.address[0].postalCode || "",
+            country: escola.address[0].country || "",
+          } : null,
+          tamanhosQuantidades: grade.itensGrade.map((gradeItem) => ({
+            item: gradeItem.itemTamanho.item.nome,
+            genero: gradeItem.itemTamanho.item.genero,
+            tamanho: gradeItem.itemTamanho.tamanho.nome,
+            composicao: gradeItem.itemTamanho.item.composicao || "",
+            quantidade: gradeItem.quantidadeExpedida,
+          })),
+          caixas: grade.gradeCaixas,
+          enderecocompany: grade.company.address.length > 0 ? {
+            rua: grade.company.address[0].street || "",
+            numero: grade.company.address[0].number || "",
+            complemento: grade.company.address[0].complement || "",
+            bairro: grade.company.address[0].neighborhood || "",
+            cidade: grade.company.address[0].city || "",
+            estado: grade.company.address[0].state || "",
+            postalCode: grade.company.address[0].postalCode || "",
+            country: grade.company.address[0].country || "",
+          } : null,
+        }))
+      )
+    );
 
-    return resultadoFormatado;
+    return formattedData;
   }
 
 }

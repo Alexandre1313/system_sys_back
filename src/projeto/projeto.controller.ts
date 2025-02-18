@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ProjetoPrisma } from './projeto.prisma';
-import { GradeOpenBySchool, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
+import { GradeOpenBySchool, GradesRomaneio, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
 
 @Controller('projetos')
 export class ProjetoController {
@@ -66,9 +66,9 @@ export class ProjetoController {
     return projetoItems;
   } 
 
-  @Get('resumeexped/:id')
-  async getExpeditionResume(@Param('id') id: string): Promise<any> {
-    const resume = await this.repo.getProjetoComResumoExpedicao(+id);
+  @Get('resumeexped')
+  async getExpeditionResume(): Promise<GradesRomaneio[]> {
+    const resume = await this.repo.getProjetoComResumoExpedicao();
     if (!resume) {
       throw new NotFoundException(`Não foram encontrados dados referente ao projeto.`);
     }
