@@ -567,7 +567,7 @@ export class ProjetoPrisma {
     }
   }
 
-  async getProjetoComResumoExpedicao(): Promise<GradesRomaneio[]> {
+  /*async getProjetoComResumoExpedicao(): Promise<GradesRomaneio[]> {
     const projectsWithGrades = await this.prisma.projeto.findMany({
       include: {
         escolas: {  
@@ -658,6 +658,6 @@ export class ProjetoPrisma {
     );
 
     return formattedData;
-  }
+  }*/
 
 }

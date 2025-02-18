@@ -66,14 +66,14 @@ export class ProjetoController {
     return projetoItems;
   } 
 
-  @Get('resumeexped')
+  /*@Get('resumeexped')
   async getExpeditionResume(): Promise<GradesRomaneio[]> {
     const resume = await this.repo.getProjetoComResumoExpedicao();
     if (!resume) {
       throw new NotFoundException(`Não foram encontrados dados referente ao projeto.`);
     }
     return resume;
-  } 
+  } */
 
   @Get('saldos/:id')
   async getItemsEntyInputStock(@Param('id') id: string): Promise<ProjetoStockItems | null> {
