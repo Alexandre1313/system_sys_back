@@ -567,7 +567,7 @@ export class ProjetoPrisma {
     }
   }
 
-  /*async getProjetoComResumoExpedicao(): Promise<GradesRomaneio[]> {
+  async getProjetoComResumoExpedicao(): Promise<GradesRomaneio[]> {
     const projectsWithGrades = await this.prisma.projeto.findMany({
       include: {
         escolas: {  
@@ -623,18 +623,18 @@ export class ProjetoPrisma {
           numberJoin: escola.numberJoin || "",
           telefoneCompany: grade.company.telefone.map((t) => t.telefone).join(", "),
           emailCompany: grade.company.email,
-          telefoneEscola: escola.telefone.map((t) => t.telefone).join(", "),
+          telefoneEscola: grade.escola.telefone?.map(tel => tel.telefone).join(', ') || "", // Telefones da escola
           create: grade.createdAt.toISOString(),
-          enderecoschool: escola.address.length > 0 ? {
-            rua: escola.address[0].street || "",
-            numero: escola.address[0].number || "",
-            complemento: escola.address[0].complement || "",
-            bairro: escola.address[0].neighborhood || "",
-            cidade: escola.address[0].city || "",
-            estado: escola.address[0].state || "",
-            postalCode: escola.address[0].postalCode || "",
-            country: escola.address[0].country || "",
-          } : null,
+          enderecoschool: {
+            rua: grade.escola.address[0]?.street || "",
+            numero: grade.escola.address[0]?.number || "",
+            complemento: grade.escola.address[0]?.complement || "",
+            bairro: grade.escola.address[0]?.neighborhood || "",
+            cidade: grade.escola.address[0]?.city || "",
+            estado: grade.escola.address[0]?.state || "",
+            postalCode: grade.escola.address[0]?.postalCode || "",
+            country: grade.escola.address[0]?.country || "",
+          },
           tamanhosQuantidades: grade.itensGrade.map((gradeItem) => ({
             item: gradeItem.itemTamanho.item.nome,
             genero: gradeItem.itemTamanho.item.genero,
@@ -658,6 +658,6 @@ export class ProjetoPrisma {
     );
 
     return formattedData;
-  }*/
+  }
 
 }
