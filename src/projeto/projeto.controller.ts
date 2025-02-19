@@ -55,7 +55,7 @@ export class ProjetoController {
       return null;
     }
     return projetoItems;
-  }  
+  }
 
   @Get('itens/:id')
   async getItems(@Param('id') id: string): Promise<ProjectItems> {
@@ -64,16 +64,28 @@ export class ProjetoController {
       throw new NotFoundException(`Não foram encontrados itens para os projetos.`);
     }
     return projetoItems;
-  } 
+  }
 
-  @Get('resumeexped')
-  async getExpeditionResume(): Promise<GradesRomaneio[]> {
-    const resume = await this.repo.getProjetoComResumoExpedicao();
-    if (!resume) {
+  @Get('resumeexped/:id/:remessa/:status')
+  async getExpeditionResume(
+    @Param('id') id: string,
+    @Param('remessa') remessa: string,
+    @Param('status') status: string
+  ): Promise<GradesRomaneio[]> {
+    // Lista de status válidos
+    const validStatuses = ["EXPEDIDA", "DESPACHADA", "PRONTA", "IMPRESSA", "TODAS"];
+    // Verifica se o status recebido é válido
+    if (!validStatuses.includes(status.toUpperCase())) {
+      throw new BadRequestException(`Status inválido. Use um dos seguintes: ${validStatuses.join(', ')}`);
+    }
+    // Chama a função passando os parâmetros convertidos
+    const resume = await this.repo.getProjetoComResumoExpedicao(+id, +remessa, status.toUpperCase() as "EXPEDIDA" | "DESPACHADA" | "PRONTA" | "IMPRESSA" | "TODAS");
+    if (!resume || resume.length === 0) {
       throw new NotFoundException(`Não foram encontrados dados referente ao projeto.`);
     }
     return resume;
-  } 
+  }
+
 
   @Get('saldos/:id')
   async getItemsEntyInputStock(@Param('id') id: string): Promise<ProjetoStockItems | null> {
@@ -91,6 +103,15 @@ export class ProjetoController {
       throw new NotFoundException(`Não foram encontradas datas válidas.`);
     }
     return dates;
+  }
+
+  @Get('remessas/:id')
+  async getRemessas(@Param('id') id: string): Promise<number[]> {
+    const remessas = await this.repo.getUniqueGradeRemessasByProject(+id);
+    if (!remessas) {
+      throw new NotFoundException(`Não foram encontradas remessas válidas.`);
+    }
+    return remessas;
   }
 
   // Obter um projeto específico pelo ID

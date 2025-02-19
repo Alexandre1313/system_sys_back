@@ -61,6 +61,7 @@ async function seed2() {
                     console.log(`\nCriando grade para a escola ${escola.nome}`);
                     const grade = await prisma.grade.create({
                         data: {
+                            remessa: 1,
                             escolaId: escola.id,                          
                             companyId: 222222,
                             //createdAt: "2025-02-17T11:39:00.739Z", 

@@ -201,6 +201,32 @@ export class ProjetoPrisma {
     }
   }
 
+  async getUniqueGradeRemessasByProject(projectId: number): Promise<number[]> {
+    if (!projectId) {
+      console.error('ID do projeto é inválido.');
+      return [];
+    }
+
+    try {
+      // Buscar valores únicos de remessa dentro das grades vinculadas às escolas do projeto
+      const remessas = await this.prisma.$queryRaw<{ remessa: number }[]>(
+        Prisma.sql`
+            SELECT DISTINCT "Grade"."remessa"
+            FROM "Grade"
+            INNER JOIN "Escola" ON "Grade"."escolaId" = "Escola"."id"
+            WHERE "Escola"."projetoId" = ${projectId} AND "Grade"."remessa" IS NOT NULL
+            ORDER BY "Grade"."remessa" ASC
+        `
+      );
+
+      // Retornar um array simples com os valores únicos de remessa
+      return remessas.map(row => row.remessa);
+    } catch (error) {
+      console.error(`Erro ao buscar as remessas únicas das grades para o projeto ${projectId}:`, error);
+      return [];
+    }
+  }
+
   async getFormattedGradesByDateAndProject(projectId: number, dateStr: string): Promise<GradesRomaneio[]> {
     if (!projectId || !dateStr) {
       console.error("Projeto ID ou data inválidos.");
@@ -294,6 +320,7 @@ export class ProjetoPrisma {
           escola: grade.escola.nome,
           tipo: grade.tipo,
           numeroEscola: grade.escola.numeroEscola || "",  // Número da escola
+          status: grade.status,
           numberJoin: grade.escola.numberJoin,
           telefoneCompany: grade.company.telefone?.map(tel => tel.telefone).join(', ') || "",  // Telefones da empresa
           emailCompany: grade.company.email || "",   // E-mail da empresa (agora no modelo Company)
@@ -567,36 +594,36 @@ export class ProjetoPrisma {
     }
   }
 
-  async getProjetoComResumoExpedicao(): Promise<GradesRomaneio[]> {
+  async getProjetoComResumoExpedicao(
+    projectId: number,
+    remessa: number,
+    status: "EXPEDIDA" | "DESPACHADA" | "PRONTA" | "IMPRESSA" | "TODAS"
+  ): Promise<GradesRomaneio[]> {
+    
     const projectsWithGrades = await this.prisma.projeto.findMany({
+      where: { id: projectId }, // Filtra pelo ID do projeto
       include: {
-        escolas: {  
+        escolas: {
           include: {
             grades: {
-              where: { status: "EXPEDIDA" },
+              where: {
+                remessa, // Filtra pelo número da remessa
+                ...(status !== "TODAS" ? { status } : {}), // Filtra pelo status, exceto se for "TODAS"
+              },
               include: {
                 company: {
-                  include: {
-                    address: true,
-                    telefone: true
-                  }
+                  include: { address: true, telefone: true }
                 },
                 itensGrade: {
                   include: {
                     itemTamanho: {
-                      include: {
-                        item: true,
-                        tamanho: true
-                      }
+                      include: { item: true, tamanho: true }
                     }
                   }
                 },
                 gradeCaixas: true,
                 escola: {
-                  include: {
-                    address: true,
-                    telefone: true
-                  }
+                  include: { address: true, telefone: true }
                 }
               }
             }
@@ -604,26 +631,27 @@ export class ProjetoPrisma {
         }
       }
     });
-
+  
     if (!projectsWithGrades || projectsWithGrades.length === 0) {
       return [];
     }
-
-    const formattedData = projectsWithGrades.flatMap((projeto) =>
-      projeto.escolas?.flatMap((escola) => 
+  
+    let formattedData = projectsWithGrades.flatMap((projeto) =>
+      projeto.escolas?.flatMap((escola) =>
         escola.grades.map((grade) => ({
           id: grade.id,
-          isPrint: grade.status === "IMPRESSA",
+          isPrint: grade.finalizada,
           company: grade.company.nome,
           cnpjCompany: grade.company.cnpj || "",
           projectname: projeto.nome,
           escola: escola.nome,
           tipo: grade.tipo,
           numeroEscola: escola.numeroEscola,
+          status: grade.status,
           numberJoin: escola.numberJoin || "",
           telefoneCompany: grade.company.telefone.map((t) => t.telefone).join(", "),
           emailCompany: grade.company.email,
-          telefoneEscola: grade.escola.telefone?.map(tel => tel.telefone).join(', ') || "", // Telefones da escola
+          telefoneEscola: grade.escola.telefone?.map(tel => tel.telefone).join(', ') || "",
           create: grade.createdAt.toISOString(),
           enderecoschool: {
             rua: grade.escola.address[0]?.street || "",
@@ -656,8 +684,16 @@ export class ProjetoPrisma {
         }))
       )
     );
-
+  
+    // Se o status for "TODAS", ordena as grades na sequência correta
+    if (status === "TODAS") {
+      const statusOrder = { EXPEDIDA: 1, DESPACHADA: 2, PRONTA: 3, IMPRESSA: 4 };
+      formattedData = formattedData.sort(
+        (a, b) => (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5)
+      );
+    }
+  
     return formattedData;
-  }
+  }  
 
 }

@@ -185,6 +185,7 @@ model Grade {
   finalizada  Boolean     @default(false)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  remessa     Int?
   tipo        String?
   status      Status      @default(PRONTA)
   gradeCaixas Caixa[]

@@ -1,4 +1,4 @@
-import { Caixa } from "@prisma/client";
+import { Caixa, Status } from "@prisma/client";
 
 export default interface GradesRomaneio {
   id: number;
@@ -9,6 +9,7 @@ export default interface GradesRomaneio {
   escola: string;
   tipo: string | null;
   numeroEscola: string;
+  status: Status;
   numberJoin: string;
   telefoneCompany: string;
   emailCompany: string;
