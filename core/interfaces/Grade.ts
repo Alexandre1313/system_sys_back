@@ -13,6 +13,7 @@ export default interface Grade {
   tipo?: string;
   itensGrade?: GradeItem[];
   gradeCaixas?: Caixa[];
+  remessa: number;
   finalizada?: boolean;
   status?: Status;
   createdAt?: Date;

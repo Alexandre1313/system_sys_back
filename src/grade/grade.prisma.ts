@@ -142,6 +142,7 @@ export class GradePrisma {
             escolaId: grade.escolaId,
             finalizada: false,
             status: 'PRONTA' as Status,
+            remessa: grade.remessa,
             itensGrade: itemsParaCriarNovaGrade,
           };
 
@@ -153,6 +154,7 @@ export class GradePrisma {
               escolaId: dadosDaGrade.escolaId,
               companyId: dadosDaGrade.companyId,
               finalizada: dadosDaGrade.finalizada,
+              remessa: dadosDaGrade.remessa,
               status: dadosDaGrade.status as Status,
             },
           });
