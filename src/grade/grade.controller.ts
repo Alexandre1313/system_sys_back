@@ -31,18 +31,35 @@ export class GradeController {
     }
   }
 
+  @Post('/alterdespachadas')
+  @HttpCode(HttpStatus.OK)
+  async finalizarGrades(@Body() ids: number[]): Promise<number[]> {
+    try {
+      if (!ids || ids.length === 0) {
+        throw new BadRequestException('O array de IDs é obrigatório e não pode estar vazio.');
+      }      
+      const idsAlterados = await this.repo.atualizarStatusParaDespachada(ids);
+      if (idsAlterados.length === 0) {
+        throw new NotFoundException('Nenhuma grade com status EXPEDIDA encontrada para alteração.');
+      }
+      return idsAlterados; 
+    } catch (error) {
+      throw new BadRequestException('Erro ao finalizar as grades: ' + error.message);
+    }
+  }
+
   @Post('/ajustar/:id')
   @HttpCode(HttpStatus.OK)
   async ajustarGrade(@Param('id') id: string): Promise<Grade | null> {
     try {
       if (!id) {
         throw new BadRequestException('O ID da grade é obrigatório.');
-      }     
+      }
       const novaGrade = await this.repo.replicarGrade(+id);
       if (!novaGrade) {
         throw new NotFoundException('Nenhuma nova grade foi criada. Verifique os dados da grade original.');
       }
-      return novaGrade; 
+      return novaGrade;
     } catch (error) {
       throw new BadRequestException('Erro ao ajustar a grade: ' + error.message);
     }

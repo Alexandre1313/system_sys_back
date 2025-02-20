@@ -79,7 +79,7 @@ export class GradePrisma {
           include: { itensGrade: true },
         });
 
-        if (!grade || grade.status !== "PRONTA") {       
+        if (!grade || grade.status !== "PRONTA") {
           return null;
         }
 
@@ -91,7 +91,7 @@ export class GradePrisma {
           (item) => item.quantidadeExpedida > 0
         );
 
-        if (!algumItemExpedido) {          
+        if (!algumItemExpedido) {
           return null;
         }
 
@@ -114,7 +114,7 @@ export class GradePrisma {
             });
 
             houveAjuste = true;
-          } 
+          }
 
           if (algumItemExpedido && item.quantidadeExpedida === 0) {
             // Exclui o item se quantidadeExpedida for igual a 0 e algum item já foi expedido
@@ -192,6 +192,32 @@ export class GradePrisma {
         timeout: 20000, // Tempo máximo para execução da transação
       }
     );
+  }
+
+  async atualizarStatusParaDespachada(gradeIds: number[]): Promise<number[]> {
+    // Busca as grades no banco de dados, garantindo que estejam com status "EXPEDIDA"
+    const gradesExpedidas = await this.prisma.grade.findMany({
+      where: {
+        id: { in: gradeIds },
+        status: "EXPEDIDA",
+      },
+      select: { id: true },
+    });
+
+    // Se não encontrar nenhuma grade expedida, retorna um array vazio
+    if (gradesExpedidas.length === 0) return [];
+
+    // Extrai os IDs das grades que serão alteradas
+    const idsParaAtualizar = gradesExpedidas.map(grade => grade.id);
+
+    // Atualiza o status das grades encontradas para "DESPACHADA"
+    await this.prisma.grade.updateMany({
+      where: { id: { in: idsParaAtualizar } },
+      data: { status: "DESPACHADA" },
+    });
+
+    // Retorna os IDs das grades que foram alteradas
+    return idsParaAtualizar;
   }
 
 }
