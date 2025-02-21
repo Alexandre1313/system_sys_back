@@ -295,6 +295,7 @@ export class ProjetoPrisma {
           genero: itemGrade.itemTamanho.item.genero,
           tamanho: itemGrade.itemTamanho.tamanho.nome, // Nome do tamanho
           quantidade: itemGrade.quantidadeExpedida,   // Quantidade expedida
+          previsto: itemGrade.quantidade,
         }));
 
         tamanhosEQuantidades.sort((a, b) => {
@@ -669,6 +670,7 @@ export class ProjetoPrisma {
             tamanho: gradeItem.itemTamanho.tamanho.nome,
             composicao: gradeItem.itemTamanho.item.composicao || "",
             quantidade: gradeItem.quantidadeExpedida,
+            previsto: gradeItem.quantidade,
           })),
           caixas: grade.gradeCaixas,
           enderecocompany: grade.company.address.length > 0 ? {
