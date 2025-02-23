@@ -600,102 +600,102 @@ export class ProjetoPrisma {
     remessa: number,
     status: "EXPEDIDA" | "DESPACHADA" | "PRONTA" | "IMPRESSA" | "TODAS"
   ): Promise<GradesRomaneio[]> {
-    
-    const projectsWithGrades = await this.prisma.projeto.findMany({
-      where: { id: projectId }, // Filtra pelo ID do projeto
-      include: {
-        escolas: {
-          include: {
-            grades: {
-              where: {
-                remessa, // Filtra pelo número da remessa
-                ...(status !== "TODAS" ? { status } : {}), // Filtra pelo status, exceto se for "TODAS"
+    try {
+      const projectsWithGrades = await this.prisma.projeto.findMany({
+        where: { id: projectId },
+        include: {
+          escolas: {
+            include: {
+              grades: {
+                where: {
+                  remessa,
+                  ...(status !== "TODAS" ? { status } : {}),
+                },
+                include: {
+                  company: { include: { address: true, telefone: true } },
+                  itensGrade: { include: { itemTamanho: { include: { item: true, tamanho: true } } } },
+                  gradeCaixas: true,
+                  escola: { include: { address: true, telefone: true } },
+                },
               },
-              include: {
-                company: {
-                  include: { address: true, telefone: true }
-                },
-                itensGrade: {
-                  include: {
-                    itemTamanho: {
-                      include: { item: true, tamanho: true }
-                    }
-                  }
-                },
-                gradeCaixas: true,
-                escola: {
-                  include: { address: true, telefone: true }
-                }
-              }
-            }
-          }
-        }
-      }
-    });
-  
-    if (!projectsWithGrades || projectsWithGrades.length === 0) {
-      return [];
-    }
-  
-    let formattedData = projectsWithGrades.flatMap((projeto) =>
-      projeto.escolas?.flatMap((escola) =>
-        escola.grades.map((grade) => ({
-          id: grade.id,
-          isPrint: grade.finalizada,
-          company: grade.company.nome,
-          cnpjCompany: grade.company.cnpj || "",
-          projectname: projeto.nome,
-          escola: escola.nome,
-          tipo: grade.tipo,
-          numeroEscola: escola.numeroEscola,
-          status: grade.status,
-          numberJoin: escola.numberJoin || "",
-          telefoneCompany: grade.company.telefone.map((t) => t.telefone).join(", "),
-          emailCompany: grade.company.email,
-          telefoneEscola: grade.escola.telefone?.map(tel => tel.telefone).join(', ') || "",
-          create: grade.createdAt.toISOString(),
-          enderecoschool: {
-            rua: grade.escola.address[0]?.street || "",
-            numero: grade.escola.address[0]?.number || "",
-            complemento: grade.escola.address[0]?.complement || "",
-            bairro: grade.escola.address[0]?.neighborhood || "",
-            cidade: grade.escola.address[0]?.city || "",
-            estado: grade.escola.address[0]?.state || "",
-            postalCode: grade.escola.address[0]?.postalCode || "",
-            country: grade.escola.address[0]?.country || "",
+            },
           },
-          tamanhosQuantidades: grade.itensGrade.map((gradeItem) => ({
-            item: gradeItem.itemTamanho.item.nome,
-            genero: gradeItem.itemTamanho.item.genero,
-            tamanho: gradeItem.itemTamanho.tamanho.nome,
-            composicao: gradeItem.itemTamanho.item.composicao || "",
-            quantidade: gradeItem.quantidadeExpedida,
-            previsto: gradeItem.quantidade,
-          })),
-          caixas: grade.gradeCaixas,
-          enderecocompany: grade.company.address.length > 0 ? {
-            rua: grade.company.address[0].street || "",
-            numero: grade.company.address[0].number || "",
-            complemento: grade.company.address[0].complement || "",
-            bairro: grade.company.address[0].neighborhood || "",
-            cidade: grade.company.address[0].city || "",
-            estado: grade.company.address[0].state || "",
-            postalCode: grade.company.address[0].postalCode || "",
-            country: grade.company.address[0].country || "",
-          } : null,
-        }))
-      )
-    );
-  
-    // Se o status for "TODAS", ordena as grades na sequência correta
-    if (status === "TODAS") {
-      const statusOrder = { EXPEDIDA: 1, DESPACHADA: 2, PRONTA: 3, IMPRESSA: 4 };
-      formattedData = formattedData.sort(
-        (a, b) => (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5)
+        },
+      });
+
+      if (!projectsWithGrades || projectsWithGrades.length === 0) {
+        return [];
+      }
+
+      let formattedData = projectsWithGrades.flatMap((projeto) =>
+        (projeto.escolas ?? []).flatMap((escola) =>
+          (escola.grades ?? []).map((grade) => ({
+            id: grade.id,
+            isPrint: grade.finalizada,
+            company: grade.company?.nome ?? "",
+            cnpjCompany: grade.company?.cnpj ?? "",
+            projectname: projeto.nome,
+            escola: escola.nome,
+            tipo: grade.tipo,
+            numeroEscola: escola.numeroEscola,
+            status: grade.status,
+            numberJoin: escola.numberJoin,
+            telefoneCompany: (grade.company?.telefone ?? []).map((t) => t.telefone).join(", ") || "-",
+            emailCompany: grade.company?.email ?? "",
+            telefoneEscola: (grade.escola?.telefone ?? []).map(tel => tel.telefone).join(', ') || "-",
+            create: convertSPTime(String(grade.createdAt)),
+
+            // Endereço da Escola
+            enderecoschool: {
+              rua: grade.escola?.address?.[0]?.street ?? "",
+              numero: grade.escola?.address?.[0]?.number ?? "",
+              complemento: grade.escola?.address?.[0]?.complement ?? "",
+              bairro: grade.escola?.address?.[0]?.neighborhood ?? "",
+              cidade: grade.escola?.address?.[0]?.city ?? "",
+              estado: grade.escola?.address?.[0]?.state ?? "",
+              postalCode: grade.escola?.address?.[0]?.postalCode ?? "",
+              country: grade.escola?.address?.[0]?.country ?? "",
+            },
+
+            // Endereço da Company (agora sempre retorna um objeto, mesmo se não houver dados)
+            enderecocompany: {
+              rua: grade.company?.address?.[0]?.street ?? "",
+              numero: grade.company?.address?.[0]?.number ?? "",
+              complemento: grade.company?.address?.[0]?.complement ?? "",
+              bairro: grade.company?.address?.[0]?.neighborhood ?? "",
+              cidade: grade.company?.address?.[0]?.city ?? "",
+              estado: grade.company?.address?.[0]?.state ?? "",
+              postalCode: grade.company?.address?.[0]?.postalCode ?? "",
+              country: grade.company?.address?.[0]?.country ?? "",
+            },
+
+            tamanhosQuantidades: (grade.itensGrade ?? []).map((gradeItem) => ({
+              item: gradeItem.itemTamanho?.item?.nome,
+              genero: gradeItem.itemTamanho?.item?.genero,
+              tamanho: gradeItem.itemTamanho?.tamanho?.nome,
+              composicao: gradeItem.itemTamanho?.item?.composicao,
+              quantidade: gradeItem.quantidadeExpedida,
+              previsto: gradeItem.quantidade,
+            })),
+
+            caixas: grade.gradeCaixas ?? [],
+          }))
+        )
       );
+
+      // Ordenação se for "TODAS"
+      if (status === "TODAS") {
+        const statusOrder = { EXPEDIDA: 1, DESPACHADA: 2, PRONTA: 3, IMPRESSA: 4 };
+        formattedData = formattedData.sort(
+          (a, b) => (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5)
+        );
+      }
+
+      return formattedData;
+    } catch (error) {
+      console.error("Erro ao buscar projeto:", error);
+      throw new Error("Erro interno ao buscar os dados do projeto.");
     }
-  
-    return formattedData;
-  }  
+  }
 
 }
