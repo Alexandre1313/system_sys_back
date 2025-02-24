@@ -627,6 +627,11 @@ export class ProjetoPrisma {
         return [];
       }
 
+      function calcularPorcentagem(parte: number, total: number): number {
+        if (total === 0) return 0; 
+        return (parte / total) * 100;
+      }
+
       let formattedData = projectsWithGrades.flatMap((projeto) =>
         (projeto.escolas ?? []).flatMap((escola) =>
           (escola.grades ?? []).map((grade) => ({
@@ -689,6 +694,19 @@ export class ProjetoPrisma {
         formattedData = formattedData.sort(
           (a, b) => (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5)
         );
+      }
+
+      // Ordenação se for "TODAS" ou "PRONTAS"
+      if (status === "PRONTA") {
+        formattedData = formattedData.sort((a, b) => {
+          const totalA = a.tamanhosQuantidades.reduce((sum, item) => sum + item.quantidade, 0);
+          const totalB = b.tamanhosQuantidades.reduce((sum, item) => sum + item.quantidade, 0);
+          const totalAP = a.tamanhosQuantidades.reduce((sum, item) => sum + item.previsto, 0);
+          const totalBP = b.tamanhosQuantidades.reduce((sum, item) => sum + item.previsto, 0);
+          const totalPorcentA = calcularPorcentagem(totalA, totalAP);
+          const totalPorcentB = calcularPorcentagem(totalB, totalBP);
+          return totalPorcentB - totalPorcentA;
+        });
       }
 
       return formattedData;
