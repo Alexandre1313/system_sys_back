@@ -110,6 +110,7 @@ export class EscolaPrisma {
             id: true,
             tipo: true,
             finalizada: true,
+            status: true,
             companyId: true,
             escolaId: true,
             company: {
