@@ -327,6 +327,7 @@ export class ProjetoPrisma {
           emailCompany: grade.company.email || "",   // E-mail da empresa (agora no modelo Company)
           telefoneEscola: grade.escola.telefone?.map(tel => tel.telefone).join(', ') || "", // Telefones da escola
           create: convertSPTime(String(grade.createdAt)),
+          update: convertSPTime(String(grade.updatedAt)),
           enderecoschool: {
             rua: grade.escola.address[0]?.street || "",
             numero: grade.escola.address[0]?.number || "",
@@ -649,6 +650,7 @@ export class ProjetoPrisma {
             emailCompany: grade.company?.email ?? "",
             telefoneEscola: (grade.escola?.telefone ?? []).map(tel => tel.telefone).join(', ') || "-",
             create: convertSPTime(String(grade.createdAt)),
+            update: convertSPTime(String(grade.updatedAt)),
 
             // Endereço da Escola
             enderecoschool: {
