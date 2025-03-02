@@ -98,6 +98,20 @@ export class CaixaPrisma {
           })
         );
 
+        const itensDaGrade = await prisma.gradeItem.findMany({
+          where: { gradeId: +dadosDaCaixa.gradeId }
+        });
+
+        const todosExpedidos = itensDaGrade.every(item => item.quantidadeExpedida === item.quantidade);
+
+        if (todosExpedidos) {
+          // Atualiza a grade para EXPEDIDA e finalizada = true
+          await prisma.grade.update({
+            where: { id: +dadosDaCaixa.gradeId },
+            data: { status: "EXPEDIDA", finalizada: true }
+          });
+        }
+
         // Retorna a nova caixa com os itens associados
         return {
           ...novaCaixa,

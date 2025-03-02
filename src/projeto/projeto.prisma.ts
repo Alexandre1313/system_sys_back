@@ -379,7 +379,7 @@ export class ProjetoPrisma {
 
         numTamanhos.sort((a, b) => parseInt(a) - parseInt(b)); // Ordena tamanhos numéricos
         letraTamanhos.sort((a, b) => {
-          const ordem = ['P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
+          const ordem = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
           return ordem.indexOf(a) - ordem.indexOf(b);
         });
 
@@ -534,7 +534,7 @@ export class ProjetoPrisma {
         numTamanhos.sort((a, b) => parseInt(a) - parseInt(b));
 
         // Ordena tamanhos com letras conforme a ordem desejada
-        const ordem = ['P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
+        const ordem = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
         letraTamanhos.sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b));
 
         return [...numTamanhos, ...letraTamanhos];
@@ -629,9 +629,24 @@ export class ProjetoPrisma {
       }
 
       function calcularPorcentagem(parte: number, total: number): number {
-        if (total === 0) return 0; 
+        if (total === 0) return 0;
         return (parte / total) * 100;
       }
+
+      // Função para ordenar tamanhos
+      const ordenarTamanhos = (tamanhos: string[]): string[] => {
+        const numTamanhos = tamanhos.filter(tamanho => /^[0-9]+$/.test(tamanho)); // Filtra tamanhos numéricos
+        const letraTamanhos = tamanhos.filter(tamanho => !/^[0-9]+$/.test(tamanho)); // Filtra tamanhos com letras
+
+        // Ordena tamanhos numéricos (convertendo para inteiro)
+        numTamanhos.sort((a, b) => parseInt(a) - parseInt(b));
+
+        // Ordena tamanhos com letras conforme a ordem desejada
+        const ordem = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
+        letraTamanhos.sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b));
+
+        return [...numTamanhos, ...letraTamanhos];
+      };
 
       let formattedData = projectsWithGrades.flatMap((projeto) =>
         (projeto.escolas ?? []).flatMap((escola) =>
@@ -683,16 +698,24 @@ export class ProjetoPrisma {
               composicao: gradeItem.itemTamanho?.item?.composicao,
               quantidade: gradeItem.quantidadeExpedida,
               previsto: gradeItem.quantidade,
-            })),
-
+            })).sort((a, b) => { 
+              if (a.item < b.item) return -1;
+              if (a.item > b.item) return 1;                 
+              if (a.genero < b.genero) return -1;
+              if (a.genero > b.genero) return 1;             
+              const tamanhos = [a.tamanho, b.tamanho];
+              const tamanhosOrdenados = ordenarTamanhos(tamanhos);
+              return tamanhosOrdenados.indexOf(a.tamanho) - tamanhosOrdenados.indexOf(b.tamanho);
+            }),
+            
             caixas: grade.gradeCaixas ?? [],
           }))
         )
-      );
+      );      
 
       // Ordenação se for "TODAS"
       if (status === "TODAS") {
-        const statusOrder = { EXPEDIDA: 1, DESPACHADA: 2, PRONTA: 3, IMPRESSA: 4 };
+        const statusOrder = { PRONTA: 1, EXPEDIDA: 2, DESPACHADA: 3, IMPRESSA: 4 };
         formattedData = formattedData.sort(
           (a, b) => (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5)
         );
