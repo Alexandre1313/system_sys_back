@@ -362,6 +362,21 @@ export class EscolaPrisma {
         }
       };
 
+      // Função para ordenar tamanhos
+      const ordenarTamanhos = (tamanhos: string[]): string[] => {
+        const numTamanhos = tamanhos.filter(tamanho => /^[0-9]+$/.test(tamanho)); // Filtra tamanhos numéricos
+        const letraTamanhos = tamanhos.filter(tamanho => !/^[0-9]+$/.test(tamanho)); // Filtra tamanhos com letras
+
+        // Ordena tamanhos numéricos (convertendo para inteiro)
+        numTamanhos.sort((a, b) => parseInt(a) - parseInt(b));
+
+        // Ordena tamanhos com letras conforme a ordem desejada
+        const ordem = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
+        letraTamanhos.sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b));
+
+        return [...numTamanhos, ...letraTamanhos];
+      };
+
       // Ordenando as grades: primeiro por status, depois por data (assumindo que a data de criação é um campo na grade)
       const sortedGrades = escola.grades
         .sort((a, b) => {
@@ -437,7 +452,17 @@ export class EscolaPrisma {
               estoque: item.itemTamanho.estoque.quantidade,
               estoqueId: item.itemTamanho.estoque.id,
             },
-          })),
+          })).sort(
+            (a, b) => {
+              if (a.itemTamanho.itemNome < b.itemTamanho.itemNome) return -1;
+              if (a.itemTamanho.itemNome > b.itemTamanho.itemNome) return 1;
+              if (a.itemTamanho.itemGenero < b.itemTamanho.itemGenero) return -1;
+              if (a.itemTamanho.itemGenero > b.itemTamanho.itemGenero) return 1;
+              const tamanhos = [a.itemTamanho.tamanhoNome, b.itemTamanho.tamanhoNome];
+              const tamanhosOrdenados = ordenarTamanhos(tamanhos);
+              return tamanhosOrdenados.indexOf(a.itemTamanho.tamanhoNome) - tamanhosOrdenados.indexOf(b.itemTamanho.tamanhoNome);
+            }
+          ),
         })),
       };
 
