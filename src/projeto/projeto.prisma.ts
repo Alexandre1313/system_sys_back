@@ -137,6 +137,21 @@ export class ProjetoPrisma {
 
       if (!projeto) return null; // Retorna null se o projeto não for encontrado
 
+      // Função para ordenar tamanhos
+      const ordenarTamanhos = (tamanhos: string[]): string[] => {
+        const numTamanhos = tamanhos.filter(tamanho => /^[0-9]+$/.test(tamanho)); // Filtra tamanhos numéricos
+        const letraTamanhos = tamanhos.filter(tamanho => !/^[0-9]+$/.test(tamanho)); // Filtra tamanhos com letras
+
+        // Ordena tamanhos numéricos (convertendo para inteiro)
+        numTamanhos.sort((a, b) => parseInt(a) - parseInt(b));
+
+        // Ordena tamanhos com letras conforme a ordem desejada
+        const ordem = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
+        letraTamanhos.sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b));
+
+        return [...numTamanhos, ...letraTamanhos];
+      };
+
       // Transformação dos dados para a estrutura desejada
       const resultado = {
         id: projeto.id,
@@ -162,8 +177,10 @@ export class ProjetoPrisma {
 
         const generoCompare = a.genero.localeCompare(b.genero);
         if (generoCompare !== 0) return generoCompare;
-
-        return a.tamanho.localeCompare(b.tamanho);
+        
+        const tamanhos = [a.tamanho, b.tamanho];
+        const tamanhosOrdenados = ordenarTamanhos(tamanhos);
+        return tamanhosOrdenados.indexOf(a.tamanho) - tamanhosOrdenados.indexOf(b.tamanho);
       });
 
       return resultado; // Retorna o objeto diretamente
@@ -698,20 +715,20 @@ export class ProjetoPrisma {
               composicao: gradeItem.itemTamanho?.item?.composicao,
               quantidade: gradeItem.quantidadeExpedida,
               previsto: gradeItem.quantidade,
-            })).sort((a, b) => { 
+            })).sort((a, b) => {
               if (a.item < b.item) return -1;
-              if (a.item > b.item) return 1;                 
+              if (a.item > b.item) return 1;
               if (a.genero < b.genero) return -1;
-              if (a.genero > b.genero) return 1;             
+              if (a.genero > b.genero) return 1;
               const tamanhos = [a.tamanho, b.tamanho];
               const tamanhosOrdenados = ordenarTamanhos(tamanhos);
               return tamanhosOrdenados.indexOf(a.tamanho) - tamanhosOrdenados.indexOf(b.tamanho);
             }),
-            
+
             caixas: grade.gradeCaixas ?? [],
           }))
         )
-      );      
+      );
 
       // Ordenação se for "TODAS"
       if (status === "TODAS") {
