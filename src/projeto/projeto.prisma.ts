@@ -177,7 +177,7 @@ export class ProjetoPrisma {
 
         const generoCompare = a.genero.localeCompare(b.genero);
         if (generoCompare !== 0) return generoCompare;
-        
+
         const tamanhos = [a.tamanho, b.tamanho];
         const tamanhosOrdenados = ordenarTamanhos(tamanhos);
         return tamanhosOrdenados.indexOf(a.tamanho) - tamanhosOrdenados.indexOf(b.tamanho);
@@ -730,15 +730,27 @@ export class ProjetoPrisma {
         )
       );
 
-      // Ordenação se for "TODAS"
       if (status === "TODAS") {
         const statusOrder = { PRONTA: 1, EXPEDIDA: 2, DESPACHADA: 3, IMPRESSA: 4 };
-        formattedData = formattedData.sort(
-          (a, b) => (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5)
+
+        // Ordenação primeiro pelo status
+        formattedData = formattedData.sort((a, b) =>
+          (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5)
         );
+
+        // Agora, dentro de cada status, ordenar alfabeticamente pelo nome da escola
+        formattedData = formattedData.sort((a, b) => {
+          // Ordena primeiro pelo status e depois pelo nome da escola
+          if (a.status === b.status) {
+            const numeroEscolaA = parseInt(a.numeroEscola, 10);
+            const numeroEscolaB = parseInt(b.numeroEscola, 10);
+            return numeroEscolaA - numeroEscolaB;
+          }
+          return (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5);
+        });
       }
 
-      // Ordenação se for "TODAS" ou "PRONTAS"
+      // Ordenação se for "PRONTA"
       if (status === "PRONTA") {
         formattedData = formattedData.sort((a, b) => {
           const totalA = a.tamanhosQuantidades.reduce((sum, item) => sum + item.quantidade, 0);
@@ -748,6 +760,24 @@ export class ProjetoPrisma {
           const totalPorcentA = calcularPorcentagem(totalA, totalAP);
           const totalPorcentB = calcularPorcentagem(totalB, totalBP);
           return totalPorcentB - totalPorcentA;
+        });
+      }
+
+      // Ordenação se for "EXPEDIDA"
+      if (status === "EXPEDIDA") {
+        formattedData = formattedData.sort((a, b) => {
+          const numeroEscolaA = parseInt(a.numeroEscola, 10);
+          const numeroEscolaB = parseInt(b.numeroEscola, 10);
+          return numeroEscolaA - numeroEscolaB;
+        });
+      }
+
+      // Ordenação se for "DESPACHADA"
+      if (status === "DESPACHADA") {
+        formattedData = formattedData.sort((a, b) => {
+          const numeroEscolaA = parseInt(a.numeroEscola, 10);
+          const numeroEscolaB = parseInt(b.numeroEscola, 10);
+          return numeroEscolaA - numeroEscolaB;
         });
       }
 
