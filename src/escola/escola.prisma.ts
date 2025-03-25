@@ -113,6 +113,7 @@ export class EscolaPrisma {
             status: true,
             companyId: true,
             escolaId: true,
+            updatedAt: true,
             company: {
               select: {
                 id: true,
