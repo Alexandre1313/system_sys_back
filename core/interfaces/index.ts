@@ -34,11 +34,12 @@ import TamanhoQuantidade from "./TamanhoQuantidade";
 import TelephonesCompany from "./TelephonesCompany";
 import TelephonesSchool from "./TelephonesSchool";
 import Usuarios from "./Usuarios";
+import Grafo from "./Grafo";
 
 export type {
     AddressCompany, AddressSchool, Barcode, Caixa,
     CaixaItem, Company, DataInserction, DataInserctionUni, Embalagem, EnderecoInserction, EntryInput, Escola,     
     EscolaGradesItems, Estoque, FinalyGrade, Grade, GradeItem, GradeOpenBySchool, GradesRomaneio, Item, ItemsInserction, 
     ItemTamanho, ItensProjects, Login, OutInput, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems, QtyEmbDay,
-    StockGenerate, Tamanho, TamanhoQuantidade, TelephonesCompany, TelephonesSchool, Usuarios
+    StockGenerate, Tamanho, TamanhoQuantidade, TelephonesCompany, TelephonesSchool, Usuarios, Grafo
 };

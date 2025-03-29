@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ProjetoPrisma } from './projeto.prisma';
-import { GradeOpenBySchool, GradesRomaneio, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
+import { GradeOpenBySchool, GradesRomaneio, Grafo, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
 
 @Controller('projetos')
 export class ProjetoController {
@@ -35,6 +35,15 @@ export class ProjetoController {
       throw new NotFoundException(`Não foram encontrados projetos.`);
     }
     return projetosimp;
+  }
+
+  @Get('grafs')
+  async getProjectGrafs(): Promise<Grafo[]> {
+    const projetosGraf: Grafo[] = await this.repo.somarQuantidadesPorProjeto();
+    if (!projetosGraf) {
+      throw new NotFoundException(`Não foram encontrados dados.`);
+    }
+    return projetosGraf;
   }
 
   // Obter grades por data

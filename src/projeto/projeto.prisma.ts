@@ -1,4 +1,4 @@
-import { convertSPTime, GradeOpenBySchool, GradesRomaneio, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
+import { convertSPTime, GradeOpenBySchool, GradesRomaneio, Grafo, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaProvider } from 'src/db/prisma.provider';
@@ -787,5 +787,81 @@ export class ProjetoPrisma {
       throw new Error("Erro interno ao buscar os dados do projeto.");
     }
   }
+
+  async somarQuantidadesPorProjeto(): Promise<Grafo[]> {
+    try {
+      // Passo 1: Obter a remessa mais alta para cada escola
+      const remessasMaisAltas = await this.prisma.grade.groupBy({
+        by: ['remessa', 'escolaId'],
+        _max: {
+          remessa: true, // Obtendo a remessa mais alta para cada escola
+        },
+      });
+  
+      // Passo 2: Obter as grades com a remessa mais alta de cada escola
+      const grades = await this.prisma.grade.findMany({
+        where: {
+          remessa: {
+            in: remessasMaisAltas.map((item) => item._max.remessa),            
+          },
+          tipo: null,
+        },
+        include: {
+          escola: {
+            include: {
+              projeto: true, // Incluindo os dados do projeto
+            },
+          },
+          itensGrade: { // Incluir os itens de cada grade
+            select: {
+              quantidade: true,
+              quantidadeExpedida: true,
+            },
+          },
+        },
+      });  
+      
+      if (!grades || grades.length === 0) {
+        return [];
+      }
+  
+      // Passo 4: Agrupar as quantidades de `GradeItem` por projeto
+      const resultado = grades.reduce<{ [projetoId: number]: Grafo }>((acc, grade) => {
+        const projetoId = grade.escola.projetoId;
+        const nomeProjeto = grade.escola.projeto.nome;
+  
+        // Calcular a soma das quantidades para esta grade
+        const somaQuantidade = grade.itensGrade.reduce((sum, item) => sum + item.quantidade, 0);
+        const somaQuantidadeExpedida = grade.itensGrade.reduce((sum, item) => sum + item.quantidadeExpedida, 0);
+  
+        // Verificando se o projeto já foi adicionado ao acumulado
+        if (!acc[projetoId]) {
+          acc[projetoId] = {
+            nomeProjeto,
+            quantidadeTotal: 0,
+            quantidadeExpedida: 0,
+          };
+        }
+  
+        // Acumulando as quantidades
+        acc[projetoId].quantidadeTotal += somaQuantidade;
+        acc[projetoId].quantidadeExpedida += somaQuantidadeExpedida;
+  
+        return acc;
+      }, {});
+  
+      // Passo 5: Filtrar os projetos que já tiveram as quantidades atendidas
+      const resultadoFiltrado = Object.values(resultado).filter(
+        (projeto) => projeto.quantidadeTotal !== projeto.quantidadeExpedida && projeto.quantidadeTotal > 0
+      );
+  
+      // Passo 6: Exibir os resultados ou retornar
+      return resultadoFiltrado; 
+        
+    } catch (error) {
+      console.error('Erro ao buscar dados dos projetos:', error);
+      throw new Error('Erro interno ao buscar os dados dos projetos.');
+    }
+  }  
 
 }
