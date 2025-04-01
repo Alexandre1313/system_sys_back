@@ -200,9 +200,20 @@ export class EscolaPrisma {
               },
             },
           },
+          where: {
+            OR: [
+              { status: { not: 'DESPACHADA' } }, // Incluir grades com status diferente de 'DESPACHADA'
+              {
+                status: 'DESPACHADA', // Incluir grades com status 'DESPACHADA'
+                updatedAt: {
+                  gte: new Date(new Date().getTime() - 3 * 60 * 60 * 1000), // Apenas grades com 'DESPACHADA' atualizadas nas últimas 4 horas
+                },
+              },
+            ],
+          },
         },
       },
-    });
+    });    
 
     // Processar e ordenar os dados
     escolaComGrades.grades.forEach((grade) => {
