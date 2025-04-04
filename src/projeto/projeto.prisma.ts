@@ -620,13 +620,15 @@ export class ProjetoPrisma {
   ): Promise<GradesRomaneio[]> {
     try {
       const projectsWithGrades = await this.prisma.projeto.findMany({
-        where: { id: projectId },
+        where: {
+           ...(projectId > 0 ? {id: projectId}: {})
+        },
         include: {
           escolas: {
             include: {
               grades: {
                 where: {
-                  remessa,
+                  ...(remessa > 0 ? { remessa } : {}),
                   ...(status !== "TODAS" ? { status } : {}),
                 },
                 include: {
