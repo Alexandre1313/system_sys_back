@@ -59,8 +59,7 @@ export class EscolaController {
     const escolagradeItems = await this.repo.buscarDadosEscolaByItemsAndGrades(+id);
     if (!escolagradeItems) {
       throw new NotFoundException(`Escola grade e items com ID ${id} não encontrada.`)
-    }
-    console.log(escolagradeItems)
+    }   
     return escolagradeItems || null;
   }
 
