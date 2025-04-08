@@ -281,7 +281,7 @@ export class EscolaPrisma {
             },
           },
           grades: {
-            take: 8, // Limita a 10 grades mais recentes
+            take: 15, // Limita a 10 grades mais recentes
             orderBy: {
               createdAt: 'desc', // Ordena as grades pela data de criação, mais recente primeiro
             },
