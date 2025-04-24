@@ -63,7 +63,7 @@ async function seed2() {
                         data: {
                             remessa: 1,
                             escolaId: escola.id,                          
-                            companyId: 69999,
+                            companyId: 66667,
                             //createdAt: "2025-02-17T11:39:00.739Z", 
                             //updatedAt: "2025-02-17T11:39:00.739Z",
                             //tipo: "REPOSIÇÂO",
