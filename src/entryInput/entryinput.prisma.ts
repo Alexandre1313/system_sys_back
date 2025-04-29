@@ -67,7 +67,7 @@ export class EntryInputPrisma {
         // 3. Quantidade de estoque do item específico
         const quantidadeEstoque = await this.prisma.estoque.findUnique({
             where: {
-                id: itemTamanhoId,
+                itemTamanhoId: itemTamanhoId,
             },
             select: {
                 quantidade: true,

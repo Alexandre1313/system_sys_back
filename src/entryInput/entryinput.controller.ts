@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { EntryInputPrisma } from './entryinput.prisma';
 import { EntryInput, QtyEmbDay, StockGenerate } from '@core/index';
 
