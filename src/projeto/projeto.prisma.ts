@@ -651,7 +651,7 @@ export class ProjetoPrisma {
                         },
                       }
                     }
-                  },                  
+                  },
                 },
               },
             },
@@ -663,8 +663,8 @@ export class ProjetoPrisma {
         return [];
       }
 
-      function transformPeso(n: number): number{
-        if(n > 0){
+      function transformPeso(n: number): number {
+        if (n > 0) {
           return n / 1000;
         }
         return n;
@@ -684,6 +684,8 @@ export class ProjetoPrisma {
         let totalCubagemCM3 = 0;
 
         for (const caixa of caixas) {
+          if (!caixa.tipoEmbalagem) continue; // pular caixas sem embalagem
+
           const { peso, largura, profundidade, altura = 40 } = caixa.tipoEmbalagem;
           const volumeCm3 = largura * profundidade * altura;
           totalPesoGramas += peso;
