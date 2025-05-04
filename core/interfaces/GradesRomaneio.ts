@@ -14,6 +14,8 @@ export default interface GradesRomaneio {
   telefoneCompany: string;
   emailCompany: string;
   telefoneEscola: string;
+  peso?: number,
+  cubagem?: number;
   create: string;
   update: string;
   enderecoschool: {
@@ -33,6 +35,10 @@ export default interface GradesRomaneio {
     composicao: string;
     quantidade: number;
     previsto: number;
+    peso?: number;       
+    altura?: number;      
+    largura?: number;     
+    profundidade?: number; 
   }[];
   caixas: Caixa[];
   enderecocompany: {

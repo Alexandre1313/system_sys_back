@@ -2,7 +2,7 @@ import { Item as PrismaItem, Genero as PrismaGenero } from '@prisma/client';
 import { Injectable } from '@nestjs/common';
 import { PrismaProvider } from 'src/db/prisma.provider';
 import { Item } from '@core/index';
-import { Genero } from '@core/interfaces/Genero';
+import { Genero } from "@prisma/client";
 
 @Injectable()
 export class ItemPrisma {

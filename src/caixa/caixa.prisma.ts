@@ -21,6 +21,7 @@ export class CaixaPrisma {
             projeto: dadosDaCaixa.projeto,
             escolaCaixa: dadosDaCaixa.escolaCaixa,
             caixaNumber: dadosDaCaixa.caixaNumber,
+            tipoEmbalagemId: dadosDaCaixa.tipoEmbalagemId,
             userId: userId,
           },
         });

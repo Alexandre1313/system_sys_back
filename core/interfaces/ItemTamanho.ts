@@ -12,7 +12,11 @@ export default interface ItemTamanho {
     tamanho?: Tamanho;
     barcode?: Barcode;
     estoque?: Estoque;
-    url: string
+    url: string;
+    peso?: number;       
+    altura?: number;      
+    largura?: number;     
+    profundidade?: number; 
     createdAt?: Date;
     updatedAt?: Date;
     GradeItem?: GradeItem[];

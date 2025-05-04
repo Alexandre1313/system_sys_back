@@ -1,4 +1,4 @@
-import { Genero } from "./Genero";
+import { Genero } from "@prisma/client";
 import ItemTamanho from "./ItemTamanho";
 import Projeto from "./Projeto";
 

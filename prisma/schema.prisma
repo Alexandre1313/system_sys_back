@@ -39,14 +39,14 @@ model Projeto {
 model Escola {
   id           Int                @id @default(autoincrement())
   numeroEscola String
-  numberJoin   String?
   nome         String
   projetoId    Int
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
+  numberJoin   String?
+  address      AddressSchool?
   projeto      Projeto            @relation(fields: [projetoId], references: [id])
   grades       Grade[]
-  address      AddressSchool[]
   telefone     TelephonesSchool[]
 
   @@unique([projetoId, nome])
@@ -85,8 +85,8 @@ model Company {
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
   address   AddressCompany[]
-  telefone  TelephonesCompany[]
   Grade     Grade[]
+  telefone  TelephonesCompany[]
 }
 
 model TelephonesCompany {
@@ -138,20 +138,24 @@ model Tamanho {
 }
 
 model ItemTamanho {
-  id         Int          @id @default(autoincrement())
-  itemId     Int
-  tamanhoId  Int
-  url        String?
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  barcode    Barcode?
-  estoque    Estoque?
-  item       Item         @relation(fields: [itemId], references: [id])
-  tamanho    Tamanho      @relation(fields: [tamanhoId], references: [id])
-  entryInput EntryInput[]
-  outInput   OutInput[]
-  gradeItem  GradeItem[]
-  ops        Ops[]
+  id           Int          @id @default(autoincrement())
+  itemId       Int
+  tamanhoId    Int
+  url          String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  altura       Float        @default(0)
+  largura      Float        @default(0)
+  peso         Float        @default(0)
+  profundidade Float        @default(0)
+  barcode      Barcode?
+  entryInput   EntryInput[]
+  estoque      Estoque?
+  gradeItem    GradeItem[]
+  item         Item         @relation(fields: [itemId], references: [id])
+  tamanho      Tamanho      @relation(fields: [tamanhoId], references: [id])
+  ops          Ops[]
+  outInput     OutInput[]
 
   @@unique([itemId, tamanhoId])
 }
@@ -172,43 +176,45 @@ model Estoque {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   entryInput    EntryInput[]
-  outInput      OutInput[]
   itemTamanho   ItemTamanho  @relation(fields: [itemTamanhoId], references: [id])
+  outInput      OutInput[]
 }
 
 model Grade {
   id          Int         @id @default(autoincrement())
   escolaId    Int
-  escola      Escola      @relation(fields: [escolaId], references: [id])
-  companyId   Int
-  company     Company     @relation(fields: [companyId], references: [id])
   finalizada  Boolean     @default(false)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-  remessa     Int?
+  companyId   Int
   tipo        String?
   status      Status      @default(PRONTA)
+  remessa     Int?
   gradeCaixas Caixa[]
+  company     Company     @relation(fields: [companyId], references: [id])
+  escola      Escola      @relation(fields: [escolaId], references: [id])
   itensGrade  GradeItem[]
   OutInput    OutInput[]
 }
 
 model Caixa {
-  id           Int         @id @default(autoincrement())
-  gradeId      Int
-  escolaCaixa  String
-  escolaNumber String
-  numberJoin   String?
-  projeto      String
-  qtyCaixa     Int
-  caixaNumber  String
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  usuario      Usuarios?   @relation(fields: [userId], references: [id])
-  userId       Int?
-  grade        Grade       @relation(fields: [gradeId], references: [id])
-  caixaItem    CaixaItem[]
-  OutInput     OutInput[]
+  id              Int            @id @default(autoincrement())
+  gradeId         Int
+  escolaCaixa     String
+  escolaNumber    String
+  projeto         String
+  qtyCaixa        Int
+  caixaNumber     String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  userId          Int?
+  numberJoin      String?
+  tipoEmbalagemId Int?
+  grade           Grade          @relation(fields: [gradeId], references: [id])
+  tipoEmbalagem   TipoEmbalagem? @relation(fields: [tipoEmbalagemId], references: [id])
+  usuario         Usuarios?      @relation(fields: [userId], references: [id])
+  caixaItem       CaixaItem[]
+  OutInput        OutInput[]
 
   @@unique([gradeId, caixaNumber])
 }
@@ -242,7 +248,6 @@ model GradeItem {
 
 model Embalagem {
   id           Int          @id @default(autoincrement())
-  entryInput   EntryInput[]
   nome         String       @unique @db.VarChar(200)
   email        String       @unique @db.VarChar(200)
   nomefantasia String?      @db.VarChar(200)
@@ -250,38 +255,39 @@ model Embalagem {
   whats        String       @db.VarChar(15)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+  entryInput   EntryInput[]
 }
 
 model EntryInput {
   id            Int         @id @default(autoincrement())
-  embalagem     Embalagem   @relation(fields: [embalagemId], references: [id])
   embalagemId   Int
-  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
   itemTamanhoId Int
-  estoque       Estoque     @relation(fields: [estoqueId], references: [id])
-  estoqueId     Int
-  usuario       Usuarios?   @relation(fields: [userId], references: [id])
-  userId        Int?
   quantidade    Int
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  estoqueId     Int
+  userId        Int?
+  embalagem     Embalagem   @relation(fields: [embalagemId], references: [id])
+  estoque       Estoque     @relation(fields: [estoqueId], references: [id])
+  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
+  usuario       Usuarios?   @relation(fields: [userId], references: [id])
 }
 
 model OutInput {
   id            Int         @id @default(autoincrement())
-  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
   itemTamanhoId Int
-  grade         Grade?      @relation(fields: [gradeId], references: [id])
-  gradeId       Int?
-  caixa         Caixa?      @relation(fields: [caixaId], references: [id])
-  caixaId       Int?
-  estoque       Estoque     @relation(fields: [estoqueId], references: [id])
-  estoqueId     Int
-  usuario       Usuarios?   @relation(fields: [userId], references: [id])
-  userId        Int?
   quantidade    Int
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  estoqueId     Int
+  userId        Int?
+  gradeId       Int?
+  caixaId       Int?
+  caixa         Caixa?      @relation(fields: [caixaId], references: [id])
+  estoque       Estoque     @relation(fields: [estoqueId], references: [id])
+  grade         Grade?      @relation(fields: [gradeId], references: [id])
+  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
+  usuario       Usuarios?   @relation(fields: [userId], references: [id])
 }
 
 model Ops {
@@ -289,21 +295,21 @@ model Ops {
   op            String      @unique @db.VarChar(10)
   quantidade    Int
   seloImpresso  Boolean     @default(false)
-  faccao        Faccoes     @relation(fields: [faccaoId], references: [id])
   faccaoId      Int
-  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
   itemTamanhoId Int
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  faccao        Faccoes     @relation(fields: [faccaoId], references: [id])
+  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
 }
 
 model Faccoes {
   id        Int                 @id @default(autoincrement())
   nome      String              @unique @db.VarChar(200)
-  ops       Ops[]
-  telefone  TelephonesFaccoes[]
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
+  ops       Ops[]
+  telefone  TelephonesFaccoes[]
 }
 
 model TelephonesFaccoes {
@@ -313,6 +319,18 @@ model TelephonesFaccoes {
   updatedAt DateTime @updatedAt
   faccaoId  Int
   faaccao   Faccoes  @relation(fields: [faccaoId], references: [id])
+}
+
+model TipoEmbalagem {
+  id           Int      @id @default(autoincrement())
+  nome         String   @unique
+  peso         Float
+  altura       Float    @default(0)
+  largura      Float    @default(0)
+  profundidade Float    @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  caixas       Caixa[]
 }
 
 enum Genero {

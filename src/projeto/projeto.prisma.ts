@@ -1,4 +1,4 @@
-import { convertSPTime, GradeOpenBySchool, GradesRomaneio, Grafo, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
+import { Caixa, convertSPTime, GradeItem, GradeOpenBySchool, GradesRomaneio, Grafo, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaProvider } from 'src/db/prisma.provider';
@@ -346,14 +346,14 @@ export class ProjetoPrisma {
           create: convertSPTime(String(grade.createdAt)),
           update: convertSPTime(String(grade.updatedAt)),
           enderecoschool: {
-            rua: grade.escola.address[0]?.street || "",
-            numero: grade.escola.address[0]?.number || "",
-            complemento: grade.escola.address[0]?.complement || "",
-            bairro: grade.escola.address[0]?.neighborhood || "",
-            cidade: grade.escola.address[0]?.city || "",
-            estado: grade.escola.address[0]?.state || "",
-            postalCode: grade.escola.address[0]?.postalCode || "",
-            country: grade.escola.address[0]?.country || "",
+            rua: grade.escola.address.street || "",
+            numero: grade.escola.address.number || "",
+            complemento: grade.escola.address.complement || "",
+            bairro: grade.escola.address.neighborhood || "",
+            cidade: grade.escola.address.city || "",
+            estado: grade.escola.address.state || "",
+            postalCode: grade.escola.address.postalCode || "",
+            country: grade.escola.address.country || "",
           },
           tamanhosQuantidades: tamanhosEQuantidades, // Informações de tamanhos e quantidades
           caixas: caixas,  // Array com as caixas e seus itens
@@ -621,11 +621,13 @@ export class ProjetoPrisma {
     try {
       const projectsWithGrades = await this.prisma.projeto.findMany({
         where: {
-           ...(projectId > 0 ? {id: projectId}: {})
+          ...(projectId > 0 ? { id: projectId } : {})
         },
         include: {
           escolas: {
             include: {
+              address: true,
+              telefone: true,
               grades: {
                 where: {
                   ...(remessa > 0 ? { remessa } : {}),
@@ -634,8 +636,22 @@ export class ProjetoPrisma {
                 include: {
                   company: { include: { address: true, telefone: true } },
                   itensGrade: { include: { itemTamanho: { include: { item: true, tamanho: true } } } },
-                  gradeCaixas: true,
-                  escola: { include: { address: true, telefone: true } },
+                  gradeCaixas: {
+                    include: {
+                      tipoEmbalagem: {
+                        select: {
+                          id: true,
+                          nome: true,
+                          peso: true,
+                          altura: true,
+                          largura: true,
+                          profundidade: true,
+                          createdAt: true,
+                          updatedAt: true,
+                        },
+                      }
+                    }
+                  },                  
                 },
               },
             },
@@ -645,6 +661,41 @@ export class ProjetoPrisma {
 
       if (!projectsWithGrades || projectsWithGrades.length === 0) {
         return [];
+      }
+
+      function transformPeso(n: number): number{
+        if(n > 0){
+          return n / 1000;
+        }
+        return n;
+      }
+
+      function calcularPesoECubagemCaixas(caixas: Caixa[], itens: GradeItem[]): { pesoKg: number; cubagemM3: number } {
+
+        function calcularPesoItens(itens: GradeItem[]): number {
+          return itens.reduce((total, item) => {
+            const peso = item.itemTamanho?.peso ?? 0;
+            const quantidade = item.quantidadeExpedida ?? 0;
+            return total + peso * quantidade;
+          }, 0);
+        }
+
+        let totalPesoGramas = 0;
+        let totalCubagemCM3 = 0;
+
+        for (const caixa of caixas) {
+          const { peso, largura, profundidade, altura = 40 } = caixa.tipoEmbalagem;
+          const volumeCm3 = largura * profundidade * altura;
+          totalPesoGramas += peso;
+          totalCubagemCM3 += volumeCm3;
+        }
+
+        totalPesoGramas += calcularPesoItens(itens);
+
+        return {
+          pesoKg: totalPesoGramas / 1000,
+          cubagemM3: totalCubagemCM3 / 1_000_000,
+        };
       }
 
       function calcularPorcentagem(parte: number, total: number): number {
@@ -669,66 +720,75 @@ export class ProjetoPrisma {
 
       let formattedData = projectsWithGrades.flatMap((projeto) =>
         (projeto.escolas ?? []).flatMap((escola) =>
-          (escola.grades ?? []).map((grade) => ({
-            id: grade.id,
-            isPrint: grade.finalizada,
-            company: grade.company?.nome ?? "",
-            cnpjCompany: grade.company?.cnpj ?? "",
-            projectname: projeto.nome,
-            escola: escola.nome,
-            tipo: grade.tipo,
-            numeroEscola: escola.numeroEscola,
-            status: grade.status,
-            numberJoin: escola.numberJoin,
-            telefoneCompany: (grade.company?.telefone ?? []).map((t) => t.telefone).join(", ") || "-",
-            emailCompany: grade.company?.email ?? "",
-            telefoneEscola: (grade.escola?.telefone ?? []).map(tel => tel.telefone).join(', ') || "-",
-            create: convertSPTime(String(grade.createdAt)),
-            update: convertSPTime(String(grade.updatedAt)),
+          (escola.grades ?? []).map((grade) => {
+            const pesoCubagem = calcularPesoECubagemCaixas(grade.gradeCaixas, grade.itensGrade);
+            return {
+              id: grade.id,
+              isPrint: grade.finalizada,
+              company: grade.company?.nome ?? "",
+              cnpjCompany: grade.company?.cnpj ?? "",
+              projectname: projeto.nome,
+              escola: escola.nome,
+              tipo: grade.tipo,
+              numeroEscola: escola.numeroEscola,
+              status: grade.status,
+              numberJoin: escola.numberJoin,
+              telefoneCompany: (grade.company?.telefone ?? []).map((t) => t.telefone).join(", ") || "-",
+              emailCompany: grade.company?.email ?? "",
+              telefoneEscola: (escola?.telefone ?? []).map(tel => tel.telefone).join(', ') || "-",
+              peso: pesoCubagem.pesoKg,
+              cubagem: pesoCubagem.cubagemM3,
+              create: convertSPTime(String(grade.createdAt)),
+              update: convertSPTime(String(grade.updatedAt)),
 
-            // Endereço da Escola
-            enderecoschool: {
-              rua: grade.escola?.address?.[0]?.street ?? "",
-              numero: grade.escola?.address?.[0]?.number ?? "",
-              complemento: grade.escola?.address?.[0]?.complement ?? "",
-              bairro: grade.escola?.address?.[0]?.neighborhood ?? "",
-              cidade: grade.escola?.address?.[0]?.city ?? "",
-              estado: grade.escola?.address?.[0]?.state ?? "",
-              postalCode: grade.escola?.address?.[0]?.postalCode ?? "",
-              country: grade.escola?.address?.[0]?.country ?? "",
-            },
+              // Endereço da Escola
+              enderecoschool: {
+                rua: escola?.address?.street ?? "",
+                numero: escola?.address?.number ?? "",
+                complemento: escola?.address.complement ?? "",
+                bairro: escola?.address?.neighborhood ?? "",
+                cidade: escola?.address.city ?? "",
+                estado: escola?.address.state ?? "",
+                postalCode: escola?.address.postalCode ?? "",
+                country: escola?.address.country ?? "",
+              },
 
-            // Endereço da Company (agora sempre retorna um objeto, mesmo se não houver dados)
-            enderecocompany: {
-              rua: grade.company?.address?.[0]?.street ?? "",
-              numero: grade.company?.address?.[0]?.number ?? "",
-              complemento: grade.company?.address?.[0]?.complement ?? "",
-              bairro: grade.company?.address?.[0]?.neighborhood ?? "",
-              cidade: grade.company?.address?.[0]?.city ?? "",
-              estado: grade.company?.address?.[0]?.state ?? "",
-              postalCode: grade.company?.address?.[0]?.postalCode ?? "",
-              country: grade.company?.address?.[0]?.country ?? "",
-            },
+              // Endereço da Company (agora sempre retorna um objeto, mesmo se não houver dados)
+              enderecocompany: {
+                rua: grade.company?.address?.[0]?.street ?? "",
+                numero: grade.company?.address?.[0]?.number ?? "",
+                complemento: grade.company?.address?.[0]?.complement ?? "",
+                bairro: grade.company?.address?.[0]?.neighborhood ?? "",
+                cidade: grade.company?.address?.[0]?.city ?? "",
+                estado: grade.company?.address?.[0]?.state ?? "",
+                postalCode: grade.company?.address?.[0]?.postalCode ?? "",
+                country: grade.company?.address?.[0]?.country ?? "",
+              },
 
-            tamanhosQuantidades: (grade.itensGrade ?? []).map((gradeItem) => ({
-              item: gradeItem.itemTamanho?.item?.nome,
-              genero: gradeItem.itemTamanho?.item?.genero,
-              tamanho: gradeItem.itemTamanho?.tamanho?.nome,
-              composicao: gradeItem.itemTamanho?.item?.composicao,
-              quantidade: gradeItem.quantidadeExpedida,
-              previsto: gradeItem.quantidade,
-            })).sort((a, b) => {
-              if (a.item < b.item) return -1;
-              if (a.item > b.item) return 1;
-              if (a.genero < b.genero) return -1;
-              if (a.genero > b.genero) return 1;
-              const tamanhos = [a.tamanho, b.tamanho];
-              const tamanhosOrdenados = ordenarTamanhos(tamanhos);
-              return tamanhosOrdenados.indexOf(a.tamanho) - tamanhosOrdenados.indexOf(b.tamanho);
-            }),
+              tamanhosQuantidades: (grade.itensGrade ?? []).map((gradeItem) => ({
+                item: gradeItem.itemTamanho?.item?.nome,
+                genero: gradeItem.itemTamanho?.item?.genero,
+                tamanho: gradeItem.itemTamanho?.tamanho?.nome,
+                composicao: gradeItem.itemTamanho?.item?.composicao,
+                quantidade: gradeItem.quantidadeExpedida,
+                previsto: gradeItem.quantidade,
+                peso: transformPeso(gradeItem.itemTamanho.peso),
+                altura: gradeItem.itemTamanho.altura,
+                largura: gradeItem.itemTamanho.largura,
+                profundidade: gradeItem.itemTamanho.profundidade,
+              })).sort((a, b) => {
+                if (a.item < b.item) return -1;
+                if (a.item > b.item) return 1;
+                if (a.genero < b.genero) return -1;
+                if (a.genero > b.genero) return 1;
+                const tamanhos = [a.tamanho, b.tamanho];
+                const tamanhosOrdenados = ordenarTamanhos(tamanhos);
+                return tamanhosOrdenados.indexOf(a.tamanho) - tamanhosOrdenados.indexOf(b.tamanho);
+              }),
 
-            caixas: grade.gradeCaixas ?? [],
-          }))
+              caixas: grade.gradeCaixas ?? [],
+            }
+          })
         )
       );
 
@@ -799,12 +859,12 @@ export class ProjetoPrisma {
           remessa: true, // Obtendo a remessa mais alta para cada escola
         },
       });
-  
+
       // Passo 2: Obter as grades com a remessa mais alta de cada escola
       const grades = await this.prisma.grade.findMany({
         where: {
           remessa: {
-            in: remessasMaisAltas.map((item) => item._max.remessa),            
+            in: remessasMaisAltas.map((item) => item._max.remessa),
           },
           tipo: null,
         },
@@ -821,21 +881,21 @@ export class ProjetoPrisma {
             },
           },
         },
-      });  
-      
+      });
+
       if (!grades || grades.length === 0) {
         return [];
       }
-  
+
       // Passo 4: Agrupar as quantidades de `GradeItem` por projeto
       const resultado = grades.reduce<{ [projetoId: number]: Grafo }>((acc, grade) => {
         const projetoId = grade.escola.projetoId;
         const nomeProjeto = grade.escola.projeto.nome;
-  
+
         // Calcular a soma das quantidades para esta grade
         const somaQuantidade = grade.itensGrade.reduce((sum, item) => sum + item.quantidade, 0);
         const somaQuantidadeExpedida = grade.itensGrade.reduce((sum, item) => sum + item.quantidadeExpedida, 0);
-  
+
         // Verificando se o projeto já foi adicionado ao acumulado
         if (!acc[projetoId]) {
           acc[projetoId] = {
@@ -844,26 +904,26 @@ export class ProjetoPrisma {
             quantidadeExpedida: 0,
           };
         }
-  
+
         // Acumulando as quantidades
         acc[projetoId].quantidadeTotal += somaQuantidade;
         acc[projetoId].quantidadeExpedida += somaQuantidadeExpedida;
-  
+
         return acc;
       }, {});
-  
+
       // Passo 5: Filtrar os projetos que já tiveram as quantidades atendidas
       const resultadoFiltrado = Object.values(resultado).filter(
         (projeto) => projeto.quantidadeTotal !== projeto.quantidadeExpedida && projeto.quantidadeTotal > 0
       );
-  
+
       // Passo 6: Exibir os resultados ou retornar
-      return resultadoFiltrado; 
-        
+      return resultadoFiltrado;
+
     } catch (error) {
       console.error('Erro ao buscar dados dos projetos:', error);
       throw new Error('Erro interno ao buscar os dados dos projetos.');
     }
-  }  
+  }
 
 }
