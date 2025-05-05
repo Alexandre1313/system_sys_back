@@ -288,6 +288,7 @@ export class ProjetoPrisma {
           gradeCaixas: {
             include: {
               caixaItem: true,  // Incluindo itens de cada caixa
+              tipoEmbalagem: true,
             },
           },
           itensGrade: {
@@ -303,8 +304,39 @@ export class ProjetoPrisma {
         },
       });
 
+      function calcularPesoECubagemCaixas(caixas: Caixa[], itens: GradeItem[]): { pesoKg: number; cubagemM3: number } {
+
+        function calcularPesoItens(itens: GradeItem[]): number {
+          return itens.reduce((total, item) => {
+            const peso = item.itemTamanho?.peso ?? 0;
+            const quantidade = item.quantidadeExpedida ?? 0;
+            return total + peso * quantidade;
+          }, 0);
+        }
+
+        let totalPesoGramas = 0;
+        let totalCubagemCM3 = 0;
+
+        for (const caixa of caixas) {
+          if (!caixa.tipoEmbalagem) continue; // pular caixas sem embalagem
+
+          const { peso, largura, profundidade, altura = 40 } = caixa.tipoEmbalagem;
+          const volumeCm3 = largura * profundidade * altura;
+          totalPesoGramas += peso;
+          totalCubagemCM3 += volumeCm3;
+        }
+
+        totalPesoGramas += calcularPesoItens(itens);
+
+        return {
+          pesoKg: totalPesoGramas / 1000,
+          cubagemM3: totalCubagemCM3 / 1_000_000,
+        };
+      }
+
       // Formatação das grades
       const formattedGrades: GradesRomaneio[] = grades.map((grade) => {
+        const pesoCubagem = calcularPesoECubagemCaixas(grade.gradeCaixas, grade.itensGrade);
         // Inclui nome do item em tamanhosEQuantidades
         const tamanhosEQuantidades = grade.itensGrade.map((itemGrade) => ({
           item: itemGrade.itemTamanho.item.nome, // Nome do item específico
@@ -313,6 +345,7 @@ export class ProjetoPrisma {
           tamanho: itemGrade.itemTamanho.tamanho.nome, // Nome do tamanho
           quantidade: itemGrade.quantidadeExpedida,   // Quantidade expedida
           previsto: itemGrade.quantidade,
+          peso: itemGrade.itemTamanho.peso,
         }));
 
         tamanhosEQuantidades.sort((a, b) => {
@@ -343,6 +376,8 @@ export class ProjetoPrisma {
           telefoneCompany: grade.company.telefone?.map(tel => tel.telefone).join(', ') || "",  // Telefones da empresa
           emailCompany: grade.company.email || "",   // E-mail da empresa (agora no modelo Company)
           telefoneEscola: grade.escola.telefone?.map(tel => tel.telefone).join(', ') || "", // Telefones da escola
+          peso: pesoCubagem.pesoKg,
+          cubagem: pesoCubagem.cubagemM3,
           create: convertSPTime(String(grade.createdAt)),
           update: convertSPTime(String(grade.updatedAt)),
           enderecoschool: {
