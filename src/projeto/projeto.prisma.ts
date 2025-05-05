@@ -759,6 +759,7 @@ export class ProjetoPrisma {
         (projeto.escolas ?? []).flatMap((escola) =>
           (escola.grades ?? []).map((grade) => {
             const pesoCubagem = calcularPesoECubagemCaixas(grade.gradeCaixas, grade.itensGrade);
+            //console.dir(grade, { depth: null, colors: true });
             return {
               id: grade.id,
               isPrint: grade.finalizada,
@@ -782,12 +783,12 @@ export class ProjetoPrisma {
               enderecoschool: {
                 rua: escola?.address?.street ?? "",
                 numero: escola?.address?.number ?? "",
-                complemento: escola?.address.complement ?? "",
+                complemento: escola?.address?.complement ?? "",
                 bairro: escola?.address?.neighborhood ?? "",
-                cidade: escola?.address.city ?? "",
-                estado: escola?.address.state ?? "",
-                postalCode: escola?.address.postalCode ?? "",
-                country: escola?.address.country ?? "",
+                cidade: escola?.address?.city ?? "",
+                estado: escola?.address?.state ?? "",
+                postalCode: escola?.address?.postalCode ?? "",
+                country: escola?.address?.country ?? "",
               },
 
               // Endereço da Company (agora sempre retorna um objeto, mesmo se não houver dados)
