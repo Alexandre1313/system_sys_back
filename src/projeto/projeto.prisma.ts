@@ -1,4 +1,5 @@
 import { Caixa, convertSPTime, GradeItem, GradeOpenBySchool, GradesRomaneio, Grafo, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
+import { sizeOrders } from '@core/utils/utils';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaProvider } from 'src/db/prisma.provider';
@@ -135,22 +136,7 @@ export class ProjetoPrisma {
         },
       });
 
-      if (!projeto) return null; // Retorna null se o projeto não for encontrado
-
-      // Função para ordenar tamanhos
-      const ordenarTamanhos = (tamanhos: string[]): string[] => {
-        const numTamanhos = tamanhos.filter(tamanho => /^[0-9]+$/.test(tamanho)); // Filtra tamanhos numéricos
-        const letraTamanhos = tamanhos.filter(tamanho => !/^[0-9]+$/.test(tamanho)); // Filtra tamanhos com letras
-
-        // Ordena tamanhos numéricos (convertendo para inteiro)
-        numTamanhos.sort((a, b) => parseInt(a) - parseInt(b));
-
-        // Ordena tamanhos com letras conforme a ordem desejada
-        const ordem = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
-        letraTamanhos.sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b));
-
-        return [...numTamanhos, ...letraTamanhos];
-      };
+      if (!projeto) return null; // Retorna null se o projeto não for encontrado     
 
       // Transformação dos dados para a estrutura desejada
       const resultado = {
@@ -179,7 +165,7 @@ export class ProjetoPrisma {
         if (generoCompare !== 0) return generoCompare;
 
         const tamanhos = [a.tamanho, b.tamanho];
-        const tamanhosOrdenados = ordenarTamanhos(tamanhos);
+        const tamanhosOrdenados = sizeOrders(tamanhos);
         return tamanhosOrdenados.indexOf(a.tamanho) - tamanhosOrdenados.indexOf(b.tamanho);
       });
 
@@ -381,14 +367,14 @@ export class ProjetoPrisma {
           create: convertSPTime(String(grade.createdAt)),
           update: convertSPTime(String(grade.updatedAt)),
           enderecoschool: {
-            rua: grade.escola.address.street || "",
-            numero: grade.escola.address.number || "",
-            complemento: grade.escola.address.complement || "",
-            bairro: grade.escola.address.neighborhood || "",
-            cidade: grade.escola.address.city || "",
-            estado: grade.escola.address.state || "",
-            postalCode: grade.escola.address.postalCode || "",
-            country: grade.escola.address.country || "",
+            rua: grade.escola.address?.street || "",
+            numero: grade.escola.address?.number || "",
+            complemento: grade.escola.address?.complement || "",
+            bairro: grade.escola.address?.neighborhood || "",
+            cidade: grade.escola.address?.city || "",
+            estado: grade.escola.address?.state || "",
+            postalCode: grade.escola.address?.postalCode || "",
+            country: grade.escola.address?.country || "",
           },
           tamanhosQuantidades: tamanhosEQuantidades, // Informações de tamanhos e quantidades
           caixas: caixas,  // Array com as caixas e seus itens
@@ -424,20 +410,6 @@ export class ProjetoPrisma {
   // Função para buscar os itens e somar as entradas e saídas
   async getProjetoItensComEntradasSaidas(projetoId: number): Promise<ProjetoStockItems | null> {
     try {
-      // Função para ordenar tamanhos
-      const ordenarTamanhos = (tamanhos: string[]) => {
-        const numTamanhos = tamanhos.filter(tamanho => /^[0-9]+$/.test(tamanho)); // Filtra tamanhos numéricos
-        const letraTamanhos = tamanhos.filter(tamanho => !/^[0-9]+$/.test(tamanho)); // Filtra tamanhos com letras
-
-        numTamanhos.sort((a, b) => parseInt(a) - parseInt(b)); // Ordena tamanhos numéricos
-        letraTamanhos.sort((a, b) => {
-          const ordem = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
-          return ordem.indexOf(a) - ordem.indexOf(b);
-        });
-
-        return [...numTamanhos, ...letraTamanhos];
-      };
-
       // Buscando o projeto
       const projeto = await this.prisma.projeto.findUnique({
         where: { id: projetoId },
@@ -489,7 +461,7 @@ export class ProjetoPrisma {
         });
 
         // Ordenando tamanhos por critérios específicos
-        const tamanhosOrdenados = ordenarTamanhos(
+        const tamanhosOrdenados = sizeOrders(
           item.tamanhos.map((itemTamanho) => itemTamanho.tamanho.nome)
         );
 
@@ -575,22 +547,7 @@ export class ProjetoPrisma {
       // Verificar se o projeto existe
       if (!projeto) {
         return null;
-      }
-
-      // Função para ordenar tamanhos
-      const ordenarTamanhos = (tamanhos: string[]): string[] => {
-        const numTamanhos = tamanhos.filter(tamanho => /^[0-9]+$/.test(tamanho)); // Filtra tamanhos numéricos
-        const letraTamanhos = tamanhos.filter(tamanho => !/^[0-9]+$/.test(tamanho)); // Filtra tamanhos com letras
-
-        // Ordena tamanhos numéricos (convertendo para inteiro)
-        numTamanhos.sort((a, b) => parseInt(a) - parseInt(b));
-
-        // Ordena tamanhos com letras conforme a ordem desejada
-        const ordem = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
-        letraTamanhos.sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b));
-
-        return [...numTamanhos, ...letraTamanhos];
-      };
+      }     
 
       // Processar as grades e caixas
       const result: GradeOpenBySchool[] = projeto.escolas.flatMap((escola) => {
@@ -625,9 +582,9 @@ export class ProjetoPrisma {
             if (a.itemNome < b.itemNome) return -1;
             if (a.itemNome > b.itemNome) return 1;
 
-            // Se os nomes forem iguais, ordenar pelo tamanho usando a função ordenarTamanhos
+            // Se os nomes forem iguais, ordenar pelo tamanho usando a função
             const tamanhos = [a.tamanho, b.tamanho];
-            const tamanhosOrdenados = ordenarTamanhos(tamanhos);
+            const tamanhosOrdenados = sizeOrders(tamanhos);
             return tamanhosOrdenados.indexOf(a.tamanho) - tamanhosOrdenados.indexOf(b.tamanho);
           });
 
@@ -740,21 +697,6 @@ export class ProjetoPrisma {
         return (parte / total) * 100;
       }
 
-      // Função para ordenar tamanhos
-      const ordenarTamanhos = (tamanhos: string[]): string[] => {
-        const numTamanhos = tamanhos.filter(tamanho => /^[0-9]+$/.test(tamanho)); // Filtra tamanhos numéricos
-        const letraTamanhos = tamanhos.filter(tamanho => !/^[0-9]+$/.test(tamanho)); // Filtra tamanhos com letras
-
-        // Ordena tamanhos numéricos (convertendo para inteiro)
-        numTamanhos.sort((a, b) => parseInt(a) - parseInt(b));
-
-        // Ordena tamanhos com letras conforme a ordem desejada
-        const ordem = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
-        letraTamanhos.sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b));
-
-        return [...numTamanhos, ...letraTamanhos];
-      };
-
       let formattedData = projectsWithGrades.flatMap((projeto) =>
         (projeto.escolas ?? []).flatMap((escola) =>
           (escola.grades ?? []).map((grade) => {
@@ -820,7 +762,7 @@ export class ProjetoPrisma {
                 if (a.genero < b.genero) return -1;
                 if (a.genero > b.genero) return 1;
                 const tamanhos = [a.tamanho, b.tamanho];
-                const tamanhosOrdenados = ordenarTamanhos(tamanhos);
+                const tamanhosOrdenados = sizeOrders(tamanhos);
                 return tamanhosOrdenados.indexOf(a.tamanho) - tamanhosOrdenados.indexOf(b.tamanho);
               }),
 

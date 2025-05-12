@@ -1,4 +1,5 @@
 import { Escola, EscolaGradesItems } from '@core/index';
+import { sizeOrders } from '@core/utils/utils';
 import { Injectable } from '@nestjs/common';
 import { PrismaProvider } from 'src/db/prisma.provider';
 
@@ -230,7 +231,7 @@ export class EscolaPrisma {
         // Ordenar os tamanhos
         const sortTamanho = (tamanho: string): number => {
           const numericRegex = /^\d+$/; // Verifica se é numérico
-          const sizeOrder = ['PP', 'P', 'M', 'G', 'GG', 'EG', 'EGG', 'XGG', 'EXG']; // Ordem para tamanhos literais
+          const sizeOrder = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'EXGG', 'G1', 'G2', 'G3', 'EG/LG']; // Ordem para tamanhos literais
 
           if (numericRegex.test(tamanho)) {
             return parseInt(tamanho, 10); // Valores numéricos
@@ -372,22 +373,7 @@ export class EscolaPrisma {
           case 'DESPACHADA': return 4;
           default: return 5;  // Caso haja um status desconhecido
         }
-      };
-
-      // Função para ordenar tamanhos
-      const ordenarTamanhos = (tamanhos: string[]): string[] => {
-        const numTamanhos = tamanhos.filter(tamanho => /^[0-9]+$/.test(tamanho)); // Filtra tamanhos numéricos
-        const letraTamanhos = tamanhos.filter(tamanho => !/^[0-9]+$/.test(tamanho)); // Filtra tamanhos com letras
-
-        // Ordena tamanhos numéricos (convertendo para inteiro)
-        numTamanhos.sort((a, b) => parseInt(a) - parseInt(b));
-
-        // Ordena tamanhos com letras conforme a ordem desejada
-        const ordem = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'G1', 'G2', 'G3', 'EG/LG'];
-        letraTamanhos.sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b));
-
-        return [...numTamanhos, ...letraTamanhos];
-      };
+      };     
 
       // Ordenando as grades: primeiro por status, depois por data (assumindo que a data de criação é um campo na grade)
       const sortedGrades = escola.grades
@@ -471,7 +457,7 @@ export class EscolaPrisma {
               if (a.itemTamanho.itemGenero < b.itemTamanho.itemGenero) return -1;
               if (a.itemTamanho.itemGenero > b.itemTamanho.itemGenero) return 1;
               const tamanhos = [a.itemTamanho.tamanhoNome, b.itemTamanho.tamanhoNome];
-              const tamanhosOrdenados = ordenarTamanhos(tamanhos);
+              const tamanhosOrdenados = sizeOrders(tamanhos);
               return tamanhosOrdenados.indexOf(a.itemTamanho.tamanhoNome) - tamanhosOrdenados.indexOf(b.itemTamanho.tamanhoNome);
             }
           ),
