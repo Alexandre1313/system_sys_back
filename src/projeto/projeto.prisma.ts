@@ -709,6 +709,7 @@ export class ProjetoPrisma {
               cnpjCompany: grade.company?.cnpj ?? "",
               projectname: projeto.nome,
               escola: escola.nome,
+              escolaId: escola.id,
               tipo: grade.tipo,
               numeroEscola: escola.numeroEscola,
               status: grade.status,

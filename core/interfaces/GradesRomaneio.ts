@@ -7,6 +7,7 @@ export default interface GradesRomaneio {
   cnpjCompany: string;
   projectname: string;
   escola: string;
+  escolaId?: number;
   tipo: string | null;
   numeroEscola: string;
   status: Status;
