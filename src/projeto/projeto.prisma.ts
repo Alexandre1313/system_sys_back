@@ -547,7 +547,7 @@ export class ProjetoPrisma {
       // Verificar se o projeto existe
       if (!projeto) {
         return null;
-      }     
+      }
 
       // Processar as grades e caixas
       const result: GradeOpenBySchool[] = projeto.escolas.flatMap((escola) => {
@@ -608,7 +608,8 @@ export class ProjetoPrisma {
   async getProjetoComResumoExpedicao(
     projectId: number,
     remessa: number,
-    status: "EXPEDIDA" | "DESPACHADA" | "PRONTA" | "IMPRESSA" | "TODAS"
+    status: "EXPEDIDA" | "DESPACHADA" | "PRONTA" | "IMPRESSA" | "TODAS",
+    tipo: string,
   ): Promise<GradesRomaneio[]> {
     try {
       const projectsWithGrades = await this.prisma.projeto.findMany({
@@ -624,6 +625,11 @@ export class ProjetoPrisma {
                 where: {
                   ...(remessa > 0 ? { remessa } : {}),
                   ...(status !== "TODAS" ? { status } : {}),
+                  ...(tipo === "N"
+                    ? { tipo: null }
+                    : tipo === "R"
+                      ? { tipo: { equals: "REPOSIÇÃO", mode: 'insensitive' } }
+                      : {}),
                 },
                 include: {
                   company: { include: { address: true, telefone: true } },
