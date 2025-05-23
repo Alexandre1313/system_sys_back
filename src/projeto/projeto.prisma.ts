@@ -628,7 +628,7 @@ export class ProjetoPrisma {
                   ...(tipo === "N"
                     ? { tipo: null }
                     : tipo === "R"
-                      ? { tipo: { equals: "REPOSIÇÃO", mode: 'insensitive' } }
+                      ? { tipo: { contains: "REPOS", mode: 'insensitive' } }
                       : {}),
                 },
                 include: {
