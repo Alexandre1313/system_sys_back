@@ -130,4 +130,23 @@ export class CaixaPrisma {
       throw new Error('Erro ao inserir a caixa e itens no banco de dados.');
     }
   }
+
+  async getCaixasComItensPorGradeId(gradeId: number): Promise<Caixa[]> {
+    try {
+      const caixas = await this.prisma.caixa.findMany({
+        where: { gradeId },
+        include: {
+          caixaItem: true, // Inclui os itens de cada caixa
+        },
+      });
+
+      if(!caixas) return [];
+
+      return caixas;
+    } catch (error) {
+      console.error("Erro ao buscar caixas:", error);
+      throw error;
+    }
+  }
+
 }
