@@ -147,13 +147,15 @@ export class CaixaPrisma {
 
       if (!caixas) return [];
 
-      // transforma usuario de objeto para string
       const caixasComUsuarioNome = caixas.map((caixa) => ({
         ...caixa,
         usuario: caixa.usuario?.nome ?? 'Desconhecido',
       }));
 
-      return caixasComUsuarioNome;
+      // Ordenar de forma numérica decrescente, mesmo sendo texto no banco
+      return caixasComUsuarioNome.sort(
+        (a, b) => Number(b.caixaNumber) - Number(a.caixaNumber)
+      );
     } catch (error) {
       console.error("Erro ao buscar caixas:", error);
       throw error;
