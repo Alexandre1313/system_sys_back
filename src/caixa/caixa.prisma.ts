@@ -131,18 +131,29 @@ export class CaixaPrisma {
     }
   }
 
-  async getCaixasComItensPorGradeId(gradeId: number): Promise<Caixa[]> {
+  async getCaixasComItensPorGradeId(gradeId: number): Promise<(Omit<Caixa, 'usuario'> & { usuario: string })[]> {
     try {
       const caixas = await this.prisma.caixa.findMany({
         where: { gradeId },
         include: {
-          caixaItem: true, // Inclui os itens de cada caixa
+          caixaItem: true,
+          usuario: {
+            select: {
+              nome: true,
+            },
+          },
         },
       });
 
-      if(!caixas) return [];
+      if (!caixas) return [];
 
-      return caixas;
+      // transforma usuario de objeto para string
+      const caixasComUsuarioNome = caixas.map((caixa) => ({
+        ...caixa,
+        usuario: caixa.usuario?.nome ?? 'Desconhecido',
+      }));
+
+      return caixasComUsuarioNome;
     } catch (error) {
       console.error("Erro ao buscar caixas:", error);
       throw error;
