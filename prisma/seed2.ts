@@ -63,10 +63,10 @@ async function seed2() {
                         data: {
                             remessa: 1,
                             escolaId: escola.id,                          
-                            companyId: 333332,
+                            companyId: 266666,
                             //createdAt: "2025-02-17T11:39:00.739Z", 
                             //updatedAt: "2025-02-17T11:39:00.739Z",
-                            //tipo: "REPOSIÇÂO",
+                            tipo: "REPOSIÇÂO",
                         },
                     });
                     console.log(`Grade (ID: ${grade.id}) criada.`);
