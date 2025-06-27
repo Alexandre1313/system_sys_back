@@ -14,6 +14,19 @@ export class CaixaPrisma {
 
     try {
       const result = await this.prisma.$transaction(async (prisma) => {
+
+        /*const caixasDaGrade = await prisma.caixa.findMany({
+          where: { gradeId: gradeId },
+          select: { caixaNumber: true },
+        });
+
+        const maiorNumero = caixasDaGrade
+          .map(c => Number(c.caixaNumber))
+          .filter(n => !isNaN(n))
+          .sort((a, b) => b - a)[0] ?? 0;
+
+        const proximaCaixaNumber = String(maiorNumero + 1).padStart(2, "0");*/
+
         const novaCaixa = await prisma.caixa.create({
           data: {
             gradeId: gradeId,
@@ -28,8 +41,12 @@ export class CaixaPrisma {
           },
         });
 
+        console.log(novaCaixa)
+
+        if(!novaCaixa) throw new Error("Caixa não criada !");
+
         const itensCriados = [];
-        
+
         for (const item of caixaItem) {
           const criado = await prisma.caixaItem.create({
             data: {
@@ -70,7 +87,7 @@ export class CaixaPrisma {
 
           if (itemTamanhoId) {
             const estoqueAtual = await prisma.estoque.findUnique({
-              where: { itemTamanhoId },
+              where: { itemTamanhoId: itemTamanhoId },
             });
 
             if (!estoqueAtual) {
@@ -82,17 +99,17 @@ export class CaixaPrisma {
             const novaQuantidade = estoqueAtual.quantidade - itemQty;
 
             await prisma.estoque.update({
-              where: { itemTamanhoId },
+              where: { itemTamanhoId: itemTamanhoId },
               data: { quantidade: novaQuantidade },
             });
 
             await prisma.outInput.create({
               data: {
-                itemTamanhoId,
+                itemTamanhoId: itemTamanhoId,
                 estoqueId: estoqueAtual.id,
                 quantidade: itemQty,
-                userId,
-                gradeId,
+                userId: userId,
+                gradeId: gradeId,
                 caixaId: novaCaixa.id,
               },
             });
@@ -100,7 +117,7 @@ export class CaixaPrisma {
         }
 
         const itensDaGrade = await prisma.gradeItem.findMany({
-          where: { gradeId },
+          where: { gradeId: gradeId },
         });
 
         const todosExpedidos = itensDaGrade.every(
@@ -126,7 +143,7 @@ export class CaixaPrisma {
 
       return result;
     } catch (error: any) {
-      console.error("Erro detalhado ao inserir caixa:", error);
+      console.error("", error);
       throw new Error("Erro ao inserir a caixa: " + error.message);
     }
   }
