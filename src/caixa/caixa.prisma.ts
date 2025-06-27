@@ -39,9 +39,7 @@ export class CaixaPrisma {
             tipoEmbalagemId: dadosDaCaixa.tipoEmbalagemId,
             userId: userId,
           },
-        });
-
-        console.log(novaCaixa)
+        });        
 
         if(!novaCaixa) throw new Error("Caixa não criada !");
 
@@ -130,6 +128,8 @@ export class CaixaPrisma {
             data: { status: "EXPEDIDA", finalizada: true },
           });
         }
+
+        console.log(novaCaixa)
 
         return {
           ...novaCaixa,
