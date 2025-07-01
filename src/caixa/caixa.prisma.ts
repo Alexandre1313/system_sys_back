@@ -206,6 +206,7 @@ export class CaixaPrisma {
       return {
         id: caixa.id,
         gradeId: caixa.gradeId,
+        status: String(caixa.grade.status),
         caixaNumber: caixa.caixaNumber,
         qtyCaixa: caixa.qtyCaixa,
         createdAt: convertSPTime(String(caixa.createdAt)),
