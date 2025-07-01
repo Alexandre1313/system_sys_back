@@ -1,10 +1,19 @@
-import { Caixa } from '@core/index';
+import { Caixa, CaixaAjuste } from '@core/index';
 import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { CaixaPrisma } from './Caixa.prisma';
 
 @Controller('caixas')
 export class CaixaController {
   constructor(private readonly repo: CaixaPrisma) { }
+
+  @Get('getcaixaajust/:id')
+  async getCaixasporId(@Param('id') id: string): Promise<CaixaAjuste | null> {
+    const caixa = await this.repo.getCaixaById(+id);
+    if (!caixa) {
+      return null;
+    }
+    return caixa;
+  }
 
   @Get('getcaixas/:id')
   async getCaixasporG(@Param('id') id: string): Promise<Caixa[]> {

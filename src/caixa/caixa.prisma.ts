@@ -1,4 +1,4 @@
-import { Caixa } from '@core/index';
+import { Caixa, CaixaAjuste, convertSPTime } from '@core/index';
 import { Injectable } from '@nestjs/common';
 import { PrismaProvider } from 'src/db/prisma.provider';
 
@@ -39,9 +39,9 @@ export class CaixaPrisma {
             tipoEmbalagemId: dadosDaCaixa.tipoEmbalagemId,
             userId: userId,
           },
-        });        
+        });
 
-        if(!novaCaixa) throw new Error("Caixa não criada !");
+        if (!novaCaixa) throw new Error("Caixa não criada !");
 
         const itensCriados = [];
 
@@ -175,6 +175,58 @@ export class CaixaPrisma {
       );
     } catch (error) {
       console.error("Erro ao buscar caixas:", error);
+      throw error;
+    }
+  }
+
+  async getCaixaById(caixaId: number): Promise<CaixaAjuste | null> {
+    try {
+      const caixa = await this.prisma.caixa.findUnique({
+        where: {
+          id: caixaId,
+        },
+        include: {
+          caixaItem: true, // inclui os itens da caixa
+          grade: {
+            include: {
+              escola: {
+                include: {
+                  projeto: true, // inclui o projeto ao qual a escola pertence
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!caixa) {
+        return null;
+      }
+
+      return {
+        id: caixa.id,
+        gradeId: caixa.gradeId,
+        caixaNumber: caixa.caixaNumber,
+        qtyCaixa: caixa.qtyCaixa,
+        createdAt: convertSPTime(String(caixa.createdAt)),
+        updatedAt: convertSPTime(String(caixa.updatedAt)),
+        projeto: caixa.grade.escola.projeto.nome,
+        escola: caixa.grade.escola.nome,
+        escolaNumero: caixa.grade.escola.numeroEscola,
+        itens: caixa.caixaItem.map((item) => ({
+          id: item.id,
+          caixaId: item.caixaId,
+          itemName: item.itemName,
+          itemGenero: item.itemGenero,
+          itemTam: item.itemTam,
+          itemQty: item.itemQty,
+          itemTamanhoId: item.itemTamanhoId,
+          updatedAt: convertSPTime(String(item.updatedAt)),
+          createdAt: convertSPTime(String(item.createdAt)),
+        })),
+      };
+    } catch (error) {
+      console.error('Erro ao buscar a caixa:', error);
       throw error;
     }
   }
