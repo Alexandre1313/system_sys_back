@@ -232,8 +232,123 @@ export class CaixaPrisma {
     }
   }
 
-  //async processarCaixaEntrada(dadosEntrada: CaixaAjuste): Promise<CaixaAjuste | null> {
-  //  const { id, gradeId, caixaNumber, qtyCaixa, itens } = dadosEntrada;
-  //  return 
-  //}  
+  async updateItensByBox(caixaData: CaixaAjuste): Promise<CaixaAjuste | null> {
+    if (!caixaData) return null;
+
+    const { id, gradeId, itens } = caixaData;
+
+    try {
+      const retorno = await this.prisma.$transaction(async (prisma) => {
+
+        const itensModify = [];
+
+        for (const item of itens) {
+          const { itemTamanhoId, itemQty } = item;
+
+
+          const outInput = await prisma.outInput.findFirst({
+            where: {
+              caixaId: id,
+              itemTamanhoId: itemTamanhoId
+            }
+          });
+
+          if (outInput) {
+            if (outInput.quantidade !== itemQty) {
+
+              const objectItens = {
+                stockIdentifier: outInput.estoqueId,
+                itemTamanhoIdIdentifier: outInput.itemTamanhoId,
+                gradeIdentifier: outInput.gradeId,
+                boxIdentifier: outInput.caixaId,
+                exclude: itemQty === 0 ? true : false,
+                diff: outInput.quantidade - itemQty,
+              };
+
+              itensModify.push(objectItens);
+
+              if (objectItens.exclude) {
+                await prisma.outInput.delete({ where: { id: outInput.id } });
+              }
+
+              if (!objectItens.exclude) {
+                await prisma.outInput.update({
+                  where: { id: outInput.id }, data: { quantidade: itemQty }
+                })
+              }
+
+            }
+          }
+        }
+
+        for (const item of itensModify) {
+          const { stockIdentifier, itemTamanhoIdIdentifier, gradeIdentifier, boxIdentifier, exclude, diff } = item;
+
+          if (diff <= 0) {
+            continue
+          }
+
+          const gradeItens = await prisma.gradeItem.findFirst(
+            {
+              where: {
+                itemTamanhoId: itemTamanhoIdIdentifier,
+                gradeId: gradeIdentifier
+              }
+            },
+          )
+
+          if (gradeItens) {
+            await prisma.gradeItem.update({
+              where: { id: gradeItens.id },
+              data: { quantidadeExpedida: gradeItens.quantidadeExpedida - diff }
+            })
+          }
+
+          const caixaItem = await prisma.caixaItem.findFirst(
+            {
+              where: {
+                itemTamanhoId: itemTamanhoIdIdentifier,
+                caixaId: boxIdentifier
+              }
+            },
+          )
+
+          if(caixaItem){
+            
+          }
+
+
+
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        return await this.getCaixaById(id);
+      }, { maxWait: 5000, timeout: 20000, });
+
+
+      return retorno ? retorno : null;
+
+    } catch (error: any) {
+      console.error("", error);
+      throw new Error("Erro ao inserir a caixa: " + error.message);
+    }
+  }
+
 }
