@@ -232,4 +232,8 @@ export class CaixaPrisma {
     }
   }
 
+  //async processarCaixaEntrada(dadosEntrada: CaixaAjuste): Promise<CaixaAjuste | null> {
+  //  const { id, gradeId, caixaNumber, qtyCaixa, itens } = dadosEntrada;
+  //  return 
+  //}  
 }
