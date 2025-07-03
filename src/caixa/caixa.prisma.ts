@@ -241,7 +241,6 @@ export class CaixaPrisma {
       const retorno = await this.prisma.$transaction(async (prisma) => {
 
         const itensModify = [];
-        let isModification = false;
 
         for (const item of itens) {
           const { itemTamanhoId, itemQty } = item;
@@ -254,34 +253,28 @@ export class CaixaPrisma {
             }
           });
 
-          if (outInput) {
-            if (outInput.quantidade !== itemQty) {
+          if (!outInput) {
+            throw new Error(`Saída não encontrada para caixaId=${id}, itemTamanhoId=${itemTamanhoId}, gradeId=${gradeId}`);
+          }
 
-              const objectItens = {
-                stockIdentifier: outInput.estoqueId,
-                itemTamanhoIdIdentifier: outInput.itemTamanhoId,
-                gradeIdentifier: outInput.gradeId,
-                boxIdentifier: outInput.caixaId,
-                exclude: itemQty === 0 ? true : false,
-                diff: outInput.quantidade - itemQty,
-                qtyNew: itemQty,
-              };
+          if (outInput.quantidade !== itemQty) {
 
-              itensModify.push(objectItens);
+            const objectItens = {
+              stockIdentifier: outInput.estoqueId,
+              itemTamanhoIdIdentifier: outInput.itemTamanhoId,
+              gradeIdentifier: outInput.gradeId,
+              boxIdentifier: outInput.caixaId,
+              exclude: itemQty === 0 ? true : false,
+              diff: outInput.quantidade - itemQty,
+              qtyNew: itemQty,
+            };
 
-              if (objectItens.exclude) {
-                await prisma.outInput.delete({ where: { id: outInput.id } });
-                continue;
-              }
+            itensModify.push(objectItens);
 
-              if (objectItens.diff <= 0) continue;
-
-              if (!objectItens.exclude) {
-                await prisma.outInput.update({
-                  where: { id: outInput.id }, data: { quantidade: itemQty }
-                })
-              }
-
+            if (objectItens.exclude) {
+              await prisma.outInput.delete({ where: { id: outInput.id } });
+            } else if (objectItens.diff > 0) {
+              await prisma.outInput.update({ where: { id: outInput.id }, data: { quantidade: itemQty } });
             }
           }
         }
@@ -293,67 +286,72 @@ export class CaixaPrisma {
             continue
           }
 
-          if (diff > 0) {
-            const gradeItens = await prisma.gradeItem.findFirst(
-              {
-                where: {
-                  itemTamanhoId: itemTamanhoIdIdentifier,
-                  gradeId: gradeIdentifier
-                }
-              },
-            )
-
-            if (gradeItens) {
-              await prisma.gradeItem.update({
-                where: { id: gradeItens.id },
-                data: { quantidadeExpedida: gradeItens.quantidadeExpedida - diff }
-              })
-            }
-          }
-
-          if (diff > 0) {
-            const caixaItem = await prisma.caixaItem.findFirst(
-              {
-                where: {
-                  itemTamanhoId: itemTamanhoIdIdentifier,
-                  caixaId: boxIdentifier
-                }
-              },
-            )
-
-            if (caixaItem) {
-              if (exclude) {
-                await prisma.caixaItem.delete({ where: { id: caixaItem.id } });
+          const gradeItens = await prisma.gradeItem.findFirst(
+            {
+              where: {
+                itemTamanhoId: itemTamanhoIdIdentifier,
+                gradeId: gradeIdentifier
               }
-              if (!exclude) {
-                await prisma.caixaItem.update({
-                  where: { id: caixaItem.id }, data: { itemQty: qtyNew }
-                })
+            },
+          )
+
+          if (!gradeItens) {
+            throw new Error(`GradeItem não encontrado para itemTamanhoId=${itemTamanhoIdIdentifier}, gradeId=${gradeIdentifier}`);
+          }
+
+          const novaQuantidadeExpedida = gradeItens.quantidadeExpedida - diff;
+
+          if (novaQuantidadeExpedida < 0) {
+            throw new Error("QuantidadeExpedida resultaria em valor negativo");
+          }
+
+          await prisma.gradeItem.update({
+            where: { id: gradeItens.id },
+            data: { quantidadeExpedida: novaQuantidadeExpedida }
+          })
+
+          const caixaItem = await prisma.caixaItem.findFirst(
+            {
+              where: {
+                itemTamanhoId: itemTamanhoIdIdentifier,
+                caixaId: boxIdentifier
               }
-            }
+            },
+          )
 
+          if (!caixaItem) {
+            throw new Error(`CaixaItem não encontrado para itemTamanhoId=${itemTamanhoIdIdentifier}, caixaId=${boxIdentifier}`);
           }
 
-          if (diff > 0) {
-            const stock = await prisma.estoque.findFirst(
-              {
-                where: {
-                  id: stockIdentifier,
-                }
-              },
-            )
-            if (stock) {
-              await prisma.estoque.update({
-                where: { id: stock.id }, data: { quantidade: stock.quantidade - diff }
-              })
-            }
+          if (exclude) {
+            await prisma.caixaItem.delete({ where: { id: caixaItem.id } });
           }
+          if (!exclude) {
+            await prisma.caixaItem.update({
+              where: { id: caixaItem.id }, data: { itemQty: qtyNew }
+            })
+          }
+
+          const stock = await prisma.estoque.findFirst(
+            {
+              where: {
+                id: stockIdentifier,
+              }
+            },
+          )
+
+          if (!stock) {
+            throw new Error(`Estoque não encontrado para estoqueId=${stockIdentifier}`);
+          }
+
+          await prisma.estoque.update({
+            where: { id: stock.id }, data: { quantidade: stock.quantidade - diff }
+          })
         }
 
-        if (itensModify.length > 0) isModification = true;
+        if (itensModify.length > 0) {
 
-        if (isModification) {
-          const qtyPCaixa = itensModify.reduce((acc, item) => acc + item.qtyNew, 0);
+          const qtyPCaixa = itens.reduce((acc, item) => acc + item.itemQty, 0);
           const box = await prisma.caixa.findFirst(
             {
               where: {
@@ -361,11 +359,13 @@ export class CaixaPrisma {
               }
             },
           )
-          if (box) {
-            await prisma.caixa.update({
-              where: { id: id }, data: { qtyCaixa: qtyPCaixa }
-            })
+
+          if (!box) {
+            throw new Error(`Caixa não encontrada para caixaId=${id}`);
           }
+          await prisma.caixa.update({
+            where: { id: id }, data: { qtyCaixa: qtyPCaixa }
+          })
         }
         return await this.getCaixaById(id);
       }, { maxWait: 5000, timeout: 20000, });
