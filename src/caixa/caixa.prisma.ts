@@ -233,7 +233,7 @@ export class CaixaPrisma {
   }
 
   async updateItensByBox(caixaData: CaixaAjuste): Promise<CaixaAjuste | null> {
-    if (caixaData) return null;
+    if (!caixaData) return null;
 
     const { id, gradeId, itens } = caixaData;
 
