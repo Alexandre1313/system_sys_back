@@ -34,4 +34,15 @@ export class CaixaController {
       throw new BadRequestException('Erro ao salvar o caixa: ' + error.message);
     }
   }
+
+  // Modificar itens da caixa
+  @Post('/updatedbox')
+  @HttpCode(HttpStatus.CREATED)
+  async modificarQuantidadesDaCaixa(@Body() caixa: CaixaAjuste): Promise<CaixaAjuste | null> {
+    try {
+      return await this.repo.updateItensByBox(caixa);
+    } catch (error) {
+      throw new BadRequestException('Erro ao modificar os itens da caixa: ' + error.message);
+    }
+  }
 }
