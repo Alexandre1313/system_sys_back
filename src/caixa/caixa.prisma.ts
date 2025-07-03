@@ -233,7 +233,7 @@ export class CaixaPrisma {
   }
 
   async updateItensByBox(caixaData: CaixaAjuste): Promise<CaixaAjuste | null> {
-    if (!caixaData) return null;
+    if (caixaData) return null;
 
     const { id, gradeId, itens } = caixaData;
 
@@ -345,7 +345,7 @@ export class CaixaPrisma {
           }
 
           await prisma.estoque.update({
-            where: { id: stock.id }, data: { quantidade: stock.quantidade - diff }
+            where: { id: stock.id }, data: { quantidade: stock.quantidade + diff }
           })
         }
 
