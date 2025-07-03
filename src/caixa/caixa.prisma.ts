@@ -375,5 +375,5 @@ export class CaixaPrisma {
       throw new Error("Erro ao modificar dados da caixa: " + error.message);
     }
   }
-
+  
 }
