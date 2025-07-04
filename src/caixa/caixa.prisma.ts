@@ -238,7 +238,7 @@ export class CaixaPrisma {
     const { id, gradeId, itens } = caixaData;
 
     try {
-      const retorno = await this.prisma.$transaction(async (prisma) => {
+      await this.prisma.$transaction(async (prisma) => {
 
         const itensModify = [];
 
@@ -367,9 +367,11 @@ export class CaixaPrisma {
             where: { id: id }, data: { qtyCaixa: qtyPCaixa }
           })
         }
-        return await this.getCaixaById(id);
+       
       }, { maxWait: 5000, timeout: 20000, });
-      return retorno ? retorno : null;
+      const newBox = await this.getCaixaById(id);
+      console.log(newBox)
+      return newBox ? newBox: null;
     } catch (error: any) {
       console.error("", error);
       throw new Error("Erro ao modificar dados da caixa: " + error.message);
