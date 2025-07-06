@@ -1,5 +1,7 @@
 import { Caixa, CaixaAjuste, convertSPTime } from '@core/index';
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+
 import { PrismaProvider } from 'src/db/prisma.provider';
 
 @Injectable()
@@ -137,10 +139,11 @@ export class CaixaPrisma {
           itensGrade: [],
         };
       }, {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
         maxWait: 5000,
         timeout: 20000,
       });
-
+      
       return result;
     } catch (error: any) {
       console.error("", error);
@@ -368,9 +371,9 @@ export class CaixaPrisma {
           })
         }
        
-      }, { maxWait: 5000, timeout: 20000, });
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable,  maxWait: 5000, timeout: 20000, });
       const newBox = await this.getCaixaById(id);
-      console.log(newBox)
+      //console.log(newBox)
       return newBox ? newBox: null;
     } catch (error: any) {
       console.error("", error);
