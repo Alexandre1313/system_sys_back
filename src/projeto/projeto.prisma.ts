@@ -821,12 +821,34 @@ export class ProjetoPrisma {
         });
       }
 
-      // Ordenação se for "DESPACHADA"
+      /* Ordenação se for "DESPACHADA"
       if (status === "DESPACHADA") {
         formattedData = formattedData.sort((a, b) => {
           const numeroEscolaA = parseInt(a.numeroEscola, 10);
           const numeroEscolaB = parseInt(b.numeroEscola, 10);
           return numeroEscolaA - numeroEscolaB;
+        });
+      }*/
+
+      if (status === "DESPACHADA") {
+        formattedData = formattedData.sort((a, b) => {
+          const parseDate = (str: string) => {
+            const [date, time] = str.split(' ');
+            const [day, month, year] = date.split('/');
+            const [hour, minute] = time.split(':');
+            return new Date(
+              Number(year),
+              Number(month) - 1,
+              Number(day),
+              Number(hour),
+              Number(minute)
+            );
+          };
+
+          const dateA = parseDate(a.update).getTime();
+          const dateB = parseDate(b.update).getTime();
+
+          return dateB - dateA; // mais antigo primeiro
         });
       }
 
