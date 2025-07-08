@@ -833,22 +833,21 @@ export class ProjetoPrisma {
       if (status === "DESPACHADA") {
         formattedData = formattedData.sort((a, b) => {
           const parseDate = (str: string) => {
-            const [date, time] = str.split(' ');
-            const [day, month, year] = date.split('/');
-            const [hour, minute] = time.split(':');
-            return new Date(
-              Number(year),
-              Number(month) - 1,
-              Number(day),
-              Number(hour),
-              Number(minute)
-            );
+            const [date] = str.split(" ");
+            const [day, month, year] = date.split("/");
+            return new Date(Number(year), Number(month) - 1, Number(day));
           };
 
           const dateA = parseDate(a.update).getTime();
           const dateB = parseDate(b.update).getTime();
 
-          return dateB - dateA; // mais antigo primeiro
+          // Ordena por data (mais recente primeiro)
+          if (dateA !== dateB) {
+            return dateB - dateA;
+          }
+
+          // Se a data for igual, ordena pelo número da escola
+          return parseInt(a.numeroEscola, 10) - parseInt(b.numeroEscola, 10);
         });
       }
 
