@@ -205,24 +205,18 @@ export class ProjetoPrisma {
   }
 
   async getUniqueGradeRemessasByProject(projectId: number): Promise<number[]> {
-    if (!projectId) {
-      console.error('ID do projeto é inválido.');
-      return [];
-    }
-
     try {
-      // Buscar valores únicos de remessa dentro das grades vinculadas às escolas do projeto
       const remessas = await this.prisma.$queryRaw<{ remessa: number }[]>(
         Prisma.sql`
-            SELECT DISTINCT "Grade"."remessa"
-            FROM "Grade"
-            INNER JOIN "Escola" ON "Grade"."escolaId" = "Escola"."id"
-            WHERE "Escola"."projetoId" = ${projectId} AND "Grade"."remessa" IS NOT NULL
-            ORDER BY "Grade"."remessa" ASC
-        `
+        SELECT DISTINCT "Grade"."remessa"
+        FROM "Grade"
+        INNER JOIN "Escola" ON "Grade"."escolaId" = "Escola"."id"
+        WHERE "Grade"."remessa" IS NOT NULL
+        ${projectId !== -1 ? Prisma.sql`AND "Escola"."projetoId" = ${projectId}` : Prisma.empty}
+        ORDER BY "Grade"."remessa" ASC
+      `
       );
 
-      // Retornar um array simples com os valores únicos de remessa
       return remessas.map(row => row.remessa);
     } catch (error) {
       console.error(`Erro ao buscar as remessas únicas das grades para o projeto ${projectId}:`, error);
