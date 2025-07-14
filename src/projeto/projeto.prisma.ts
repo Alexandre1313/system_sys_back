@@ -5,7 +5,7 @@ import {
 import { sizeOrders } from '@core/utils/utils';
 import { Injectable } from '@nestjs/common';
 import { Escola, Grade, Prisma } from '@prisma/client';
-import { isAfter, subHours } from 'date-fns';
+import { isAfter, subMinutes } from 'date-fns';
 import { PrismaProvider } from 'src/db/prisma.provider';
 
 @Injectable()
@@ -82,7 +82,7 @@ export class ProjetoPrisma {
 
     if (!projeto) return null;
 
-    const limite = subHours(new Date(), 2);
+    const limite = subMinutes(new Date(), 30);
 
     const resultado = {
       ...projeto,
