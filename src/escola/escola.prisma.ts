@@ -207,7 +207,7 @@ export class EscolaPrisma {
               {
                 status: 'DESPACHADA', // Incluir grades com status 'DESPACHADA'
                 updatedAt: {
-                  gte: new Date(new Date().getTime() - 3 * 60 * 60 * 1000), // Apenas grades com 'DESPACHADA' atualizadas nas últimas 4 horas
+                  gte: new Date(new Date().getTime() - 30 * 60 * 1000), // Apenas grades com 'DESPACHADA' atualizadas na última meia hora
                 },
               },
             ],
