@@ -59,8 +59,7 @@ export class ProjetoPrisma {
     return (projeto as Projeto) ?? null;
   }
 
-  async obterPorIdEscolas(id: number): Promise<(Omit<Projeto, 'escolas'> & {
-    escolas: (Omit<Escola, 'grades'> & {grades: (Grade & { iniciada: boolean })[];})[];}) | null> {
+  async obterPorIdEscolas(id: number): Promise<(Omit<Projeto, 'escolas'> & {escolas: (Omit<Escola, 'grades'> & {grades: (Grade & { iniciada: boolean })[];})[];}) | null> {
     const projeto = await this.prisma.projeto.findUnique({
       where: { id },
       include: {
