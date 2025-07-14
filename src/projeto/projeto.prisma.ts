@@ -1,7 +1,11 @@
-import { Caixa, convertSPTime, GradeItem, GradeOpenBySchool, GradesRomaneio, Grafo, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
+import {
+  Caixa, convertSPTime, GradeItem, GradeOpenBySchool, GradesRomaneio,
+  Grafo, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems
+} from '@core/index';
 import { sizeOrders } from '@core/utils/utils';
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Escola, Grade, Prisma } from '@prisma/client';
+import { isAfter, subHours } from 'date-fns';
 import { PrismaProvider } from 'src/db/prisma.provider';
 
 @Injectable()
@@ -55,24 +59,58 @@ export class ProjetoPrisma {
     return (projeto as Projeto) ?? null;
   }
 
-  async obterPorIdEscolas(id: number): Promise<Projeto> {
-    return await this.prisma.projeto.findUnique({
-      where: {
-        id: id,
-      },
+  async obterPorIdEscolas(id: number): Promise<(Omit<Projeto, 'escolas'> & {
+    escolas: (Omit<Escola, 'grades'> & {grades: (Grade & { iniciada: boolean })[];})[];}) | null> {
+    const projeto = await this.prisma.projeto.findUnique({
+      where: { id },
       include: {
         escolas: {
           include: {
             grades: {
-              orderBy: {
-                createdAt: 'desc', // Ordena pela data de criação da grade (as mais recentes primeiro)
+              orderBy: { createdAt: 'desc' },
+              take: 7,
+              include: {
+                // Inclui apenas para uso interno
+                itensGrade: {
+                  select: { quantidadeExpedida: true },
+                },
               },
-              take: 10, // Limita a 10 grades mais recentes              
             },
           },
         },
       },
     });
+
+    if (!projeto) return null;
+
+    const limite = subHours(new Date(), 2);
+
+    const resultado = {
+      ...projeto,
+      escolas: projeto.escolas.map((escola) => ({
+        ...escola,
+        grades: escola.grades
+          .filter((grade) => {
+            if (grade.status === 'DESPACHADA') {
+              return isAfter(grade.updatedAt, limite);
+            }
+            return true;
+          })
+          .map((grade) => {
+            const iniciada = grade.itensGrade.some(
+              (item) => item.quantidadeExpedida > 0
+            );
+            // Retorna grade com iniciada, mas sem os gradeItens
+            const { itensGrade, ...resto } = grade;
+            return {
+              ...resto,
+              iniciada,
+            };
+          }),
+      })),
+    };
+
+    return resultado;
   }
 
   async excluir(id: number): Promise<void> {
