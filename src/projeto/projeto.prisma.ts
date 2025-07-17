@@ -1,7 +1,4 @@
-import {
-  Caixa, convertSPTime, GradeItem, GradeOpenBySchool, GradesRomaneio,
-  Grafo, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems
-} from '@core/index';
+import { Caixa, convertSPTime, GradeItem, GradeOpenBySchool, GradesRomaneio, Grafo, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
 import { sizeOrders } from '@core/utils/utils';
 import { Injectable } from '@nestjs/common';
 import { Escola, Grade, Prisma } from '@prisma/client';
@@ -59,7 +56,7 @@ export class ProjetoPrisma {
     return (projeto as Projeto) ?? null;
   }
 
-  async obterPorIdEscolas(id: number): Promise<(Omit<Projeto, 'escolas'> & {escolas: (Omit<Escola, 'grades'> & {grades: (Grade & { iniciada: boolean })[];})[];}) | null> {
+  async obterPorIdEscolas(id: number): Promise<(Omit<Projeto, 'escolas'> & { escolas: (Omit<Escola, 'grades'> & { grades: (Grade & { iniciada: boolean })[]; })[]; }) | null> {
     const projeto = await this.prisma.projeto.findUnique({
       where: { id },
       include: {

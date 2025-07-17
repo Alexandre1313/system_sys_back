@@ -45,4 +45,16 @@ export class CaixaController {
       throw new BadRequestException('Erro ao modificar os itens da caixa: ' + error.message);
     }
   }
+
+  // Modificar e ou excluir itens da caixa
+  @Post('/updatedboxorexclud')
+  @HttpCode(HttpStatus.CREATED)
+  async modificarQuantidadesDaCaixaOrExclud(@Body() caixa: CaixaAjuste): Promise<CaixaAjuste | null> {
+    try {
+      return await this.repo.updateItensByBoxOrExclud(caixa);
+    } catch (error) {
+      throw new BadRequestException('Erro ao modificar ou excluir a caixa: ' + error.message);
+    }
+  }
+
 }
