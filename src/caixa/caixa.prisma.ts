@@ -382,7 +382,7 @@ export class CaixaPrisma {
   }
 
   async updateItensByBoxOrExclud(caixaData: CaixaAjuste): Promise<CaixaAjuste | null> {
-    if (!caixaData) return null;
+    if (caixaData) return null;
 
     const { id, gradeId, itens } = caixaData;
 
@@ -528,5 +528,5 @@ export class CaixaPrisma {
       throw new Error("Erro ao modificar dados da caixa: " + error.message);
     }
   }
-  
+
 }
