@@ -33,6 +33,55 @@ const askQuestionNameFile = (question: string): Promise<string> => {
     });
 };
 
+/*
+
+// Função para perguntar ao usuário o nome do projeto
+const askQuestionRemessa = (question: string): Promise<number | null> => {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+
+    return new Promise<number | null>((resolve) => {
+        rl.question(question, (answer) => {
+            rl.close();
+            resolve(answer ? parseInt(answer, 10) : null);
+        });
+    });
+};
+
+// Função para perguntar o tipo
+const askQuestionTipo = (question: string): Promise<string | null> => {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+
+    return new Promise<string | null>((resolve) => {
+        rl.question(question, (answer) => {
+            rl.close();
+            resolve((answer ?? '').trim());
+        });
+    });
+};
+
+// Função para perguntar a companhia
+const askQuestionCompanyId = (question: string): Promise<number | null> => {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+
+    return new Promise<number | null>((resolve) => {
+        rl.question(question, (answer) => {
+            rl.close();
+            resolve(answer ? parseInt(answer, 10) : null);
+        });
+    });
+};
+
+*/
+
 async function seed2() {
     try {
         async function inserirDadosNoBanco(dados: DataInserctionUni[]) {
@@ -71,19 +120,22 @@ async function seed2() {
                             projetoId: projeto.id,
                         },
                     });
+
                     console.log(`Escola ${escola.nome} (ID: ${escola.id}) processada.`);
 
                     console.log(`\nCriando grade para a escola ${escola.nome}`);
+
                     const grade = await prisma.grade.create({
                         data: {
-                            remessa: 1,
+                            remessa: 2,
                             escolaId: escola.id,
-                            companyId: 2222222,
+                            companyId: 2,
                             //createdAt: "2025-02-17T11:39:00.739Z", 
                             //updatedAt: "2025-02-17T11:39:00.739Z",
-                            tipo: "REPOSIÇÂO",
+                            //tipo: "REPOSIÇÃO",
                         },
                     });
+
                     console.log(`Grade (ID: ${grade.id}) criada.`);
 
                     for (const itemData of escolaData.itens) {
@@ -172,6 +224,17 @@ async function seed2() {
 
         while (nameFile === '') {
             nameFile = await askQuestionNameFile('Informe o nome do projeto para o qual deseja inserir pedidos (INFORME CANCEL PARA SAIR): ');
+            if (nameFile.toUpperCase() === 'CANCEL') {
+                console.clear();
+                console.log('Inserção abortada pelo usuário.');
+                return; // Sai da função se o usuário não quiser continuar
+            }            
+        }
+
+        /*let remessa = '';
+
+        while (nameFile === '') {
+            remessa = await askQuestionRemessa('Informe a remessa do pedido (INFORME CANCEL PARA SAIR): ');
 
             if (nameFile.toUpperCase() === 'CANCEL') {
                 console.clear();
@@ -180,7 +243,31 @@ async function seed2() {
             }
         }
 
-        const pathFile = nameFile ? String(`core/utils/distgradeunificada${nameFile}.xlsx`): String(`core/utils/distgradeunificada.xlsx`);
+        let tipo = null;
+
+        while (nameFile === '') {
+            remessa = await askQuestionTipo('Informe o tipo da grade (INFORME CANCEL PARA SAIR): ');
+
+            if (nameFile.toUpperCase() === 'CANCEL') {
+                console.clear();
+                console.log('Inserção abortada pelo usuário.');
+                return; // Sai da função se o usuário não quiser continuar
+            }
+        }
+
+        let company = null;
+
+        while (nameFile === '') {
+            remessa = await askQuestionCompanyId('Informe o identificador da empresa (INFORME CANCEL PARA SAIR): ');
+
+            if (nameFile.toUpperCase() === 'CANCEL') {
+                console.clear();
+                console.log('Inserção abortada pelo usuário.');
+                return; // Sai da função se o usuário não quiser continuar
+            }
+        }*/
+
+        const pathFile = nameFile ? String(`core/utils/distgradeunificada${nameFile}.xlsx`) : String(`core/utils/distgradeunificada.xlsx`);
 
         const dados = utilities2(pathFile);
 
