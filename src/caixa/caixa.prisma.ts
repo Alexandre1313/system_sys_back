@@ -525,7 +525,7 @@ export class CaixaPrisma {
       return newBox ? newBox : null;
     } catch (error: any) {
       console.error("", error);
-      throw new Error("Erro ao modificar dados da caixa: " + error.message);
+      throw new Error("Erro ao modificar dados da caixa ou excluí-la: " + error.message);
     }
   }
 

@@ -1,7 +1,7 @@
-import { Genero, PrismaClient } from '@prisma/client';
-import utilities2 from '../core/utils/utilities2';
 import { DataInserctionUni } from '@core/interfaces';
+import { Genero, PrismaClient } from '@prisma/client';
 import * as readline from 'readline';
+import utilities2 from '../core/utils/utilities2';
 
 const prisma = new PrismaClient();
 
@@ -16,6 +16,21 @@ const askQuestion = (question) => {
         rl.close();
         resolve(answer.toUpperCase()); // Converte a resposta para maiúsculas
     }));
+};
+
+// Função para perguntar ao usuário o nome do projeto
+const askQuestionNameFile = (question: string): Promise<string> => {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+
+    return new Promise<string>((resolve) => {
+        rl.question(question, (answer) => {
+            rl.close();
+            resolve((answer ?? '').trim());
+        });
+    });
 };
 
 async function seed2() {
@@ -62,7 +77,7 @@ async function seed2() {
                     const grade = await prisma.grade.create({
                         data: {
                             remessa: 1,
-                            escolaId: escola.id,                          
+                            escolaId: escola.id,
                             companyId: 2222222,
                             //createdAt: "2025-02-17T11:39:00.739Z", 
                             //updatedAt: "2025-02-17T11:39:00.739Z",
@@ -153,8 +168,23 @@ async function seed2() {
             console.log('Inserção de dados concluída!');
         }
 
-        const dados = utilities2();
-        const confirmation = await askQuestion('Você deseja iniciar a inserção de grades poli no BD? (Y/N) ');
+        let nameFile = '';
+
+        while (nameFile === '') {
+            nameFile = await askQuestionNameFile('Informe o nome do projeto para o qual deseja inserir pedidos (INFORME CANCEL PARA SAIR): ');
+
+            if (nameFile.toUpperCase() === 'CANCEL') {
+                console.clear();
+                console.log('Inserção abortada pelo usuário.');
+                return; // Sai da função se o usuário não quiser continuar
+            }
+        }
+
+        const pathFile = nameFile ? String(`core/utils/distgradeunificada${nameFile}.xlsx`): String(`core/utils/distgradeunificada.xlsx`);
+
+        const dados = utilities2(pathFile);
+
+        const confirmation = await askQuestion(`Você deseja iniciar a inserção de grades do projeto ${nameFile.toUpperCase()} no BD? (Y/N)`);
 
         if (confirmation !== 'Y') {
             console.clear();

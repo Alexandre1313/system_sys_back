@@ -2,6 +2,7 @@ import { DataInserctionUni, TamanhoQuantidade } from "@core/interfaces";
 import * as XLSX from 'xlsx';
 
 export default function utilities2(caminhoPlanilha: string = 'core/utils/distgradeunificada.xlsx'): DataInserctionUni[] {
+  
   function tratarValor(valor: any, valorPadrao: string | null = null): string | null {
     if (valor === undefined || valor === null || String(valor).trim() === "") {
       return valorPadrao;
