@@ -18,7 +18,6 @@ const askQuestion = (question) => {
     }));
 };
 
-// Função para perguntar ao usuário o nome do projeto
 const askQuestionNameFile = (question: string): Promise<string> => {
     const rl = readline.createInterface({
         input: process.stdin,
@@ -33,31 +32,27 @@ const askQuestionNameFile = (question: string): Promise<string> => {
     });
 };
 
-/*
-
-// Função para perguntar ao usuário o nome do projeto
-const askQuestionRemessa = (question: string): Promise<number | null> => {
+const askQuestionRemessa = (question: string): Promise<string> => {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
     });
 
-    return new Promise<number | null>((resolve) => {
+    return new Promise<string>((resolve) => {
         rl.question(question, (answer) => {
             rl.close();
-            resolve(answer ? parseInt(answer, 10) : null);
+            resolve(answer.trim()); // Sempre retorna a string digitada
         });
     });
 };
 
-// Função para perguntar o tipo
-const askQuestionTipo = (question: string): Promise<string | null> => {
+const askQuestionTipo = (question: string): Promise<string> => {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
     });
 
-    return new Promise<string | null>((resolve) => {
+    return new Promise<string>((resolve) => {
         rl.question(question, (answer) => {
             rl.close();
             resolve((answer ?? '').trim());
@@ -65,26 +60,34 @@ const askQuestionTipo = (question: string): Promise<string | null> => {
     });
 };
 
-// Função para perguntar a companhia
-const askQuestionCompanyId = (question: string): Promise<number | null> => {
+const askQuestionCompanyId = (question: string): Promise<string> => {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
     });
 
-    return new Promise<number | null>((resolve) => {
+    return new Promise<string>((resolve) => {
         rl.question(question, (answer) => {
             rl.close();
-            resolve(answer ? parseInt(answer, 10) : null);
+            resolve((answer ?? '').trim());
         });
     });
 };
 
-*/
+const messageConfirmation = (message: string, nameProject: string, idCompany: string, remNumber: string, tipo: string | null) => {
+    console.log(``);
+    console.log(message);
+    console.log(``);
+    console.log(`Projeto: ${nameProject}`);
+    console.log(`Empresa: ${idCompany}`);
+    console.log(`Remessa: ${remNumber}`);
+    console.log(`   Tipo: ${tipo}`);
+    console.log(``);
+}
 
 async function seed2() {
     try {
-        async function inserirDadosNoBanco(dados: DataInserctionUni[]) {
+        async function inserirDadosNoBanco(dados: DataInserctionUni[], remessa: number, companyId: number, tipo: string | null) {
             let barcodeCounter = 0;
 
             const lastBarcode = await prisma.barcode.findFirst({
@@ -127,12 +130,12 @@ async function seed2() {
 
                     const grade = await prisma.grade.create({
                         data: {
-                            remessa: 2,
+                            remessa: remessa,
                             escolaId: escola.id,
-                            companyId: 2,
+                            companyId: companyId,
                             //createdAt: "2025-02-17T11:39:00.739Z", 
                             //updatedAt: "2025-02-17T11:39:00.739Z",
-                            //tipo: "REPOSIÇÃO",
+                            tipo: tipo || null,
                         },
                     });
 
@@ -228,50 +231,85 @@ async function seed2() {
                 console.clear();
                 console.log('Inserção abortada pelo usuário.');
                 return; // Sai da função se o usuário não quiser continuar
-            }            
-        }
-
-        /*let remessa = '';
-
-        while (nameFile === '') {
-            remessa = await askQuestionRemessa('Informe a remessa do pedido (INFORME CANCEL PARA SAIR): ');
-
-            if (nameFile.toUpperCase() === 'CANCEL') {
-                console.clear();
-                console.log('Inserção abortada pelo usuário.');
-                return; // Sai da função se o usuário não quiser continuar
             }
         }
 
-        let tipo = null;
+        let remessa: string = '';
 
-        while (nameFile === '') {
-            remessa = await askQuestionTipo('Informe o tipo da grade (INFORME CANCEL PARA SAIR): ');
+        while (true) {
+            remessa = await askQuestionRemessa('Informe a remessa do pedido, valores maior que 0 (INFORME CANCEL PARA SAIR): ');
 
-            if (nameFile.toUpperCase() === 'CANCEL') {
+            if (remessa.toUpperCase() === 'CANCEL') {
                 console.clear();
                 console.log('Inserção abortada pelo usuário.');
-                return; // Sai da função se o usuário não quiser continuar
+                return;
             }
+
+            const numero = parseInt(remessa, 10);
+
+            if (!isNaN(numero) && numero > 0) {
+                // número válido, sai do loop
+                break;
+            }
+
+            console.log('Valor inválido. Digite um número maior que 0.');
         }
 
-        let company = null;
+        let tipo: string | null = null;
 
-        while (nameFile === '') {
-            remessa = await askQuestionCompanyId('Informe o identificador da empresa (INFORME CANCEL PARA SAIR): ');
+        while (true) {
+            const resposta = await askQuestionTipo('Informe o tipo da grade (R = REPOSIÇÃO, N = NULO, ou CANCEL para sair): ');
 
-            if (nameFile.toUpperCase() === 'CANCEL') {
+            const respostaUpper = resposta.trim().toUpperCase();
+
+            if (respostaUpper === 'CANCEL') {
                 console.clear();
                 console.log('Inserção abortada pelo usuário.');
-                return; // Sai da função se o usuário não quiser continuar
+                return;
             }
-        }*/
+
+            if (respostaUpper === 'R') {
+                tipo = 'REPOSIÇÃO';
+                break;
+            }
+
+            if (respostaUpper === 'N') {
+                tipo = null;
+                break;
+            }
+
+            console.log('Entrada inválida. Digite apenas R, N ou CANCEL.');
+        }
+
+        let company: string = '';
+
+        while (true) {
+            company = await askQuestionCompanyId('Informe o identificador da empresa, maior que 0 (INFORME CANCEL PARA SAIR): ');
+
+            if (company.toUpperCase() === 'CANCEL') {
+                console.clear();
+                console.log('Inserção abortada pelo usuário.');
+                return;
+            }
+
+            const companyNumber = parseInt(company, 10);
+
+            if (!isNaN(companyNumber) && companyNumber > 0) {
+                break; // válido, sai do loop
+            }
+
+            console.log('Valor inválido. Informe um número inteiro maior que 0.');
+        }
 
         const pathFile = nameFile ? String(`core/utils/distgradeunificada${nameFile}.xlsx`) : String(`core/utils/distgradeunificada.xlsx`);
 
         const dados = utilities2(pathFile);
 
-        const confirmation = await askQuestion(`Você deseja iniciar a inserção de grades do projeto ${nameFile.toUpperCase()} no BD? (Y/N)`);
+        const mess = 'RESUMO DOS DADOS INFORMADOS PARA INSERÇÃO NO BANCO DE DADOS:';
+
+        messageConfirmation(mess, nameFile, company, remessa, tipo);
+
+        const confirmation = await askQuestion(`Você deseja iniciar a inserção de grades do projeto listado acima no BD? (Y/N)`);
 
         if (confirmation !== 'Y') {
             console.clear();
@@ -279,7 +317,7 @@ async function seed2() {
             return; // Sai da função se o usuário não quiser continuar
         }
 
-        await inserirDadosNoBanco(dados);
+        await inserirDadosNoBanco(dados, parseInt(remessa, 10), parseInt(company, 10), tipo);
     } catch (error) {
         console.error('Erro ao executar o seed:', error);
     } finally {
