@@ -307,7 +307,7 @@ async function seed2() {
 
         const mess = 'RESUMO DOS DADOS INFORMADOS PARA INSERÇÃO NO BANCO DE DADOS:';
 
-        messageConfirmation(mess, nameFile, company, remessa, tipo);
+        messageConfirmation(mess, nameFile.toUpperCase(), company, remessa, tipo);
 
         const confirmation = await askQuestion(`Você deseja iniciar a inserção de grades do projeto listado acima no BD? (Y/N)`);
 
@@ -318,6 +318,7 @@ async function seed2() {
         }
 
         await inserirDadosNoBanco(dados, parseInt(remessa, 10), parseInt(company, 10), tipo);
+
     } catch (error) {
         console.error('Erro ao executar o seed:', error);
     } finally {
