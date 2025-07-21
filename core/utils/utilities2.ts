@@ -1,15 +1,8 @@
 import { DataInserctionUni, TamanhoQuantidade } from "@core/interfaces";
 import * as XLSX from 'xlsx';
+import { limparString, tratarValor } from "./utils";
 
-export default function utilities2(caminhoPlanilha: string = 'core/utils/distgradeunificada.xlsx'): DataInserctionUni[] {
-  
-  function tratarValor(valor: any, valorPadrao: string | null = null): string | null {
-    if (valor === undefined || valor === null || String(valor).trim() === "") {
-      return valorPadrao;
-    }
-    return String(valor).toUpperCase().trim();
-  }
-  
+export default function utilities2(caminhoPlanilha: string = 'core/utils/distgradeunificada.xlsx'): DataInserctionUni[] {  
   // Lê o arquivo Excel
   const workbook = XLSX.readFile(caminhoPlanilha);
 
@@ -34,12 +27,12 @@ export default function utilities2(caminhoPlanilha: string = 'core/utils/distgra
     const linha = worksheet[i];
 
     // Extração dos dados fixos da linha (número da escola, nome da escola, etc.)
-    const numeroEscola = String(linha[2]).toUpperCase().trim();
-    const escola = String(linha[1]).toUpperCase().trim();
-    const projeto = String(linha[0]).toUpperCase().trim();
-    const item = String(linha[3]).toUpperCase().trim();
-    const genero = String(linha[4]).toUpperCase().trim();
-    const numberJoin = tratarValor(linha[5]);
+    const numeroEscola = limparString(String(linha[2]));
+    const escola = limparString(String(linha[1]));
+    const projeto = limparString(String(linha[0]));
+    const item = limparString(String(linha[3]));
+    const genero = limparString(String(linha[4]));
+    const numberJoin = tratarValor(String(linha[5]));
 
     // Cria um array para armazenar os tamanhos e quantidades
     const tamanhos: TamanhoQuantidade[] = [];
@@ -52,8 +45,8 @@ export default function utilities2(caminhoPlanilha: string = 'core/utils/distgra
       // Verifica se a quantidade é um número válido, ou seja, maior que 0
       if (quantidade !== undefined && quantidade !== null && !isNaN(quantidade) && quantidade > 0) {
         tamanhos.push({
-          tamanho: String(tamanho).toUpperCase().trim(),
-          quantidade: Number(quantidade)
+          tamanho: limparString(String(tamanho)),
+          quantidade: Number(limparString(String(quantidade)))
         });
       }
     }

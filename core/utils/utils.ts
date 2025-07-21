@@ -28,3 +28,14 @@ export const sizeOrders = (tamanhos: string[]): string[] => {
 
   return [...numTamanhos, ...letraTamanhos];
 }; 
+
+export const limparString = (str: string): string => {
+  return str.replace(/[\n\r\t]+/g, ' ').trim().toUpperCase();
+}
+
+export const tratarValor = (valor: any, valorPadrao: string | null = null): string | null => {
+  if (valor === undefined || valor === null || String(valor).trim() === "") {
+    return valorPadrao;
+  }
+  return limparString(String(valor));
+}
