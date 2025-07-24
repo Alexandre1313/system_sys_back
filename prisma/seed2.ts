@@ -1,4 +1,4 @@
-import { DataInserctionUni } from '@core/interfaces';
+import { Company, DataInserctionUni } from '@core/interfaces';
 import { Genero, PrismaClient } from '@prisma/client';
 import * as readline from 'readline';
 import utilities2 from '../core/utils/utilities2';
@@ -74,14 +74,15 @@ const askQuestionCompanyId = (question: string): Promise<string> => {
     });
 };
 
-const messageConfirmation = (message: string, nameProject: string, idCompany: string, remNumber: string, tipo: string | null) => {
+const messageConfirmation = (message: string, nameProject: string, idCompany: string, remNumber: string, tipo: string | null, companys: Company[]) => {
     console.log(``);
     console.log(message);
     console.log(``);
-    console.log(`Projeto: ${nameProject}`);
-    console.log(`Empresa: ${idCompany}`);
-    console.log(`Remessa: ${remNumber}`);
-    console.log(`   Tipo: ${tipo}`);
+    console.log(`PROJETO: ${nameProject}`);
+    const c = companys.find((c) => c.id === parseInt(idCompany, 10));
+    console.log(`EMPRESA: ${String(c.id).padStart(2, '0')} - ${c.nome}`);
+    console.log(`REMESSA: ${remNumber}`);
+    console.log(`   TIPO: ${tipo}`);
     console.log(``);
 }
 
@@ -226,10 +227,10 @@ async function seed2() {
         let nameFile = '';
 
         while (nameFile === '') {
-            nameFile = await askQuestionNameFile('Informe o nome do projeto para o qual deseja inserir pedidos (INFORME CANCEL PARA SAIR): ');
+            nameFile = await askQuestionNameFile('Informe o nome do projeto para o qual deseja inserir pedidos (INFORME CANCEL PARA SAIR): '.toUpperCase());
             if (nameFile.toUpperCase() === 'CANCEL') {
                 console.clear();
-                console.log('Inserção abortada pelo usuário.');
+                console.log('Inserção abortada pelo usuário.'.toUpperCase());
                 return; // Sai da função se o usuário não quiser continuar
             }
         }
@@ -237,11 +238,11 @@ async function seed2() {
         let remessa: string = '';
 
         while (true) {
-            remessa = await askQuestionRemessa('Informe a remessa do pedido, valores maior que 0 (INFORME CANCEL PARA SAIR): ');
+            remessa = await askQuestionRemessa('Informe a remessa do pedido, valores maior que 0 (INFORME CANCEL PARA SAIR): '.toUpperCase());
 
             if (remessa.toUpperCase() === 'CANCEL') {
                 console.clear();
-                console.log('Inserção abortada pelo usuário.');
+                console.log('Inserção abortada pelo usuário.'.toUpperCase());
                 return;
             }
 
@@ -252,19 +253,19 @@ async function seed2() {
                 break;
             }
 
-            console.log('Valor inválido. Digite um número maior que 0.');
+            console.log('Valor inválido. Digite um número maior que 0.'.toUpperCase());
         }
 
         let tipo: string | null = null;
 
         while (true) {
-            const resposta = await askQuestionTipo('Informe o tipo da grade (R = REPOSIÇÃO, N = NULO, ou CANCEL para sair): ');
+            const resposta = await askQuestionTipo('Informe o tipo da grade (R = REPOSIÇÃO, N = NULO, ou CANCEL para sair): '.toUpperCase());
 
             const respostaUpper = resposta.trim().toUpperCase();
 
             if (respostaUpper === 'CANCEL') {
                 console.clear();
-                console.log('Inserção abortada pelo usuário.');
+                console.log('Inserção abortada pelo usuário.'.toUpperCase());
                 return;
             }
 
@@ -278,17 +279,26 @@ async function seed2() {
                 break;
             }
 
-            console.log('Entrada inválida. Digite apenas R, N ou CANCEL.');
+            console.log('Entrada inválida. Digite apenas R, N ou CANCEL.'.toUpperCase());
         }
 
         let company: string = '';
 
+        const companys = await prisma.company.findMany();
+
+        console.log('');
+        companys.forEach(( comp ) => {
+            console.log(`Digite ${String(comp.id).padStart(2, ' ')} para: ${comp.nome}`.toUpperCase())
+            console.log('')
+        });
+        console.log('');
+
         while (true) {
-            company = await askQuestionCompanyId('Informe o identificador da empresa, maior que 0 (INFORME CANCEL PARA SAIR): ');
+            company = await askQuestionCompanyId('Informe o identificador da empresa, maior que 0 (INFORME CANCEL PARA SAIR): '.toUpperCase());
 
             if (company.toUpperCase() === 'CANCEL') {
                 console.clear();
-                console.log('Inserção abortada pelo usuário.');
+                console.log('Inserção abortada pelo usuário.'.toUpperCase());
                 return;
             }
 
@@ -298,7 +308,7 @@ async function seed2() {
                 break; // válido, sai do loop
             }
 
-            console.log('Valor inválido. Informe um número inteiro maior que 0.');
+            console.log('Valor inválido. Informe um número inteiro maior que 0.'.toUpperCase());
         }
 
         const pathFile = nameFile ? String(`core/utils/distgradeunificada${nameFile}.xlsx`) : String(`core/utils/distgradeunificada.xlsx`);
@@ -307,20 +317,20 @@ async function seed2() {
 
         const mess = 'RESUMO DOS DADOS INFORMADOS PARA INSERÇÃO NO BANCO DE DADOS:';
 
-        messageConfirmation(mess, nameFile.toUpperCase(), company, remessa, tipo);
+        messageConfirmation(mess, nameFile.toUpperCase(), company, remessa, tipo, companys);
 
-        const confirmation = await askQuestion(`Você deseja iniciar a inserção de grades do projeto listado acima no BD? (Y/N)`);
+        const confirmation = await askQuestion(`Você deseja iniciar a inserção de grades do projeto listado acima no BD? (Y/N)`.toUpperCase());
 
         if (confirmation !== 'Y') {
             console.clear();
-            console.log('Inserção abortada pelo usuário.');
+            console.log('Inserção abortada pelo usuário.'.toUpperCase());
             return; // Sai da função se o usuário não quiser continuar
         }
 
         await inserirDadosNoBanco(dados, parseInt(remessa, 10), parseInt(company, 10), tipo);
 
     } catch (error) {
-        console.error('Erro ao executar o seed:', error);
+        console.error('Erro ao executar o seed:'.toUpperCase(), error);
     } finally {
         await prisma.$disconnect();
     }
