@@ -2,7 +2,7 @@ import { DataInserctionUni, TamanhoQuantidade } from "@core/interfaces";
 import * as XLSX from 'xlsx';
 import { limparString, tratarValor } from "./utils";
 
-export default function utilities2(caminhoPlanilha: string = 'core/utils/distgradeunificada.xlsx'): DataInserctionUni[] {  
+export default function utilities2(caminhoPlanilha: string): DataInserctionUni[] {  
   // Lê o arquivo Excel
   const workbook = XLSX.readFile(caminhoPlanilha);
 

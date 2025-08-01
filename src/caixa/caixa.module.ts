@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { CaixaController } from './Caixa.controller';
+import { CaixaController } from './caixa.controller';
 import { DbModule } from '../db/db.module';
-import { CaixaPrisma } from './Caixa.prisma';
+import { CaixaPrisma } from './caixa.prisma';
 
 @Module({
   imports: [DbModule],

@@ -1,7 +1,8 @@
-import { Company, DataInserctionUni } from '@core/interfaces';
+import { Company, DataInserctionUni, Projeto } from '@core/interfaces';
 import { Genero, PrismaClient } from '@prisma/client';
 import * as readline from 'readline';
 import utilities2 from '../core/utils/utilities2';
+import * as path from 'path';
 
 const prisma = new PrismaClient();
 
@@ -74,11 +75,12 @@ const askQuestionCompanyId = (question: string): Promise<string> => {
     });
 };
 
-const messageConfirmation = (message: string, nameProject: string, idCompany: string, remNumber: string, tipo: string | null, companys: Company[]) => {
+const messageConfirmation = (message: string, idProject: string, idCompany: string, remNumber: string, tipo: string | null, companys: Company[], fileNames: Projeto[]) => {
     console.log(``);
     console.log(message);
     console.log(``);
-    console.log(`PROJETO: ${nameProject}`);
+    const p = fileNames.find((p) => p.id === parseInt(idProject, 10));
+    console.log(`PROJETO: ${String(p.id).padStart(2, '0')} - ${p.nome}`);
     const c = companys.find((c) => c.id === parseInt(idCompany, 10));
     console.log(`EMPRESA: ${String(c.id).padStart(2, '0')} - ${c.nome}`);
     console.log(`REMESSA: ${remNumber}`);
@@ -226,8 +228,16 @@ async function seed2() {
 
         let nameFile = '';
 
-        while (nameFile === '') {
-            nameFile = await askQuestionNameFile('Informe o nome do projeto para o qual deseja inserir pedidos (INFORME CANCEL PARA SAIR): '.toUpperCase());
+        const nameFiles = await prisma.projeto.findMany();
+
+        console.log('');
+        nameFiles.forEach((proj) => {
+            console.log(`Digite ${String(proj.id).padStart(2, ' ')} para: ${proj.nome}`.toUpperCase())            
+        });
+        console.log('');
+
+        while (nameFile === '' || isNaN(Number(nameFile)) || !Number.isInteger(Number(nameFile))) {
+            nameFile = await askQuestionNameFile('Informe o ID do projeto para o qual deseja inserir pedidos (INFORME CANCEL PARA SAIR): '.toUpperCase());
             if (nameFile.toUpperCase() === 'CANCEL') {
                 console.clear();
                 console.log('Inserção abortada pelo usuário.'.toUpperCase());
@@ -287,7 +297,7 @@ async function seed2() {
         const companys = await prisma.company.findMany();
 
         console.log('');
-        companys.forEach(( comp ) => {
+        companys.forEach((comp) => {
             console.log(`Digite ${String(comp.id).padStart(2, ' ')} para: ${comp.nome}`.toUpperCase())
             console.log('')
         });
@@ -311,13 +321,23 @@ async function seed2() {
             console.log('Valor inválido. Informe um número inteiro maior que 0.'.toUpperCase());
         }
 
-        const pathFile = nameFile ? String(`core/utils/distgradeunificada${nameFile}.xlsx`) : String(`core/utils/distgradeunificada.xlsx`);
+        let filename = '';
+        let filePath = '';
 
-        const dados = utilities2(pathFile);
+        if (nameFile) {
+            console.log(`path: ${path}`)
+            const baseDir = path.join(process.cwd(), 'core', 'utils', 'docs_proj_p');
+            filename = `distgradeunificada${nameFile.toUpperCase()}.xlsx`;
+            filePath = path.join(baseDir, filename);
+        }
+
+        //const pathFile = nameFile ? String(`core/utils/distgradeunificada${nameFile}.xlsx`) : String(`core/utils/distgradeunificada.xlsx`);
+
+        const dados = utilities2(filePath);
 
         const mess = 'RESUMO DOS DADOS INFORMADOS PARA INSERÇÃO NO BANCO DE DADOS:';
 
-        messageConfirmation(mess, nameFile.toUpperCase(), company, remessa, tipo, companys);
+        messageConfirmation(mess, nameFile.toUpperCase(), company, remessa, tipo, companys, nameFiles);
 
         const confirmation = await askQuestion(`Você deseja iniciar a inserção de grades do projeto listado acima no BD? (Y/N)`.toUpperCase());
 

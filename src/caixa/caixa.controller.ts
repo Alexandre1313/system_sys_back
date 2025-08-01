@@ -1,6 +1,6 @@
 import { Caixa, CaixaAjuste } from '@core/index';
 import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
-import { CaixaPrisma } from './Caixa.prisma';
+import { CaixaPrisma } from './caixa.prisma';
 
 @Controller('caixas')
 export class CaixaController {
