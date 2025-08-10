@@ -84,7 +84,7 @@ const messageConfirmation = (message: string, idProject: string, idCompany: stri
     const c = companys.find((c) => c.id === parseInt(idCompany, 10));
     console.log(`EMPRESA: ${String(c.id).padStart(2, '0')} - ${c.nome}`);
     console.log(`REMESSA: ${remNumber}`);
-    console.log(`   TIPO: ${tipo}`);
+    console.log(`   TIPO: ${tipo ? tipo: 'PEDIDO NORMAL'}`);
     console.log(``);
 }
 

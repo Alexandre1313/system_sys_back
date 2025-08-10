@@ -1,6 +1,8 @@
 import { EntryInput, QtyEmbDay, StockGenerate } from '@core/index';
 import { Injectable } from '@nestjs/common';
 import { PrismaProvider } from 'src/db/prisma.provider';
+import { Prisma } from '@prisma/client';
+import { calcularEstoqueDeKit } from '@core/utils/utils';
 
 @Injectable()
 export class EntryInputPrisma {
@@ -65,30 +67,100 @@ export class EntryInputPrisma {
         });
 
         // 3. Quantidade de estoque do item específico
-        const quantidadeEstoque = await this.prisma.estoque.findUnique({
-            where: {
-                itemTamanhoId: itemTamanhoId,
-            },
-            select: {
-                quantidade: true,
+        const itemTamanho = await this.prisma.itemTamanho.findUnique({
+            where: { id: itemTamanhoId },
+            include: {
+                estoque: true,
+                kitMain: {
+                    include: {
+                        component: {
+                            include: {
+                                estoque: true,
+                            },
+                        },
+                    },
+                },
             },
         });
+
+        if (!itemTamanho) {
+            throw new Error(`ItemTamanho com ID ${itemTamanhoId} não encontrado.`);
+        }
+
+        let estoqueFinal = 0;
+
+        if (itemTamanho.isKit && itemTamanho.kitMain.length > 0) {
+            estoqueFinal = calcularEstoqueDeKit(itemTamanho.kitMain);
+        } else {
+            estoqueFinal = itemTamanho.estoque?.quantidade ?? 0;
+        }
 
         return {
             quantidadeTotalEmbalagem: somaQuantidadesEmbalagem._sum.quantidade || 0,
             quantidadeTotalItem: somaQuantidadesItem._sum.quantidade || 0,
-            quantidadeEstoque: quantidadeEstoque ? quantidadeEstoque.quantidade : 0,
+            quantidadeEstoque: estoqueFinal,
         };
     }
 
-    async inserirQtyNoEstoque(stock: StockGenerate): Promise<EntryInput | null> {        
+    async inserirQtyNoEstoque(stock: StockGenerate): Promise<EntryInput | null> {
         const { embalagemId, itemTamanhoId, estoqueId, userId, quantidade } = stock;
 
         try {
-            // Usa uma transação Prisma para garantir atomicidade
             const result = await this.prisma.$transaction(async (prisma) => {
-                // 1. Atualiza o estoque com base no `itemTamanhoId` 
-                if (itemTamanhoId) {
+                // 1. Verifica se o itemTamanhoId é um kit
+                const itemTamanho = await prisma.itemTamanho.findUnique({
+                    where: { id: itemTamanhoId },
+                    include: { kitMain: true },
+                });
+
+                if (!itemTamanho) {
+                    throw new Error(`ItemTamanho com id ${itemTamanhoId} não encontrado.`);
+                }
+
+                // Se for kit, atualiza estoque e cria entry para cada componente do kit
+                if (itemTamanho.isKit) {
+                    const entradas: EntryInput[] = [];
+
+                    for (const componente of itemTamanho.kitMain) {
+                        // Calcula a quantidade para o componente
+                        const quantidadeComponente = quantidade * componente.quantidade;
+
+                        // Atualiza estoque do componente
+                        const estoqueAtual = await prisma.estoque.findUnique({
+                            where: { itemTamanhoId: componente.componentId },
+                        });
+
+                        if (!estoqueAtual) {
+                            throw new Error(`Estoque para componente id ${componente.componentId} não encontrado.`);
+                        }
+
+                        await prisma.estoque.update({
+                            where: { itemTamanhoId: componente.componentId },
+                            data: {
+                                quantidade: estoqueAtual.quantidade + quantidadeComponente,
+                            },
+                        });
+
+                        // Cria entrada EntryInput para o componente
+                        const newEntry = await prisma.entryInput.create({
+                            data: {
+                                embalagemId,
+                                itemTamanhoId: componente.componentId,
+                                estoqueId: estoqueAtual.id,
+                                quantidade: quantidadeComponente,
+                                userId,
+                                kitInput: true,
+                            },
+                        });                       
+
+                        entradas.push(newEntry);
+                    }
+
+                    // Retorna a primeira entrada como exemplo (ou pode retornar todas)
+                    return entradas[0] || null;
+
+                } else {
+                    // Fluxo atual para item normal
                     const estoqueAtual = await prisma.estoque.findUnique({
                         where: { itemTamanhoId },
                     });
@@ -99,28 +171,27 @@ export class EntryInputPrisma {
 
                     const novaQuantidade = estoqueAtual.quantidade + quantidade;
 
-                    // Atualiza o estoque
                     await prisma.estoque.update({
                         where: { itemTamanhoId },
                         data: { quantidade: novaQuantidade },
                     });
+
+                    const newEntry = await prisma.entryInput.create({
+                        data: {
+                            embalagemId,
+                            itemTamanhoId,
+                            estoqueId,
+                            quantidade,
+                            userId,
+                        },
+                    });
+
+                    return newEntry;
                 }
-
-                // 2. Cria a entrada na tabela EntryInput
-                const newEntry = await prisma.entryInput.create({
-                    data: {
-                        embalagemId,
-                        itemTamanhoId,
-                        estoqueId,
-                        quantidade,
-                        userId,
-                    },
-                });
-
-                return newEntry;
             }, {
-                maxWait: 5000, // default: 2000
-                timeout: 10000, // default: 5000     
+                isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+                maxWait: 5000,
+                timeout: 20000,
             });
 
             return result;

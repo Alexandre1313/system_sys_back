@@ -1,5 +1,5 @@
 import { Caixa, convertSPTime, GradeItem, GradeOpenBySchool, GradesRomaneio, Grafo, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems } from '@core/index';
-import { sizeOrders } from '@core/utils/utils';
+import { calcularEstoqueDeKit, sizeOrders } from '@core/utils/utils';
 import { Injectable } from '@nestjs/common';
 import { Escola, Grade, Prisma } from '@prisma/client';
 import { isAfter, subMinutes } from 'date-fns';
@@ -137,32 +137,48 @@ export class ProjetoPrisma {
           nome: true,
           itens: {
             select: {
-              genero: true, // Seleciona o campo de gênero             
+              genero: true,
               tamanhos: {
                 select: {
-                  id: true, // ID da relação ItemTamanho
+                  id: true,
+                  isKit: true,
                   item: {
                     select: {
-                      nome: true, // Nome do item
+                      nome: true,
                       composicao: true,
                     },
                   },
                   tamanho: {
                     select: {
-                      nome: true, // Nome do tamanho
+                      nome: true,
                     },
                   },
                   estoque: {
                     select: {
                       id: true,
-                      quantidade: true, // Código de barras (opcional)
+                      quantidade: true,
                     },
                   },
                   barcode: {
                     select: {
-                      codigo: true, // Código de barras (opcional)
+                      codigo: true,
                     },
                   },
+                  kitMain: {
+                    select: {
+                      quantidade: true,
+                      component: {
+                        select: {
+                          id: true,
+                          estoque: {
+                            select: {
+                              quantidade: true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
                 },
               },
             },
@@ -172,21 +188,30 @@ export class ProjetoPrisma {
 
       if (!projeto) return null; // Retorna null se o projeto não for encontrado     
 
-      // Transformação dos dados para a estrutura desejada
       const resultado = {
         id: projeto.id,
         nome: projeto.nome,
         itensProject: projeto.itens.flatMap((item) =>
-          item.tamanhos.map((tamanho) => ({
-            id: tamanho.id,  // ID da relação ItemTamanho
-            nome: tamanho.item.nome,
-            genero: item.genero, // Inclui o gênero na transformação
-            composicao: tamanho.item.composicao,
-            tamanho: tamanho.tamanho.nome,
-            estoqueId: tamanho.estoque.id,
-            estoque: tamanho.estoque.quantidade,
-            barcode: tamanho.barcode?.codigo || null,
-          }))
+          item.tamanhos.map((tamanho) => {
+            const isKit = tamanho.isKit && tamanho.kitMain.length > 0;
+
+            // Se for kit, calcula o estoque com base nos componentes
+            const estoqueFicticio = isKit
+              ? calcularEstoqueDeKit(tamanho.kitMain)
+              : tamanho.estoque?.quantidade ?? 0;
+
+            return {
+              id: tamanho.id, // ID da relação ItemTamanho
+              nome: tamanho.item.nome,
+              genero: item.genero,
+              composicao: tamanho.item.composicao,
+              tamanho: tamanho.tamanho.nome,
+              estoqueId: tamanho.estoque?.id ?? null,
+              estoque: estoqueFicticio,
+              barcode: tamanho.barcode?.codigo ?? null,
+              isKit: isKit,
+            };
+          })
         ),
       };
 
@@ -435,10 +460,8 @@ export class ProjetoPrisma {
     }
   }
 
-  // Função para buscar os itens e somar as entradas e saídas
   async getProjetoItensComEntradasSaidas(projetoId: number): Promise<ProjetoStockItems | null> {
     try {
-      // Buscando o projeto
       const projeto = await this.prisma.projeto.findUnique({
         where: { id: projetoId },
         include: {
@@ -450,11 +473,13 @@ export class ProjetoPrisma {
                   entryInput: {
                     select: {
                       quantidade: true,
+                      kitInput: true,
                     },
                   },
                   outInput: {
                     select: {
                       quantidade: true,
+                      kitOutput: true,
                     },
                   },
                   estoque: true,
@@ -465,30 +490,42 @@ export class ProjetoPrisma {
         },
       });
 
-      // Se o projeto não for encontrado, retorna null
       if (!projeto) {
         return null;
       }
 
-      // Mapeando os itens e tamanhos
       const itensComEntradasSaidas = projeto.itens.map((item) => {
         const tamanhosComSomas = item.tamanhos.map((itemTamanho) => {
-          // Soma das entradas e saídas
-          const somaEntradas = itemTamanho.entryInput.reduce((total, entry) => total + entry.quantidade, 0);
-          const somaSaidas = itemTamanho.outInput.reduce((total, out) => total + out.quantidade, 0);
+          // Separar entradas
+          const somaEntradasKit = itemTamanho.entryInput
+            .filter((entry) => entry.kitInput === true)
+            .reduce((total, entry) => total + entry.quantidade, 0);
 
-          // Estoque
+          const somaEntradasAvulso = itemTamanho.entryInput
+            .filter((entry) => entry.kitInput === false)
+            .reduce((total, entry) => total + entry.quantidade, 0);
+
+          // Separar saídas
+          const somaSaidasKit = itemTamanho.outInput
+            .filter((out) => out.kitOutput === true)
+            .reduce((total, out) => total + out.quantidade, 0);
+
+          const somaSaidasAvulso = itemTamanho.outInput
+            .filter((out) => out.kitOutput === false)
+            .reduce((total, out) => total + out.quantidade, 0);
+
           const estoque = itemTamanho.estoque ? itemTamanho.estoque.quantidade : 0;
 
           return {
             tamanho: itemTamanho.tamanho.nome,
             estoque,
-            entradas: somaEntradas,
-            saidas: somaSaidas,
+            entradasKit: somaEntradasKit,
+            entradasAv: somaEntradasAvulso,
+            saidasKit: somaSaidasKit,
+            saidasAv: somaSaidasAvulso,
           };
         });
 
-        // Ordenando tamanhos por critérios específicos
         const tamanhosOrdenados = sizeOrders(
           item.tamanhos.map((itemTamanho) => itemTamanho.tamanho.nome)
         );
@@ -496,14 +533,18 @@ export class ProjetoPrisma {
         return {
           nome: item.nome,
           genero: item.genero,
-          tamanhos: tamanhosOrdenados.map(tamanho => {
-            const tamanhoData = tamanhosComSomas.find(t => t.tamanho === tamanho);
-            return tamanhoData ? tamanhoData : {
-              tamanho,
-              entradas: 0,
-              saidas: 0,
-              estoque: 0,
-            };
+          tamanhos: tamanhosOrdenados.map((tamanho) => {
+            const tamanhoData = tamanhosComSomas.find((t) => t.tamanho === tamanho);
+            return tamanhoData
+              ? tamanhoData
+              : {
+                tamanho,
+                entradasKit: 0,
+                entradasAv: 0,
+                saidasKit: 0,
+                saidasAv: 0,
+                estoque: 0,
+              };
           }),
         };
       });
@@ -514,7 +555,6 @@ export class ProjetoPrisma {
         itens: itensComEntradasSaidas,
       };
     } catch (error) {
-      // Captura e exibe o erro
       console.error('Erro ao buscar projeto e itens:', error);
       return null;
     }

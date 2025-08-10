@@ -85,31 +85,68 @@ export class CaixaPrisma {
         for (const item of caixaItem) {
           const { itemTamanhoId, itemQty } = item;
 
-          if (itemTamanhoId) {
+          const itemTamanho = await prisma.itemTamanho.findUnique({
+            where: { id: itemTamanhoId },
+            include: {
+              kitMain: {
+                include: {
+                  component: {
+                    include: {
+                      estoque: true,
+                    },
+                  },
+                },
+              },
+            },
+          });
+
+          if (!itemTamanho) {
+            throw new Error(`ItemTamanho com id ${itemTamanhoId} não encontrado.`);
+          }
+
+          if (itemTamanho.isKit) {
+            for (const componente of itemTamanho.kitMain) {
+              const estoqueAtual = componente.component.estoque;
+              const qtdNecessaria = componente.quantidade * itemQty;
+
+              await prisma.estoque.update({
+                where: { itemTamanhoId: componente.componentId },
+                data: {
+                  quantidade: (estoqueAtual.quantidade) - qtdNecessaria,
+                },
+              });
+
+              await prisma.outInput.create({
+                data: {
+                  itemTamanhoId: componente.componentId,
+                  estoqueId: estoqueAtual.id,
+                  quantidade: qtdNecessaria,
+                  userId,
+                  gradeId,
+                  caixaId: novaCaixa.id,
+                  kitOutput: true,
+                },
+              });
+            }
+          } else {
             const estoqueAtual = await prisma.estoque.findUnique({
-              where: { itemTamanhoId: itemTamanhoId },
+              where: { itemTamanhoId },
             });
 
-            if (!estoqueAtual) {
-              throw new Error(
-                `Estoque com itemTamanhoId ${itemTamanhoId} não encontrado.`
-              );
-            }
-
-            const novaQuantidade = estoqueAtual.quantidade - itemQty;
+            const novaQuantidade = (estoqueAtual.quantidade) - itemQty;
 
             await prisma.estoque.update({
-              where: { itemTamanhoId: itemTamanhoId },
+              where: { itemTamanhoId },
               data: { quantidade: novaQuantidade },
             });
 
             await prisma.outInput.create({
               data: {
-                itemTamanhoId: itemTamanhoId,
+                itemTamanhoId,
                 estoqueId: estoqueAtual.id,
                 quantidade: itemQty,
-                userId: userId,
-                gradeId: gradeId,
+                userId,
+                gradeId,
                 caixaId: novaCaixa.id,
               },
             });
@@ -729,7 +766,7 @@ export class CaixaPrisma {
 
       resultBox = await this.getCaixaById(id) || caixaExclud;
     } catch (error: any) {
-      console.error("", error);      
+      console.error("", error);
       throw new Error("Erro ao modificar dados da caixa ou excluí-la: " + error.message);
     }
 

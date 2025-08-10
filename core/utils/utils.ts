@@ -12,6 +12,27 @@ export default function convertSPTime(dateString: string): string {
   return format(zonedDate, 'dd/MM/yyyy HH:mm:ss');
 }
 
+export function calcularEstoqueDeKit(componentes: any[]): number {
+  if (!componentes || componentes.length === 0) return 0;
+
+  const quantidadesPossiveis = componentes.map((componente) => {
+    const estoqueDisponivel = componente.component.estoque?.quantidade ?? 0;
+    const quantidadeNecessaria = componente.quantidade || 1;
+
+    // Não pode montar nem 1 se não tiver estoque suficiente ou necessidade inválida
+    if (estoqueDisponivel <= 0 || quantidadeNecessaria <= 0) return 0;
+
+    return Math.floor(estoqueDisponivel / quantidadeNecessaria);
+  });
+
+  const estoqueValido = quantidadesPossiveis.filter(qtd => qtd >= 0);
+
+  // Se algum componente tiver 0, não pode montar nenhum kit
+  if (estoqueValido.includes(0)) return 0;
+
+  return Math.min(...estoqueValido);
+}
+
 const sizes = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'EXGG', 'G1', 'G2', 'G3', 'EG/LG'];
 
 // Função para ordenar tamanhos
@@ -27,7 +48,7 @@ export const sizeOrders = (tamanhos: string[]): string[] => {
   letraTamanhos.sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b));
 
   return [...numTamanhos, ...letraTamanhos];
-}; 
+};
 
 export const limparString = (str: string): string => {
   return str.replace(/[\n\r\t]+/g, ' ').trim().toUpperCase();

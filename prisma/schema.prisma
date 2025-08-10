@@ -2,12 +2,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-/*generator erd {
-  provider = "prisma-erd-generator"
-  output   = "../ERD.svg"
-  theme    = "dark"
-}*/
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -138,26 +132,42 @@ model Tamanho {
 }
 
 model ItemTamanho {
-  id           Int          @id @default(autoincrement())
-  itemId       Int
-  tamanhoId    Int
-  url          String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  altura       Float        @default(0)
-  largura      Float        @default(0)
-  peso         Float        @default(0)
-  profundidade Float        @default(0)
-  barcode      Barcode?
-  entryInput   EntryInput[]
-  estoque      Estoque?
-  gradeItem    GradeItem[]
-  item         Item         @relation(fields: [itemId], references: [id])
-  tamanho      Tamanho      @relation(fields: [tamanhoId], references: [id])
-  ops          Ops[]
-  outInput     OutInput[]
+  id            Int          @id @default(autoincrement())
+  itemId        Int
+  tamanhoId     Int
+  url           String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  altura        Float        @default(0)
+  largura       Float        @default(0)
+  peso          Float        @default(0)
+  profundidade  Float        @default(0)
+  barcode       Barcode?
+  entryInput    EntryInput[]
+  estoque       Estoque?
+  gradeItem     GradeItem[]
+  item          Item         @relation(fields: [itemId], references: [id])
+  tamanho       Tamanho      @relation(fields: [tamanhoId], references: [id])
+  ops           Ops[]
+  outInput      OutInput[]
+  isKit         Boolean      @default(false) // <--- NOVO CAMPO
+  kitComponents KitItem[]    @relation("KitComponent") // <--- NOVO RELACIONAMENTO
+  kitMain       KitItem[]    @relation("KitMain") // <--- NOVO RELACIONAMENTO 
 
   @@unique([itemId, tamanhoId])
+}
+
+model KitItem {
+  id          Int         @id @default(autoincrement())
+  kitId       Int
+  componentId Int
+  quantidade  Int
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  kit         ItemTamanho @relation("KitMain", fields: [kitId], references: [id])
+  component   ItemTamanho @relation("KitComponent", fields: [componentId], references: [id])
+
+  @@unique([kitId, componentId])
 }
 
 model Barcode {
@@ -267,6 +277,7 @@ model EntryInput {
   updatedAt     DateTime    @updatedAt
   estoqueId     Int
   userId        Int?
+  kitInput      Boolean      @default(false) // <--- NOVO CAMPO
   embalagem     Embalagem   @relation(fields: [embalagemId], references: [id])
   estoque       Estoque     @relation(fields: [estoqueId], references: [id])
   itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
@@ -281,6 +292,7 @@ model OutInput {
   updatedAt     DateTime    @updatedAt
   estoqueId     Int
   userId        Int?
+  kitOutput     Boolean      @default(false) // <--- NOVO CAMPO
   gradeId       Int?
   caixaId       Int?
   caixa         Caixa?      @relation(fields: [caixaId], references: [id])

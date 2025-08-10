@@ -1,7 +1,7 @@
 import { ItemsInserction } from '@core/interfaces';
 import * as XLSX from 'xlsx';
 
-export default function insertItems(caminhoPlanilha: string = 'core/utils/cadastrodeitens.xlsx'): ItemsInserction[] {
+export default function insertItems(caminhoPlanilha: string = 'core/utils/docs_proj_items/cadastrodeitens.xlsx'): ItemsInserction[] {
   const workbook = XLSX.readFile(caminhoPlanilha);
   const sheetName = workbook.SheetNames[0];
 

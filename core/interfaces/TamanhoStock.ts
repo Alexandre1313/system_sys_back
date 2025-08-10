@@ -1,6 +1,8 @@
 export default interface TamanhoStock {
     tamanho: string;
     estoque: number;
-    entradas: number;
-    saidas: number;
+    entradasKit: number;
+    entradasAv: number;
+    saidasKit: number;    
+    saidasAv: number; 
 }
