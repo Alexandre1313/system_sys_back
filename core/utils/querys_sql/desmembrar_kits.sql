@@ -1,5 +1,5 @@
 -- ============================
--- Script: Desmembrar entradas de kits em componentes
+-- Script: Desmembrar entradas de kits em componentes (com kitOrigemId)
 -- Contexto: projetoId = 6
 -- Autor: [ALEXANDRE CORDEIRO]
 -- Data: [09/08/2025]
@@ -14,13 +14,14 @@ SELECT
   e."id" AS "estoqueId",
   ei."userId",
   TRUE AS "kitInput",
-  ei."embalagemId"
+  ei."embalagemId",
+  ei."itemTamanhoId" AS "kitOrigemId"  -- novo campo
 FROM "EntryInput" ei
 JOIN "ItemTamanho" it ON ei."itemTamanhoId" = it."id"
 JOIN "Item" i ON it."itemId" = i."id"
 JOIN "KitItem" ki ON ki."kitId" = it."id"
 JOIN "Estoque" e ON e."itemTamanhoId" = ki."componentId"
-WHERE i."projetoId" = 6
+WHERE i."projetoId" = 2
   AND it."isKit" = TRUE;
 
 -- ============================
@@ -38,7 +39,8 @@ INSERT INTO "EntryInput" (
   "estoqueId",
   "userId",
   "kitInput",
-  "embalagemId"
+  "embalagemId",
+  "kitOrigemId"  -- novo campo
 )
 SELECT
   ki."componentId" AS "itemTamanhoId",
@@ -48,13 +50,14 @@ SELECT
   e."id" AS "estoqueId",
   ei."userId",
   TRUE AS "kitInput",
-  ei."embalagemId"
+  ei."embalagemId",
+  ei."itemTamanhoId" AS "kitOrigemId"  -- preenchendo com ID original
 FROM "EntryInput" ei
 JOIN "ItemTamanho" it ON ei."itemTamanhoId" = it."id"
 JOIN "Item" i ON it."itemId" = i."id"
 JOIN "KitItem" ki ON ki."kitId" = it."id"
 JOIN "Estoque" e ON e."itemTamanhoId" = ki."componentId"
-WHERE i."projetoId" = 99999999
+WHERE i."projetoId" = 2
   AND it."isKit" = TRUE;
 
 -- DELETE: remover as entradas originais dos kits
@@ -62,7 +65,7 @@ DELETE FROM "EntryInput"
 USING "ItemTamanho" it
 JOIN "Item" i ON it."itemId" = i."id"
 WHERE "EntryInput"."itemTamanhoId" = it."id"
-  AND i."projetoId" = 9999999
+  AND i."projetoId" = 2
   AND it."isKit" = TRUE;
 
 COMMIT;
@@ -72,7 +75,7 @@ COMMIT;
 -- ============================
 ---------------------------------------------------------------------------------------------
 -- ============================
--- Script: Desmembrar saídas de kits em componentes
+-- Script: Desmembrar saídas de kits em componentes (com kitOrigemId)
 -- Contexto: projetoId = 6
 -- Autor: [ALEXANDRE CORDEIRO]
 -- Data: [09/08/2025]
@@ -88,13 +91,14 @@ SELECT
   oi."userId",
   TRUE AS "kitOutput",
   oi."gradeId",
-  oi."caixaId"
+  oi."caixaId",
+  oi."itemTamanhoId" AS "kitOrigemId"  -- novo campo
 FROM "OutInput" oi
 JOIN "ItemTamanho" it ON oi."itemTamanhoId" = it."id"
 JOIN "Item" i ON it."itemId" = i."id"
 JOIN "KitItem" ki ON ki."kitId" = it."id"
 JOIN "Estoque" e ON e."itemTamanhoId" = ki."componentId"
-WHERE i."projetoId" = 6
+WHERE i."projetoId" = 2
   AND it."isKit" = TRUE;
 
 -- ============================
@@ -113,7 +117,8 @@ INSERT INTO "OutInput" (
   "userId",
   "kitOutput",
   "gradeId",
-  "caixaId"
+  "caixaId",
+  "kitOrigemId"  -- novo campo
 )
 SELECT
   ki."componentId" AS "itemTamanhoId",
@@ -124,13 +129,14 @@ SELECT
   oi."userId",
   TRUE AS "kitOutput",
   oi."gradeId",
-  oi."caixaId"
+  oi."caixaId",
+  oi."itemTamanhoId" AS "kitOrigemId"  -- preenchendo com ID original
 FROM "OutInput" oi
 JOIN "ItemTamanho" it ON oi."itemTamanhoId" = it."id"
 JOIN "Item" i ON it."itemId" = i."id"
 JOIN "KitItem" ki ON ki."kitId" = it."id"
 JOIN "Estoque" e ON e."itemTamanhoId" = ki."componentId"
-WHERE i."projetoId" = 9999999
+WHERE i."projetoId" = 2
   AND it."isKit" = TRUE;
 
 -- DELETE: remover as saídas originais dos kits
@@ -138,7 +144,7 @@ DELETE FROM "OutInput"
 USING "ItemTamanho" it
 JOIN "Item" i ON it."itemId" = i."id"
 WHERE "OutInput"."itemTamanhoId" = it."id"
-  AND i."projetoId" = 999999
+  AND i."projetoId" = 2
   AND it."isKit" = TRUE;
 
 COMMIT;
