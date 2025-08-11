@@ -104,6 +104,8 @@ export class CaixaPrisma {
             throw new Error(`ItemTamanho com id ${itemTamanhoId} não encontrado.`);
           }
 
+          console.log('itemTamanho.isKit:', itemTamanho);
+
           if (itemTamanho.isKit) {
             for (const componente of itemTamanho.kitMain) {
               const estoqueAtual = componente.component.estoque;

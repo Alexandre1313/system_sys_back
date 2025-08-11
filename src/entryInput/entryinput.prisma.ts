@@ -115,7 +115,7 @@ export class EntryInputPrisma {
 
                 if (!itemTamanho) {
                     throw new Error(`ItemTamanho com id ${itemTamanhoId} não encontrado.`);
-                }
+                }               
 
                 // Se for kit, atualiza estoque e cria entry para cada componente do kit
                 if (itemTamanho.isKit) {
