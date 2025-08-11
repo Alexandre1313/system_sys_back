@@ -125,6 +125,7 @@ export class CaixaPrisma {
                   gradeId,
                   caixaId: novaCaixa.id,
                   kitOutput: true,
+                  kitOrigemId: itemTamanho.id,
                 },
               });
             }

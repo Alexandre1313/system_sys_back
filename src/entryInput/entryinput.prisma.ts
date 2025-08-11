@@ -150,6 +150,7 @@ export class EntryInputPrisma {
                                 quantidade: quantidadeComponente,
                                 userId,
                                 kitInput: true,
+                                kitOrigemId: itemTamanho.id,
                             },
                         });                       
 

@@ -132,27 +132,29 @@ model Tamanho {
 }
 
 model ItemTamanho {
-  id            Int          @id @default(autoincrement())
-  itemId        Int
-  tamanhoId     Int
-  url           String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  altura        Float        @default(0)
-  largura       Float        @default(0)
-  peso          Float        @default(0)
-  profundidade  Float        @default(0)
-  barcode       Barcode?
-  entryInput    EntryInput[]
-  estoque       Estoque?
-  gradeItem     GradeItem[]
-  item          Item         @relation(fields: [itemId], references: [id])
-  tamanho       Tamanho      @relation(fields: [tamanhoId], references: [id])
-  ops           Ops[]
-  outInput      OutInput[]
-  isKit         Boolean      @default(false) // <--- NOVO CAMPO
-  kitComponents KitItem[]    @relation("KitComponent") // <--- NOVO RELACIONAMENTO
-  kitMain       KitItem[]    @relation("KitMain") // <--- NOVO RELACIONAMENTO 
+  id             Int          @id @default(autoincrement())
+  itemId         Int
+  tamanhoId      Int
+  url            String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  altura         Float        @default(0)
+  largura        Float        @default(0)
+  peso           Float        @default(0)
+  profundidade   Float        @default(0)
+  barcode        Barcode?
+  entryInput     EntryInput[]
+  estoque        Estoque?
+  gradeItem      GradeItem[]
+  item           Item         @relation(fields: [itemId], references: [id])
+  tamanho        Tamanho      @relation(fields: [tamanhoId], references: [id])
+  ops            Ops[]
+  outInput       OutInput[]
+  isKit          Boolean      @default(false) // <--- NOVO CAMPO
+  kitComponents  KitItem[]    @relation("KitComponent") // <--- NOVO RELACIONAMENTO
+  kitMain        KitItem[]    @relation("KitMain") // <--- NOVO RELACIONAMENTO 
+  kitOrigemEntry EntryInput[] @relation("KitOrigemEntry") // relacionamento kitOrigemId em EntryInput
+  kitOrigemOut   OutInput[]   @relation("KitOrigemOut") // relacionamento kitOrigemId em OutInput
 
   @@unique([itemId, tamanhoId])
 }
@@ -269,37 +271,41 @@ model Embalagem {
 }
 
 model EntryInput {
-  id            Int         @id @default(autoincrement())
+  id            Int          @id @default(autoincrement())
   embalagemId   Int
   itemTamanhoId Int
   quantidade    Int
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   estoqueId     Int
   userId        Int?
-  kitInput      Boolean      @default(false) // <--- NOVO CAMPO
-  embalagem     Embalagem   @relation(fields: [embalagemId], references: [id])
-  estoque       Estoque     @relation(fields: [estoqueId], references: [id])
-  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
-  usuario       Usuarios?   @relation(fields: [userId], references: [id])
+  kitInput      Boolean      @default(false)
+  kitOrigemId   Int?
+  embalagem     Embalagem    @relation(fields: [embalagemId], references: [id])
+  estoque       Estoque      @relation(fields: [estoqueId], references: [id])
+  itemTamanho   ItemTamanho  @relation(fields: [itemTamanhoId], references: [id])
+  usuario       Usuarios?    @relation(fields: [userId], references: [id])
+  kitOrigem     ItemTamanho? @relation("KitOrigemEntry", fields: [kitOrigemId], references: [id])
 }
 
 model OutInput {
-  id            Int         @id @default(autoincrement())
+  id            Int          @id @default(autoincrement())
   itemTamanhoId Int
   quantidade    Int
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   estoqueId     Int
   userId        Int?
-  kitOutput     Boolean      @default(false) // <--- NOVO CAMPO
+  kitOutput     Boolean      @default(false)
   gradeId       Int?
   caixaId       Int?
-  caixa         Caixa?      @relation(fields: [caixaId], references: [id])
-  estoque       Estoque     @relation(fields: [estoqueId], references: [id])
-  grade         Grade?      @relation(fields: [gradeId], references: [id])
-  itemTamanho   ItemTamanho @relation(fields: [itemTamanhoId], references: [id])
-  usuario       Usuarios?   @relation(fields: [userId], references: [id])
+  kitOrigemId   Int?
+  caixa         Caixa?       @relation(fields: [caixaId], references: [id])
+  estoque       Estoque      @relation(fields: [estoqueId], references: [id])
+  grade         Grade?       @relation(fields: [gradeId], references: [id])
+  itemTamanho   ItemTamanho  @relation(fields: [itemTamanhoId], references: [id])
+  usuario       Usuarios?    @relation(fields: [userId], references: [id])
+  kitOrigem     ItemTamanho? @relation("KitOrigemOut", fields: [kitOrigemId], references: [id])
 }
 
 model Ops {
