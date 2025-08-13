@@ -474,12 +474,14 @@ export class ProjetoPrisma {
                     select: {
                       quantidade: true,
                       kitInput: true,
+                      kitOrigemId: true,
                     },
                   },
                   outInput: {
                     select: {
                       quantidade: true,
                       kitOutput: true,
+                      kitOrigemId: true,
                     },
                   },
                   estoque: true,
@@ -493,6 +495,8 @@ export class ProjetoPrisma {
       if (!projeto) {
         return null;
       }
+
+      console.log(projeto[0])
 
       const itensComEntradasSaidas = projeto.itens.map((item) => {
         const tamanhosComSomas = item.tamanhos.map((itemTamanho) => {
