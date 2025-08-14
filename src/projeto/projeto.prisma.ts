@@ -484,50 +484,97 @@ export class ProjetoPrisma {
                       kitOrigemId: true,
                     },
                   },
+                  kitMain: {
+                    include: {
+                      component: {
+                        include: {
+                          item: true,
+                          tamanho: true,
+                        },
+                      },
+                    },
+                  },
                   estoque: true,
                 },
               },
             },
           },
         },
-      });
+      });    
 
       if (!projeto) {
         return null;
       }
 
-      console.log(projeto[0])
-
       const itensComEntradasSaidas = projeto.itens.map((item) => {
         const tamanhosComSomas = item.tamanhos.map((itemTamanho) => {
-          // Separar entradas
-          const somaEntradasKit = itemTamanho.entryInput
-            .filter((entry) => entry.kitInput === true)
-            .reduce((total, entry) => total + entry.quantidade, 0);
+          if (!itemTamanho.isKit) {
+            // Separar entradas
+            const somaEntradasKit = itemTamanho.entryInput
+              .filter((entry) => entry.kitInput === true)
+              .reduce((total, entry) => total + entry.quantidade, 0);
 
-          const somaEntradasAvulso = itemTamanho.entryInput
-            .filter((entry) => entry.kitInput === false)
-            .reduce((total, entry) => total + entry.quantidade, 0);
+            const somaEntradasAvulso = itemTamanho.entryInput
+              .filter((entry) => entry.kitInput === false)
+              .reduce((total, entry) => total + entry.quantidade, 0);
 
-          // Separar saídas
-          const somaSaidasKit = itemTamanho.outInput
-            .filter((out) => out.kitOutput === true)
-            .reduce((total, out) => total + out.quantidade, 0);
+            // Separar saídas
+            const somaSaidasKit = itemTamanho.outInput
+              .filter((out) => out.kitOutput === true)
+              .reduce((total, out) => total + out.quantidade, 0);
 
-          const somaSaidasAvulso = itemTamanho.outInput
-            .filter((out) => out.kitOutput === false)
-            .reduce((total, out) => total + out.quantidade, 0);
+            const somaSaidasAvulso = itemTamanho.outInput
+              .filter((out) => out.kitOutput === false)
+              .reduce((total, out) => total + out.quantidade, 0);
 
-          const estoque = itemTamanho.estoque ? itemTamanho.estoque.quantidade : 0;
+            const estoque = itemTamanho.estoque ? itemTamanho.estoque.quantidade : 0;
+            return {
+              tamanho: itemTamanho.tamanho.nome,
+              estoque,
+              entradasKit: somaEntradasKit,
+              entradasAv: somaEntradasAvulso,
+              saidasKit: somaSaidasKit,
+              saidasAv: somaSaidasAvulso,
+              iskit: itemTamanho.isKit,
+            };
+          } else {           
+            const totalComponentes = itemTamanho.kitMain.reduce((soma, componente) => {
+              return soma + componente.quantidade;
+            }, 0);
 
-          return {
-            tamanho: itemTamanho.tamanho.nome,
-            estoque,
-            entradasKit: somaEntradasKit,
-            entradasAv: somaEntradasAvulso,
-            saidasKit: somaSaidasKit,
-            saidasAv: somaSaidasAvulso,
-          };
+            let entradasKit = 0;
+            let saidasKit = 0;
+            let entradasAV = 0;
+            let saidasAV = 0;
+
+            for (const outroItem of projeto.itens) {
+              for (const outroTamanho of outroItem.tamanhos) {
+                entradasKit += outroTamanho.entryInput
+                  .filter(
+                    (entry) => entry.kitOrigemId === itemTamanho.id && entry.kitInput === true
+                  )
+                  .reduce((total, entry) => total + entry.quantidade, 0);
+
+                saidasKit += outroTamanho.outInput
+                  .filter(
+                    (saida) => saida.kitOrigemId === itemTamanho.id && saida.kitOutput === true
+                  )
+                  .reduce((total, saida) => total + saida.quantidade, 0);
+              }
+            }
+
+            const estoque = itemTamanho.estoque ? itemTamanho.estoque.quantidade : 0;
+           
+            return {
+              tamanho: itemTamanho.tamanho.nome,
+              estoque,
+              entradasKit: totalComponentes > 0 ? entradasKit / totalComponentes : 0,
+              entradasAv: entradasAV,
+              saidasKit: totalComponentes > 0 ? saidasKit / totalComponentes : 0,
+              saidasAv: saidasAV,
+              iskit: itemTamanho.isKit,
+            };
+          }
         });
 
         const tamanhosOrdenados = sizeOrders(
@@ -536,7 +583,7 @@ export class ProjetoPrisma {
 
         return {
           nome: item.nome,
-          genero: item.genero,
+          genero: item.genero,          
           tamanhos: tamanhosOrdenados.map((tamanho) => {
             const tamanhoData = tamanhosComSomas.find((t) => t.tamanho === tamanho);
             return tamanhoData
@@ -548,6 +595,7 @@ export class ProjetoPrisma {
                 saidasKit: 0,
                 saidasAv: 0,
                 estoque: 0,
+                iskit: false,
               };
           }),
         };

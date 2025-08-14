@@ -5,4 +5,5 @@ export default interface TamanhoStock {
     entradasAv: number;
     saidasKit: number;    
     saidasAv: number; 
+    iskit: boolean;
 }
