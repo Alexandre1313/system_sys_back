@@ -8,7 +8,7 @@ async function bootstrap() {
   });
 
   const isProd = process.env.NODE_ENV === 'production';
-  const port = isProd ? 4997 : 4999;
+  const port = isProd ? 4997 : 4997;
   const host = '192.168.1.169';
 
   await app.listen(port, host, () => {
