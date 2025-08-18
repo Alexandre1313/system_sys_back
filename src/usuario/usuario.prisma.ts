@@ -62,10 +62,7 @@ export class UsuarioPrisma {
     }
   }
 
-  async obterRanking(mes?: string): Promise<{
-    rankingPorMes: Record<string, any[]>;
-    rankingGeral: any[];
-  }> {
+  async obterRanking(mes?: string): Promise<{rankingPorMes: Record<string, any[]>; rankingGeral: any[];}> {
     try {
       let whereClause = '';
       if (mes && mes !== 'T') {
