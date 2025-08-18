@@ -4,17 +4,26 @@ import { Login, Usuarios } from '@core/index';
 
 @Controller('usuarios')
 export class UsuarioController {
-  constructor(private readonly repo: UsuarioPrisma) {}
+  constructor(private readonly repo: UsuarioPrisma) { }
 
-   // Login
-   @Post('/login')   
-   async obterPorEmail(@Body() credentials: Login): Promise<Usuarios | null> {
-     try {
-       return await this.repo.searchCredentials(credentials);
-     } catch (error) {
-       throw new BadRequestException('Erro ao buscar credenciais: ' + error.message);
-     }
-   }
+  // Login
+  @Post('/login')
+  async obterPorEmail(@Body() credentials: Login): Promise<Usuarios | null> {
+    try {
+      return await this.repo.searchCredentials(credentials);
+    } catch (error) {
+      throw new BadRequestException('Erro ao buscar credenciais: ' + error.message);
+    }
+  }
+
+  @Get('ranking/:mes')
+  async obterRankingData(@Param('mes') mes: string) {
+    const ranking = await this.repo.obterRanking(mes);
+    if (!ranking) {
+      throw new NotFoundException(`Ranking para o período do mês ${mes || 'geral'} não encontrado.`);
+    }
+    return ranking;
+  }
 
   // Salvar ou criar um usuário
   @Post()
