@@ -291,7 +291,7 @@ export class CaixaPrisma {
             const { itemTamanhoId, itemQty } = item;
 
             const itemTamanho = await prisma.itemTamanho.findUnique({
-              where: { id: itemTamanhoId }, include: { kitMain: true },
+              where: { id: itemTamanhoId },
             });
 
             if (!itemTamanho) throw new Error(`ItemTamanho não encontrado: ${itemTamanhoId}`);
@@ -330,37 +330,40 @@ export class CaixaPrisma {
 
             } else {
               // 📦 Caso: Kit
-              const itemTamanhosOut = await prisma.outInput.findMany({
-                where: {
-                  caixaId: id,
-                  gradeId: gradeId,
-                  kitOrigemId: itemTamanho.id  // FK correta
-                },
-                include: {
-                  itemTamanho: {
-                    include: {
-                      kitMain: true, // sempre objeto, não variável solta
+              const itemTamanhosOut: any = await prisma.$queryRaw`
+                SELECT 
+                  o.id AS "outInputId",
+                  o."quantidade" AS "outQuantidade",
+                  o."itemTamanhoId" AS "componenteId",
+                  o."caixaId",
+                  o."gradeId",
+                  o."kitOrigemId",
+                  it.id AS "itemTamanhoId",                               
+                  ki.quantidade AS "kitQuantidade"
+                FROM "OutInput" o
+                JOIN "ItemTamanho" it ON it.id = o."itemTamanhoId"
+                LEFT JOIN "KitItem" ki 
+                  ON ki."componentId" = o."itemTamanhoId"
+                  AND ki."kitId" = o."kitOrigemId"
+                WHERE o."caixaId" = ${id}
+                  AND o."gradeId" = ${gradeId}
+                  AND o."kitOrigemId" = ${itemTamanho.id}
+                ORDER BY o.id;
+              `;
 
-                    }
-                  }
-                }
-              });
+              console.log(itemTamanhosOut)
 
-              const totalComponentes = itemTamanhosOut.reduce((sum, out) => {
-                const subtotal = out.itemTamanho.kitMain.reduce(
-                  (innerSum, mainComp) => innerSum + mainComp.quantidade,
-                  0
-                );
-                return sum + subtotal;
+              const totalComponentes = itemTamanhosOut.reduce((sum: number, kq: any) => {
+                return sum + (kq.kitQuantidade || 0); // caso seja null
               }, 0);
 
               let totalItemsDespachados2 = 0;
 
 
               // Para cada registro de outInput, iterar os componentes do kit
-              for (const componente of itemTamanho.kitMain) {
+              for (const componente of itemTamanhosOut) {
                 const componenteId = componente.componentId;
-                const qtdPorKit = componente.quantidade;
+                const qtdPorKit = componente.kitQuantidade;
                 const qtdTotal = itemQty * qtdPorKit;
 
                 const outInputComp = await prisma.outInput.findFirst({
