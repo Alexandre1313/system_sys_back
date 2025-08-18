@@ -291,8 +291,7 @@ export class CaixaPrisma {
             const { itemTamanhoId, itemQty } = item;
 
             const itemTamanho = await prisma.itemTamanho.findUnique({
-              where: { id: itemTamanhoId },
-              include: { kitComponents: true, kitMain: true },
+              where: { id: itemTamanhoId }, include: { kitMain: true },
             });
 
             if (!itemTamanho) throw new Error(`ItemTamanho não encontrado: ${itemTamanhoId}`);
@@ -331,11 +330,35 @@ export class CaixaPrisma {
 
             } else {
               // 📦 Caso: Kit
-              const totalComponentes = itemTamanho.kitMain.reduce((sum, comp) => sum + comp.quantidade, 0);
+              const itemTamanhosOut = await prisma.outInput.findMany({
+                where: {
+                  caixaId: id,
+                  gradeId: gradeId,
+                  kitOrigemId: itemTamanho.id  // FK correta
+                },
+                include: {
+                  itemTamanho: {
+                    include: {
+                      kitMain: true, // sempre objeto, não variável solta
+
+                    }
+                  }
+                }
+              });
+
+              const totalComponentes = itemTamanhosOut.reduce((sum, out) => {
+                const subtotal = out.itemTamanho.kitMain.reduce(
+                  (innerSum, mainComp) => innerSum + mainComp.quantidade,
+                  0
+                );
+                return sum + subtotal;
+              }, 0);
 
               let totalItemsDespachados2 = 0;
 
-              for (const componente of itemTamanho.kitComponents) {
+
+              // Para cada registro de outInput, iterar os componentes do kit
+              for (const componente of itemTamanho.kitMain) {
                 const componenteId = componente.componentId;
                 const qtdPorKit = componente.quantidade;
                 const qtdTotal = itemQty * qtdPorKit;
@@ -379,6 +402,7 @@ export class CaixaPrisma {
                   }
                 }
               }
+
 
               const totalKitsL = totalItemsDespachados2 / totalComponentes;
               const diffKitsL = totalKitsL - itemQty;
@@ -553,6 +577,6 @@ export class CaixaPrisma {
     }
 
     return null; // falha final
-  } 
+  }
 
 }
