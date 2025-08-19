@@ -563,7 +563,10 @@ export class ProjetoPrisma {
               }
             }
 
-            const estoque = itemTamanho.estoque ? itemTamanho.estoque.quantidade : 0;
+            const somaEstoque = (entradasKit + entradasAV) - (saidasKit + saidasAV);
+            const estoque = somaEstoque / totalComponentes; 
+
+            //const estoque1 = itemTamanho.estoque ? itemTamanho.estoque.quantidade : 0;
            
             return {
               tamanho: itemTamanho.tamanho.nome,
