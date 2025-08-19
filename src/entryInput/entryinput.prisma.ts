@@ -141,6 +141,8 @@ export class EntryInputPrisma {
                             },
                         });
 
+                        console.log(componente)
+
                         // Cria entrada EntryInput para o componente
                         const newEntry = await prisma.entryInput.create({
                             data: {
@@ -152,7 +154,7 @@ export class EntryInputPrisma {
                                 kitInput: true,
                                 kitOrigemId: itemTamanho.id,
                             },
-                        });                       
+                        });                     
 
                         entradas.push(newEntry);
                     }
