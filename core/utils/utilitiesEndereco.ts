@@ -1,7 +1,12 @@
 import { EnderecoInserction, AddressSchool, TelephonesSchool } from "@core/interfaces";
 import * as XLSX from 'xlsx';
+import * as path from 'path';
 
-export default function utilitiesEndereco(caminhoPlanilha: string = 'core/utils/cadendereco.xlsx'): EnderecoInserction[] {
+const baseDir = path.join(process.cwd(), 'core', 'utils', 'docs_proj_end');
+const filename = `cadendereco.xlsx'`;
+const filePath = path.join(baseDir, filename);
+
+export default function utilitiesEndereco(caminhoPlanilha: string = filePath): EnderecoInserction[] {
   // Lê o arquivo Excel
   const workbook = XLSX.readFile(caminhoPlanilha);
 
