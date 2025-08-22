@@ -1,4 +1,4 @@
-import { GradeItem, TipoEmbalagem } from "@prisma/client";
+import { Grade, GradeItem, TipoEmbalagem } from "@prisma/client";
 import CaixaItem from "./CaixaItem";
 import Usuarios from "./Usuarios";
 
@@ -17,5 +17,5 @@ export default interface Caixa {
     tipoEmbalagemId?: number;
     tipoEmbalagem?: TipoEmbalagem;
     createdAt?: Date;
-    updatedAt?: Date;
+    updatedAt?: Date;   
 }

@@ -201,6 +201,7 @@ export class CaixaPrisma {
               nome: true,
             },
           },
+          grade: {select: { updatedAt: true, status: true, createdAt: true }},
         },
       });
 
