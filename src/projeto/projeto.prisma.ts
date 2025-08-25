@@ -500,7 +500,7 @@ export class ProjetoPrisma {
             },
           },
         },
-      });    
+      });
 
       if (!projeto) {
         return null;
@@ -537,7 +537,7 @@ export class ProjetoPrisma {
               saidasAv: somaSaidasAvulso,
               iskit: itemTamanho.isKit,
             };
-          } else {           
+          } else {
             const totalComponentes = itemTamanho.kitMain.reduce((soma, componente) => {
               return soma + componente.quantidade;
             }, 0);
@@ -564,10 +564,10 @@ export class ProjetoPrisma {
             }
 
             const somaEstoque = (entradasKit + entradasAV) - (saidasKit + saidasAV);
-            const estoque = somaEstoque / totalComponentes; 
+            const estoque = somaEstoque / totalComponentes;
 
             //const estoque1 = itemTamanho.estoque ? itemTamanho.estoque.quantidade : 0;
-           
+
             return {
               tamanho: itemTamanho.tamanho.nome,
               estoque,
@@ -586,7 +586,7 @@ export class ProjetoPrisma {
 
         return {
           nome: item.nome,
-          genero: item.genero,          
+          genero: item.genero,
           tamanhos: tamanhosOrdenados.map((tamanho) => {
             const tamanhoData = tamanhosComSomas.find((t) => t.tamanho === tamanho);
             return tamanhoData
@@ -1054,6 +1054,262 @@ export class ProjetoPrisma {
     } catch (error) {
       console.error('Erro ao buscar dados dos projetos:', error);
       throw new Error('Erro interno ao buscar os dados dos projetos.');
+    }
+  }
+
+  async getProjetoComResumoExpedicaoPP(
+    projectId: number,
+    remessa: number,
+    status: "EXPEDIDA" | "DESPACHADA" | "PRONTA" | "IMPRESSA" | "TODAS",
+    tipo: string,
+  ): Promise<GradesRomaneio[]> {
+    try {
+      const projectsWithGrades = await this.prisma.projeto.findMany({
+        where: {
+          ...(projectId > 0 ? { id: projectId } : {})
+        },
+        include: {
+          escolas: {
+            include: {
+              address: true,
+              telefone: true,
+              grades: {
+                where: {
+                  ...(remessa > 0 ? { remessa } : {}),
+                  ...(status !== "TODAS" ? { status } : {}),
+                  ...(tipo === "N"
+                    ? { tipo: null }
+                    : tipo === "R"
+                      ? { tipo: { contains: "REPOS", mode: 'insensitive' } }
+                      : {}),
+                },
+                include: {
+                  company: {
+                    include: { address: true, telefone: true }
+                  },
+                  itensGrade: {
+                    include: {
+                      itemTamanho: {
+                        include: {
+                          item: true,
+                          tamanho: true,
+                          kitMain: {
+                            include: {
+                              component: {
+                                include: {
+                                  item: true,
+                                  tamanho: true,
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  gradeCaixas: {
+                    include: {
+                      tipoEmbalagem: {
+                        select: {
+                          id: true,
+                          nome: true,
+                          peso: true,
+                          altura: true,
+                          largura: true,
+                          profundidade: true,
+                          createdAt: true,
+                          updatedAt: true,
+                        }
+                      }
+                    }
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!projectsWithGrades || projectsWithGrades.length === 0) {
+        return [];
+      }
+
+      console.log(projectsWithGrades)
+
+      const transformPeso = (n: number): number => (n > 0 ? n / 1000 : n);
+
+      const calcularPesoECubagemCaixas = (caixas: Caixa[], itens: any[]): { pesoKg: number; cubagemM3: number } => {
+        let totalPesoGramas = 0;
+        let totalCubagemCM3 = 0;
+
+        for (const caixa of caixas) {
+          if (!caixa.tipoEmbalagem) continue;
+          const { peso, largura, profundidade, altura = 40 } = caixa.tipoEmbalagem;
+          const volumeCm3 = largura * profundidade * altura;
+          totalPesoGramas += peso;
+          totalCubagemCM3 += volumeCm3;
+        }
+
+        for (const item of itens) {
+          const pesoItem = (item.peso ?? 0) * (item.quantidade ?? 0);
+          totalPesoGramas += pesoItem * 1000; // peso vem em kg
+        }
+
+        return {
+          pesoKg: totalPesoGramas / 1000,
+          cubagemM3: totalCubagemCM3 / 1_000_000,
+        };
+      };
+
+      const calcularPorcentagem = (parte: number, total: number): number =>
+        total === 0 ? 0 : (parte / total) * 100;
+
+      const formattedData = await Promise.all(projectsWithGrades.flatMap((projeto) =>
+        projeto.escolas.flatMap((escola) =>
+          escola.grades.map(async (grade) => {
+            let tamanhosQuantidades: any[] = [];
+
+            for (const gradeItem of grade.itensGrade) {
+              const itemTamanho = gradeItem.itemTamanho;
+
+              if (!itemTamanho) continue;
+
+              if (!itemTamanho.isKit) {
+                tamanhosQuantidades.push({
+                  item: itemTamanho.item?.nome,
+                  genero: itemTamanho.item?.genero,
+                  tamanho: itemTamanho.tamanho?.nome,
+                  composicao: itemTamanho.item?.composicao,
+                  quantidade: gradeItem.quantidadeExpedida,
+                  previsto: gradeItem.quantidade,
+                  peso: transformPeso(itemTamanho.peso),
+                  altura: itemTamanho.altura,
+                  largura: itemTamanho.largura,
+                  profundidade: itemTamanho.profundidade,
+                });
+              } else {
+                const componentes = itemTamanho.kitMain ?? [];
+                for (const comp of componentes) {
+                  const compItem = comp.component;
+                  if (!compItem) continue;
+
+                  tamanhosQuantidades.push({
+                    item: compItem.item?.nome,
+                    genero: compItem.item?.genero,
+                    tamanho: compItem.tamanho?.nome,
+                    composicao: compItem.item?.composicao,
+                    quantidade: (gradeItem.quantidadeExpedida ?? 0) * comp.quantidade,
+                    previsto: (gradeItem.quantidade ?? 0) * comp.quantidade,
+                    peso: transformPeso(compItem.peso),
+                    altura: compItem.altura,
+                    largura: compItem.largura,
+                    profundidade: compItem.profundidade,
+                  });
+                }
+              }
+            }
+
+            tamanhosQuantidades = tamanhosQuantidades.sort((a, b) => {
+              if (a.item < b.item) return -1;
+              if (a.item > b.item) return 1;
+              if (a.genero < b.genero) return -1;
+              if (a.genero > b.genero) return 1;
+              const tamanhos = [a.tamanho, b.tamanho];
+              const tamanhosOrdenados = sizeOrders(tamanhos);
+              return tamanhosOrdenados.indexOf(a.tamanho) - tamanhosOrdenados.indexOf(b.tamanho);
+            });
+
+            const pesoCubagem = calcularPesoECubagemCaixas(grade.gradeCaixas, tamanhosQuantidades);
+
+            return {
+              id: grade.id,
+              isPrint: grade.finalizada,
+              company: grade.company?.nome ?? "",
+              cnpjCompany: grade.company?.cnpj ?? "",
+              projectname: projeto.nome,
+              escola: escola.nome,
+              escolaId: escola.id,
+              tipo: grade.tipo,
+              numeroEscola: escola.numeroEscola,
+              status: grade.status,
+              numberJoin: escola.numberJoin,
+              telefoneCompany: (grade.company?.telefone ?? []).map((t) => t.telefone).join(", ") || "-",
+              emailCompany: grade.company?.email ?? "",
+              telefoneEscola: (escola?.telefone ?? []).map(tel => tel.telefone).join(', ') || "-",
+              peso: pesoCubagem.pesoKg,
+              cubagem: pesoCubagem.cubagemM3,
+              create: convertSPTime(String(grade.createdAt)),
+              update: convertSPTime(String(grade.updatedAt)),
+              enderecoschool: {
+                rua: escola?.address?.street ?? "",
+                numero: escola?.address?.number ?? "",
+                complemento: escola?.address?.complement ?? "",
+                bairro: escola?.address?.neighborhood ?? "",
+                cidade: escola?.address?.city ?? "",
+                estado: escola?.address?.state ?? "",
+                postalCode: escola?.address?.postalCode ?? "",
+                country: escola?.address?.country ?? "",
+              },
+              enderecocompany: {
+                rua: grade.company?.address?.[0]?.street ?? "",
+                numero: grade.company?.address?.[0]?.number ?? "",
+                complemento: grade.company?.address?.[0]?.complement ?? "",
+                bairro: grade.company?.address?.[0]?.neighborhood ?? "",
+                cidade: grade.company?.address?.[0]?.city ?? "",
+                estado: grade.company?.address?.[0]?.state ?? "",
+                postalCode: grade.company?.address?.[0]?.postalCode ?? "",
+                country: grade.company?.address?.[0]?.country ?? "",
+              },
+              tamanhosQuantidades,
+              caixas: grade.gradeCaixas ?? [],
+            };
+          })
+        )
+      ));
+
+      let finalData = await Promise.all(formattedData);
+
+      // Ordenações conforme status
+      if (status === "TODAS") {
+        const statusOrder = { PRONTA: 1, EXPEDIDA: 2, DESPACHADA: 3, IMPRESSA: 4 };
+        finalData = finalData.sort((a, b) => {
+          if (a.status === b.status) {
+            return parseInt(a.numeroEscola, 10) - parseInt(b.numeroEscola, 10);
+          }
+          return (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5);
+        });
+      }
+
+      if (status === "PRONTA") {
+        finalData = finalData.sort((a, b) => {
+          const totalA = a.tamanhosQuantidades.reduce((sum, item) => sum + item.quantidade, 0);
+          const totalB = b.tamanhosQuantidades.reduce((sum, item) => sum + item.quantidade, 0);
+          const totalAP = a.tamanhosQuantidades.reduce((sum, item) => sum + item.previsto, 0);
+          const totalBP = b.tamanhosQuantidades.reduce((sum, item) => sum + item.previsto, 0);
+          return calcularPorcentagem(totalB, totalBP) - calcularPorcentagem(totalA, totalAP);
+        });
+      }
+
+      if (status === "EXPEDIDA" || status === "DESPACHADA") {
+        finalData = finalData.sort((a, b) => {
+          if (status === "DESPACHADA") {
+            const parseDate = (str: string) => {
+              const [d] = str.split(" ");
+              const [day, month, year] = d.split("/");
+              return new Date(Number(year), Number(month) - 1, Number(day));
+            };
+            const dateA = parseDate(a.update).getTime();
+            const dateB = parseDate(b.update).getTime();
+            if (dateA !== dateB) return dateB - dateA;
+          }
+          return parseInt(a.numeroEscola, 10) - parseInt(b.numeroEscola, 10);
+        });
+      }
+
+      return finalData;
+    } catch (error) {
+      console.error("Erro ao buscar projeto:", error);
+      throw new Error("Erro interno ao buscar os dados do projeto.");
     }
   }
 
