@@ -1134,7 +1134,7 @@ export class ProjetoPrisma {
         return [];
       }
 
-      console.log(projectsWithGrades)
+      //console.log(projectsWithGrades)
 
       const transformPeso = (n: number): number => (n > 0 ? n / 1000 : n);
 
