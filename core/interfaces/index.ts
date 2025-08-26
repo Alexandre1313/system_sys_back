@@ -39,6 +39,7 @@ import TipoEmbalagem from "./TipoEmbalagem";
 import CaixaAjuste from "./CaixaAjuste";
 import ItensCaixaAjuste from "./ItensCaixaAjuste";
 import { ItemsInserction2, ComponenteDoKit } from "./ItemsInserction2";
+import ExpedicaoResumoPD from "./ExpedicaoResumoPD";
 
 export type {
     AddressCompany, AddressSchool, Barcode, Caixa,
@@ -46,5 +47,5 @@ export type {
     EscolaGradesItems, Estoque, FinalyGrade, Grade, GradeItem, GradeOpenBySchool, GradesRomaneio, Item, ItemsInserction, 
     ItemTamanho, ItensProjects, Login, OutInput, ProjectItems, Projeto, ProjetosSimp, ProjetoStockItems, QtyEmbDay,
     StockGenerate, Tamanho, TamanhoQuantidade, TelephonesCompany, TelephonesSchool, Usuarios, Grafo, TipoEmbalagem,
-    CaixaAjuste, ItensCaixaAjuste, ItemsInserction2, ComponenteDoKit,
+    CaixaAjuste, ItensCaixaAjuste, ItemsInserction2, ComponenteDoKit, ExpedicaoResumoPD
 };

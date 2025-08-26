@@ -1,4 +1,4 @@
-import { FinalyGrade, Grade } from '@core/index';
+import { convertSPTime, ExpedicaoResumoPD, FinalyGrade, Grade } from '@core/index';
 import { Injectable } from '@nestjs/common';
 import { GradeItem, Prisma, Status } from '@prisma/client';
 import { PrismaProvider } from 'src/db/prisma.provider';
@@ -228,6 +228,121 @@ export class GradePrisma {
 
     // Retorna os IDs das grades que foram alteradas
     return idsParaAtualizar;
+  }
+
+  async getResumoExpedicaoPD(projetoId: number): Promise<ExpedicaoResumoPD[]> {
+    try {
+      const rows: {
+        data: Date | null
+        item: string
+        genero: string
+        tamanho: string
+        quantidade: number
+      }[] = await this.prisma.$queryRawUnsafe(`
+      WITH base AS (
+        SELECT
+          g."updatedAt"::date         AS data,
+          i.nome                      AS item,
+          i.genero::text              AS genero,
+          t.nome                      AS tamanho,
+          SUM(gi."quantidadeExpedida") AS quantidade
+        FROM public."GradeItem" gi
+        JOIN public."Grade" g ON gi."gradeId" = g.id
+        JOIN public."ItemTamanho" it ON gi."itemTamanhoId" = it.id
+        JOIN public."Item" i ON it."itemId" = i.id
+        JOIN public."Tamanho" t ON it."tamanhoId" = t.id
+        WHERE g."tipo" IS NULL
+          AND i."projetoId" = ${projetoId}
+        GROUP BY g."updatedAt", i.nome, i.genero, t.nome
+      ),
+
+      ordenado AS (
+        SELECT *,
+          CASE
+            WHEN tamanho ~ '^[0-9]+$' THEN LPAD(tamanho, 2, '0')
+            WHEN tamanho = 'P'     THEN '17'
+            WHEN tamanho = 'M'     THEN '18'
+            WHEN tamanho = 'G'     THEN '19'
+            WHEN tamanho = 'GG'    THEN '20'
+            WHEN tamanho = 'XG'    THEN '21'
+            WHEN tamanho = 'XGG'   THEN '22'
+            WHEN tamanho = 'EG/LG' THEN '23'
+            ELSE '99'
+          END AS tamanho_ordem
+        FROM base
+      ),
+
+      detalhes AS (
+        SELECT
+          data,
+          item,
+          genero,
+          tamanho,
+          quantidade,
+          0 AS ordem,
+          tamanho_ordem
+        FROM ordenado
+      ),
+
+      subtotais AS (
+        SELECT
+          data,
+          'Total' AS item,
+          '' AS genero,
+          '' AS tamanho,
+          SUM(quantidade) AS quantidade,
+          1 AS ordem,
+          'ZZ' AS tamanho_ordem
+        FROM base
+        GROUP BY data
+      ),
+
+      totalgeral AS (
+        SELECT
+          NULL::date AS data,
+          'Total Geral' AS item,
+          '' AS genero,
+          '' AS tamanho,
+          SUM(quantidade) AS quantidade,
+          2 AS ordem,
+          'ZZZ' AS tamanho_ordem
+        FROM base
+      )
+
+      SELECT
+        data,
+        item,
+        genero,
+        tamanho,
+        quantidade
+      FROM (
+        SELECT * FROM detalhes
+        UNION ALL
+        SELECT * FROM subtotais
+        UNION ALL
+        SELECT * FROM totalgeral
+      ) final
+      ORDER BY data, ordem, item, tamanho_ordem
+    `)
+
+      if (!rows) {
+        return [];
+      }
+
+      // Converte Date para string no campo `data`
+      const resultado: ExpedicaoResumoPD[] = rows.map((row) => ({
+        data: row.data ? convertSPTime(String(row.data)) : null,
+        item: row.item,
+        genero: row.genero,
+        tamanho: row.tamanho,
+        quantidade: row.quantidade,
+      }))
+
+      return resultado
+    } catch (error) {
+      console.error('Erro ao buscar resumo da expedição:', error)
+      throw new Error('Erro ao buscar resumo da expedição')
+    }
   }
 
 }

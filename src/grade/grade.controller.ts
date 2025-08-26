@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { GradePrisma } from './grade.prisma';
-import { FinalyGrade, Grade } from '@core/index';
+import { ExpedicaoResumoPD, FinalyGrade, Grade } from '@core/index';
 
 @Controller('grades')
 export class GradeController {
@@ -37,12 +37,12 @@ export class GradeController {
     try {
       if (!ids || ids.length === 0) {
         throw new BadRequestException('O array de IDs é obrigatório e não pode estar vazio.');
-      }      
+      }
       const idsAlterados = await this.repo.atualizarStatusParaDespachada(ids);
       if (idsAlterados.length === 0) {
         throw new NotFoundException('Nenhuma grade com status EXPEDIDA encontrada para alteração.');
       }
-      return idsAlterados; 
+      return idsAlterados;
     } catch (error) {
       throw new BadRequestException('Erro ao finalizar as grades: ' + error.message);
     }
@@ -63,6 +63,15 @@ export class GradeController {
     } catch (error) {
       throw new BadRequestException('Erro ao ajustar a grade: ' + error.message);
     }
+  }
+
+  @Get('saidaspdata/:projetoId')
+  async getItems(@Param('projetoId') projetoId: string): Promise<ExpedicaoResumoPD[]> {
+    const resumo = await this.repo.getResumoExpedicaoPD(+projetoId);
+    if (!resumo) {
+      throw new NotFoundException(`Não foram encontradas saidas para o projeto.`);
+    }
+    return resumo;
   }
 
   // Obter todas as grades
