@@ -231,9 +231,15 @@ export class GradePrisma {
     return idsParaAtualizar;
   }
 
-  async getResumoExpedicaoPD(projetoId: number, tipoGrade: number): Promise<ExpedicaoResumoPDGrouped[]> {
+  async getResumoExpedicaoPD(projetoId: number, tipoGrade: number, remessa: number): Promise<ExpedicaoResumoPDGrouped[]> {
     try {
-      const projetoFilter = projetoId === -1 ? '' : `AND i."projetoId" = ${projetoId}`;
+      const projetoFilter = projetoId === -1
+        ? ''
+        : `AND i."projetoId" = ${projetoId}`;
+
+      const remessaFilter = remessa === -1
+        ? ''
+        : `AND g."remessa" = ${remessa}`;
 
       let tipoGradeFilter = '';
       if (tipoGrade === -1) {
@@ -241,7 +247,7 @@ export class GradePrisma {
       } else if (tipoGrade === 1) {
         tipoGradeFilter = `AND g."tipo" IS NULL`;
       } else {
-        tipoGradeFilter = `AND g."tipo" = 'REPOSIÇÃO'`;
+        tipoGradeFilter = `AND g."tipo" ILIKE '%REPOS%'`;
       }
 
       const caseTamanhoOrdem = sizes
@@ -249,49 +255,53 @@ export class GradePrisma {
         .join('\n');
 
       const query = `
-      WITH base AS (
-        SELECT
-          p.nome AS projectname,
-          g."updatedAt"::date AS data,
-          i.nome AS item,
-          i.genero::text AS genero,
-          t.nome AS tamanho,
-          SUM(gi.quantidade) AS previsto,
-          SUM(gi."quantidadeExpedida") AS expedido
-        FROM "GradeItem" gi
-        JOIN "Grade" g ON gi."gradeId" = g.id
-        JOIN "ItemTamanho" it ON gi."itemTamanhoId" = it.id
-        JOIN "Item" i ON it."itemId" = i.id
-        JOIN "Tamanho" t ON it."tamanhoId" = t.id
-        JOIN "Projeto" p ON i."projetoId" = p.id
-        WHERE 1=1
-          ${projetoFilter}
-          ${tipoGradeFilter}
-        GROUP BY p.nome, g."updatedAt", i.nome, i.genero, t.nome
-      ),
-      ordenado AS (
-        SELECT *,
-          CASE
-            WHEN tamanho ~ '^[0-9]+$' THEN LPAD(tamanho, 2, '0')
-            ${caseTamanhoOrdem}
-            ELSE '999'
-          END AS tamanho_ordem
-        FROM base
-      )
+    WITH base AS (
       SELECT
-        projectname,
-        data,
-        item,
-        genero,
-        tamanho,
-        previsto,
-        expedido
-      FROM ordenado
-      ORDER BY projectname, data DESC NULLS LAST, item, tamanho_ordem;
-    `;
+        p.nome AS projectname,
+        g.status AS status,
+        g."updatedAt"::date AS data,
+        i.nome AS item,
+        i.genero::text AS genero,
+        t.nome AS tamanho,
+        SUM(gi.quantidade) AS previsto,
+        SUM(gi."quantidadeExpedida") AS expedido
+      FROM "GradeItem" gi
+      JOIN "Grade" g ON gi."gradeId" = g.id
+      JOIN "ItemTamanho" it ON gi."itemTamanhoId" = it.id
+      JOIN "Item" i ON it."itemId" = i.id
+      JOIN "Tamanho" t ON it."tamanhoId" = t.id
+      JOIN "Projeto" p ON i."projetoId" = p.id
+      WHERE 1=1
+        ${projetoFilter}
+        ${tipoGradeFilter}
+        ${remessaFilter}
+      GROUP BY p.nome, g.status, g."updatedAt", i.nome, i.genero, t.nome
+    ),
+    ordenado AS (
+      SELECT *,
+        CASE
+          WHEN tamanho ~ '^[0-9]+$' THEN LPAD(tamanho, 2, '0')
+          ${caseTamanhoOrdem}
+          ELSE '999'
+        END AS tamanho_ordem
+      FROM base
+    )
+    SELECT
+      projectname,
+      status,
+      data,
+      item,
+      genero,
+      tamanho,
+      previsto,
+      expedido
+    FROM ordenado
+    ORDER BY projectname, status, data DESC NULLS LAST, item, tamanho_ordem;
+  `;
 
       const rows: {
         projectname: string;
+        status: string | null;
         data: Date | null;
         item: string;
         genero: string;
@@ -302,19 +312,22 @@ export class GradePrisma {
 
       if (!rows || rows.length === 0) return [];
 
-      const grouped: Record<string, Record<string, ExpedicaoResumoPDItem[]>> = {};
+      // Estrutura de agrupamento: projeto → status → data
+      const grouped: Record<string, Record<string, Record<string, ExpedicaoResumoPDItem[]>>> = {};
 
       for (const row of rows) {
         const project = row.projectname;
+        const status = (row.status || 'SEM STATUS').toUpperCase();
         const dataStr = row.data
           ? convertSPTime(new Date(row.data.getFullYear(), row.data.getMonth(), row.data.getDate()).toISOString())
-          : null;
+          : 'null';
 
-        if (!grouped[project]) grouped[project] = {};
-        if (!grouped[project][dataStr ?? 'null']) grouped[project][dataStr ?? 'null'] = [];
+        grouped[project] ??= {};
+        grouped[project][status] ??= {};
+        grouped[project][status][dataStr] ??= [];
 
-        grouped[project][dataStr ?? 'null'].push({
-          data: dataStr,
+        grouped[project][status][dataStr].push({
+          data: dataStr === 'null' ? null : dataStr,
           item: row.item,
           genero: row.genero,
           tamanho: row.tamanho,
@@ -323,59 +336,95 @@ export class GradePrisma {
         });
       }
 
-      const resultado: ExpedicaoResumoPDGrouped[] = Object.entries(grouped).map(([projectname, dataGroups]) => {
+      // Ordem desejada para os status
+      const statusOrder = ['DESPACHADA', 'EXPEDIDA', 'PRONTA'];
+
+      // Monta o resultado final
+      const resultado: ExpedicaoResumoPDGrouped[] = [];
+
+      for (const [projectname, statuses] of Object.entries(grouped)) {
         let totalGeralPrevisto = 0;
         let totalGeralExpedido = 0;
 
-        const groupedItems: DataAgrupada[] = Object.entries(dataGroups)
-          .map(([data, items]) => {
-            const subtotalPrevisto = items.reduce((sum, item) => sum + item.previsto, 0);
-            const subtotalExpedido = items.reduce((sum, item) => sum + item.expedido, 0);
+        const groupedItems: DataAgrupada[] = [];
 
-            // Atualiza os totais gerais
+        // Ordena os status segundo a ordem desejada
+        const sortedStatuses = Object.keys(statuses).sort((a, b) => {
+          const indexA = statusOrder.indexOf(a.toUpperCase());
+          const indexB = statusOrder.indexOf(b.toUpperCase());
+
+          if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+          if (indexA === -1) return 1;
+          if (indexB === -1) return -1;
+
+          return indexA - indexB;
+        });
+
+        for (const status of sortedStatuses) {
+          const statusUpper = status.toUpperCase();
+
+          // Indicador de status
+          groupedItems.push({
+            data: null,
+            items: [{
+              data: null,
+              item: `STATUS: ${statusUpper}`,
+              genero: '',
+              tamanho: '',
+              previsto: 0,
+              expedido: 0,
+            }],
+          });
+
+          // Ordena as datas da mais antiga pra mais nova (ASC)
+          const dateGroups = statuses[status];
+          const sortedDates = Object.keys(dateGroups).sort((a, b) => {
+            if (a === 'null') return 1; // datas nulas no final
+            if (b === 'null') return -1;
+            return new Date(a).getTime() - new Date(b).getTime();
+          });
+
+          for (const data of sortedDates) {
+            const items = dateGroups[data];
+            const subtotalPrevisto = items.reduce((sum, x) => sum + x.previsto, 0);
+            const subtotalExpedido = items.reduce((sum, x) => sum + x.expedido, 0);
             totalGeralPrevisto += subtotalPrevisto;
             totalGeralExpedido += subtotalExpedido;
 
-            const subtotalRow: ExpedicaoResumoPDItem = {
+            groupedItems.push({
               data: data === 'null' ? null : data,
-              item: 'Total',
-              genero: '',
-              tamanho: '',
-              previsto: subtotalPrevisto,
-              expedido: subtotalExpedido,
-            };
+              items: [
+                ...items,
+                {
+                  data: data === 'null' ? null : data,
+                  item: 'Total',
+                  genero: '',
+                  tamanho: '',
+                  previsto: subtotalPrevisto,
+                  expedido: subtotalExpedido,
+                },
+              ],
+            });
+          }
+        }
 
-            return {
-              data: data === 'null' ? null : data,
-              items: [...items, subtotalRow],
-            };
-          })
-          .sort((a, b) => {
-            if (!a.data) return 1;
-            if (!b.data) return -1;
-            return new Date(b.data).getTime() - new Date(a.data).getTime();
-          });
-
-        // Adiciona o total geral após todos os dataGroups
         groupedItems.push({
           data: null,
-          items: [
-            {
-              data: null,
-              item: 'Total Geral',
-              genero: '',
-              tamanho: '',
-              previsto: totalGeralPrevisto,
-              expedido: totalGeralExpedido,
-            },
-          ],
+          items: [{
+            data: null,
+            item: 'Total Geral',
+            genero: '',
+            tamanho: '',
+            previsto: totalGeralPrevisto,
+            expedido: totalGeralExpedido,
+          }],
         });
 
-        return {
+        resultado.push({
           projectname,
           groupedItems,
-        };
-      });
+        });
+      }
 
       return resultado;
     } catch (error) {
@@ -383,5 +432,5 @@ export class GradePrisma {
       throw new Error('Erro ao buscar resumo da expedição');
     }
   }
-  
+
 }

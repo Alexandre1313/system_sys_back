@@ -48,9 +48,10 @@ export class GradeController {
     }
   }
 
-  @Get('saidaspdata/:projetoId/:tipograde')
-  async getItems(@Param('projetoId') projetoId: string, @Param('tipograde') tipograde: string): Promise<ExpedicaoResumoPDGrouped[]> {
-    const resumo = await this.repo.getResumoExpedicaoPD(+projetoId, +tipograde);
+  @Get('saidaspdata/:projetoId/:tipograde/:remessa')
+  async getItems(@Param('projetoId') projetoId: string, @Param('tipograde') tipograde: string,
+        @Param('remessa') remessa: string): Promise<ExpedicaoResumoPDGrouped[]> {
+    const resumo = await this.repo.getResumoExpedicaoPD(+projetoId, +tipograde, +remessa);
     if (!resumo) {
       throw new NotFoundException(`Não foram encontradas saidas para o projeto.`);
     }
