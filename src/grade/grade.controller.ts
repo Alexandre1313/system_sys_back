@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, HttpCode, HttpStatus, BadRequestException, NotFoundException } from '@nestjs/common';
 import { GradePrisma } from './grade.prisma';
-import { ExpedicaoResumoPD, FinalyGrade, Grade } from '@core/index';
+import { ExpedicaoResumoPDGrouped, FinalyGrade, Grade } from '@core/index';
 
 @Controller('grades')
 export class GradeController {
@@ -48,6 +48,15 @@ export class GradeController {
     }
   }
 
+  @Get('saidaspdata/:projetoId/:tipograde')
+  async getItems(@Param('projetoId') projetoId: string, @Param('tipograde') tipograde: string): Promise<ExpedicaoResumoPDGrouped[]> {
+    const resumo = await this.repo.getResumoExpedicaoPD(+projetoId, +tipograde);
+    if (!resumo) {
+      throw new NotFoundException(`Não foram encontradas saidas para o projeto.`);
+    }
+    return resumo;
+  }
+
   @Post('/ajustar/:id')
   @HttpCode(HttpStatus.OK)
   async ajustarGrade(@Param('id') id: string): Promise<Grade | null> {
@@ -64,15 +73,7 @@ export class GradeController {
       throw new BadRequestException('Erro ao ajustar a grade: ' + error.message);
     }
   }
-
-  @Get('saidaspdata/:projetoId')
-  async getItems(@Param('projetoId') projetoId: string): Promise<ExpedicaoResumoPD[]> {
-    const resumo = await this.repo.getResumoExpedicaoPD(+projetoId);
-    if (!resumo) {
-      throw new NotFoundException(`Não foram encontradas saidas para o projeto.`);
-    }
-    return resumo;
-  }
+  
 
   // Obter todas as grades
   @Get()

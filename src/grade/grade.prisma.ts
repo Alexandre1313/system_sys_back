@@ -1,7 +1,8 @@
-import { convertSPTime, ExpedicaoResumoPD, FinalyGrade, Grade } from '@core/index';
+import { convertSPTime, DataAgrupada, ExpedicaoResumoPDGrouped, ExpedicaoResumoPDItem, FinalyGrade, Grade } from '@core/index';
 import { Injectable } from '@nestjs/common';
 import { GradeItem, Prisma, Status } from '@prisma/client';
 import { PrismaProvider } from 'src/db/prisma.provider';
+import { sizes } from '@core/utils/utils';
 
 @Injectable()
 export class GradePrisma {
@@ -230,119 +231,157 @@ export class GradePrisma {
     return idsParaAtualizar;
   }
 
-  async getResumoExpedicaoPD(projetoId: number): Promise<ExpedicaoResumoPD[]> {
+  async getResumoExpedicaoPD(projetoId: number, tipoGrade: number): Promise<ExpedicaoResumoPDGrouped[]> {
     try {
-      const rows: {
-        data: Date | null
-        item: string
-        genero: string
-        tamanho: string
-        quantidade: number
-      }[] = await this.prisma.$queryRawUnsafe(`
+      const projetoFilter = projetoId === -1 ? '' : `AND i."projetoId" = ${projetoId}`;
+
+      let tipoGradeFilter = '';
+      if (tipoGrade === -1) {
+        tipoGradeFilter = '';
+      } else if (tipoGrade === 1) {
+        tipoGradeFilter = `AND g."tipo" IS NULL`;
+      } else {
+        tipoGradeFilter = `AND g."tipo" = 'REPOSIÇÃO'`;
+      }
+
+      const caseTamanhoOrdem = sizes
+        .map((s, i) => `WHEN tamanho = '${s}' THEN '${i + 100}'`)
+        .join('\n');
+
+      const query = `
       WITH base AS (
         SELECT
-          g."updatedAt"::date         AS data,
-          i.nome                      AS item,
-          i.genero::text              AS genero,
-          t.nome                      AS tamanho,
-          SUM(gi."quantidadeExpedida") AS quantidade
-        FROM public."GradeItem" gi
-        JOIN public."Grade" g ON gi."gradeId" = g.id
-        JOIN public."ItemTamanho" it ON gi."itemTamanhoId" = it.id
-        JOIN public."Item" i ON it."itemId" = i.id
-        JOIN public."Tamanho" t ON it."tamanhoId" = t.id
-        WHERE g."tipo" IS NULL
-          AND i."projetoId" = ${projetoId}
-        GROUP BY g."updatedAt", i.nome, i.genero, t.nome
+          p.nome AS projectname,
+          g."updatedAt"::date AS data,
+          i.nome AS item,
+          i.genero::text AS genero,
+          t.nome AS tamanho,
+          SUM(gi.quantidade) AS previsto,
+          SUM(gi."quantidadeExpedida") AS expedido
+        FROM "GradeItem" gi
+        JOIN "Grade" g ON gi."gradeId" = g.id
+        JOIN "ItemTamanho" it ON gi."itemTamanhoId" = it.id
+        JOIN "Item" i ON it."itemId" = i.id
+        JOIN "Tamanho" t ON it."tamanhoId" = t.id
+        JOIN "Projeto" p ON i."projetoId" = p.id
+        WHERE 1=1
+          ${projetoFilter}
+          ${tipoGradeFilter}
+        GROUP BY p.nome, g."updatedAt", i.nome, i.genero, t.nome
       ),
-
       ordenado AS (
         SELECT *,
           CASE
             WHEN tamanho ~ '^[0-9]+$' THEN LPAD(tamanho, 2, '0')
-            WHEN tamanho = 'P'     THEN '17'
-            WHEN tamanho = 'M'     THEN '18'
-            WHEN tamanho = 'G'     THEN '19'
-            WHEN tamanho = 'GG'    THEN '20'
-            WHEN tamanho = 'XG'    THEN '21'
-            WHEN tamanho = 'XGG'   THEN '22'
-            WHEN tamanho = 'EG/LG' THEN '23'
-            ELSE '99'
+            ${caseTamanhoOrdem}
+            ELSE '999'
           END AS tamanho_ordem
         FROM base
-      ),
-
-      detalhes AS (
-        SELECT
-          data,
-          item,
-          genero,
-          tamanho,
-          quantidade,
-          0 AS ordem,
-          tamanho_ordem
-        FROM ordenado
-      ),
-
-      subtotais AS (
-        SELECT
-          data,
-          'Total' AS item,
-          '' AS genero,
-          '' AS tamanho,
-          SUM(quantidade) AS quantidade,
-          1 AS ordem,
-          'ZZ' AS tamanho_ordem
-        FROM base
-        GROUP BY data
-      ),
-
-      totalgeral AS (
-        SELECT
-          NULL::date AS data,
-          'Total Geral' AS item,
-          '' AS genero,
-          '' AS tamanho,
-          SUM(quantidade) AS quantidade,
-          2 AS ordem,
-          'ZZZ' AS tamanho_ordem
-        FROM base
       )
-
       SELECT
+        projectname,
         data,
         item,
         genero,
         tamanho,
-        quantidade
-      FROM (
-        SELECT * FROM detalhes
-        UNION ALL
-        SELECT * FROM subtotais
-        UNION ALL
-        SELECT * FROM totalgeral
-      ) final
-      ORDER BY data, ordem, item, tamanho_ordem
-    `)
+        previsto,
+        expedido
+      FROM ordenado
+      ORDER BY projectname, data DESC NULLS LAST, item, tamanho_ordem;
+    `;
 
-      if (!rows) {
-        return [];
+      const rows: {
+        projectname: string;
+        data: Date | null;
+        item: string;
+        genero: string;
+        tamanho: string;
+        previsto: number;
+        expedido: number;
+      }[] = await this.prisma.$queryRawUnsafe(query);
+
+      if (!rows || rows.length === 0) return [];
+
+      const grouped: Record<string, Record<string, ExpedicaoResumoPDItem[]>> = {};
+
+      for (const row of rows) {
+        const project = row.projectname;
+        const dataStr = row.data
+          ? convertSPTime(new Date(row.data.getFullYear(), row.data.getMonth(), row.data.getDate()).toISOString())
+          : null;
+
+        if (!grouped[project]) grouped[project] = {};
+        if (!grouped[project][dataStr ?? 'null']) grouped[project][dataStr ?? 'null'] = [];
+
+        grouped[project][dataStr ?? 'null'].push({
+          data: dataStr,
+          item: row.item,
+          genero: row.genero,
+          tamanho: row.tamanho,
+          previsto: Number(row.previsto),
+          expedido: Number(row.expedido),
+        });
       }
 
-      // Converte Date para string no campo `data`
-      const resultado: ExpedicaoResumoPD[] = rows.map((row) => ({
-        data: row.data ? convertSPTime(String(row.data)) : null,
-        item: row.item,
-        genero: row.genero,
-        tamanho: row.tamanho,
-        quantidade: row.quantidade,
-      }))
+      const resultado: ExpedicaoResumoPDGrouped[] = Object.entries(grouped).map(([projectname, dataGroups]) => {
+        let totalGeralPrevisto = 0;
+        let totalGeralExpedido = 0;
 
-      return resultado
+        const groupedItems: DataAgrupada[] = Object.entries(dataGroups)
+          .map(([data, items]) => {
+            const subtotalPrevisto = items.reduce((sum, item) => sum + item.previsto, 0);
+            const subtotalExpedido = items.reduce((sum, item) => sum + item.expedido, 0);
+
+            // Atualiza os totais gerais
+            totalGeralPrevisto += subtotalPrevisto;
+            totalGeralExpedido += subtotalExpedido;
+
+            const subtotalRow: ExpedicaoResumoPDItem = {
+              data: data === 'null' ? null : data,
+              item: 'Total',
+              genero: '',
+              tamanho: '',
+              previsto: subtotalPrevisto,
+              expedido: subtotalExpedido,
+            };
+
+            return {
+              data: data === 'null' ? null : data,
+              items: [...items, subtotalRow],
+            };
+          })
+          .sort((a, b) => {
+            if (!a.data) return 1;
+            if (!b.data) return -1;
+            return new Date(b.data).getTime() - new Date(a.data).getTime();
+          });
+
+        // Adiciona o total geral após todos os dataGroups
+        groupedItems.push({
+          data: null,
+          items: [
+            {
+              data: null,
+              item: 'Total Geral',
+              genero: '',
+              tamanho: '',
+              previsto: totalGeralPrevisto,
+              expedido: totalGeralExpedido,
+            },
+          ],
+        });
+
+        return {
+          projectname,
+          groupedItems,
+        };
+      });
+
+      return resultado;
     } catch (error) {
-      console.error('Erro ao buscar resumo da expedição:', error)
-      throw new Error('Erro ao buscar resumo da expedição')
+      console.error('Erro ao buscar resumo da expedição:', error);
+      throw new Error('Erro ao buscar resumo da expedição');
     }
   }
-
+  
 }

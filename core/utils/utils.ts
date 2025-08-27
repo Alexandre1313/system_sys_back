@@ -33,7 +33,7 @@ export function calcularEstoqueDeKit(componentes: any[]): number {
   return Math.min(...estoqueValido);
 }
 
-const sizes = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'EXGG', 'G1', 'G2', 'G3', 'EG/LG'];
+export const sizes = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'EG', 'EX', 'EGG', 'EXG', 'XGG', 'EXGG', 'G1', 'G2', 'G3', 'EG/LG'];
 
 // Função para ordenar tamanhos
 export const sizeOrders = (tamanhos: string[]): string[] => {
