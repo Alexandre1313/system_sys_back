@@ -50,12 +50,32 @@ export class GradeController {
 
   @Get('saidaspdata/:projetoId/:tipograde/:remessa')
   async getItems(@Param('projetoId') projetoId: string, @Param('tipograde') tipograde: string,
-        @Param('remessa') remessa: string): Promise<ExpedicaoResumoPDGrouped[]> {
+    @Param('remessa') remessa: string): Promise<ExpedicaoResumoPDGrouped[]> {
     const resumo = await this.repo.getResumoExpedicaoPD(+projetoId, +tipograde, +remessa);
     if (!resumo) {
       throw new NotFoundException(`Não foram encontradas saidas para o projeto.`);
     }
     return resumo;
+  }
+
+  @Get('saidaspdataresum/:projetoId/:tipograde/:remessa')
+  async getItemsResum(@Param('projetoId') projetoId: string, @Param('tipograde') tipograde: string,
+    @Param('remessa') remessa: string): Promise<ExpedicaoResumoPDGrouped[]> {
+    const resumo = await this.repo.getResumoExpedicaoPDResum(+projetoId, +tipograde, +remessa);
+    if (!resumo) {
+      throw new NotFoundException(`Não foram encontradas saidas para o projeto.`);
+    }
+    return resumo;
+  }
+
+  @Get('saidaspdataresumpdf/:projetoId/:tipograde/:remessa')
+  async getItemsResumPDF(@Param('projetoId') projetoId: string, @Param('tipograde') tipograde: string,
+    @Param('remessa') remessa: string): Promise<Buffer> {
+    const resumopdf = await this.repo.getResumoExpedicaoPDResumPDF(+projetoId, +tipograde, +remessa);
+    if (!resumopdf) {
+      throw new NotFoundException(`Não foram encontradas saidas para gerar o pdf.`);
+    }
+    return resumopdf;
   }
 
   @Post('/ajustar/:id')
@@ -74,7 +94,6 @@ export class GradeController {
       throw new BadRequestException('Erro ao ajustar a grade: ' + error.message);
     }
   }
-  
 
   // Obter todas as grades
   @Get()
