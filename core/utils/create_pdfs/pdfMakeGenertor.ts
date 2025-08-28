@@ -19,6 +19,10 @@ function formatDateTime(date: Date): string {
 }
 
 export async function gerarPDFExpedicao(resumo: ExpedicaoResumoPDGrouped[]): Promise<Buffer> {
+  if (!Array.isArray(resumo) || resumo.length === 0) {
+    throw new Error('O resumo está vazio ou inválido. Não é possível gerar PDF.');
+  }
+
   const now = new Date();
   const formattedDateTime = formatDateTime(now);
 
@@ -33,7 +37,18 @@ export async function gerarPDFExpedicao(resumo: ExpedicaoResumoPDGrouped[]): Pro
 
   const body: any[] = [];
 
-  resumo.forEach(grupo => {
+  for (const grupo of resumo) {
+    if (!grupo || typeof grupo !== 'object') {
+      console.warn('Grupo inválido ignorado:', grupo);
+      continue;
+    }
+
+    if (!Array.isArray(grupo.groupedItems) || grupo.groupedItems.length === 0) {
+      console.warn(`Grupo "${grupo.projectname}" ignorado por não ter groupedItems válidos.`);
+      continue;
+    }
+
+    // Linha do projeto + data/hora geração
     body.push([
       {
         text: `PROJETO: ${grupo.projectname}`,
@@ -58,13 +73,20 @@ export async function gerarPDFExpedicao(resumo: ExpedicaoResumoPDGrouped[]): Pro
       null,
     ]);
 
+    // Cabeçalhos da tabela
     body.push(headers);
 
-    grupo.groupedItems.forEach(dataGroup => {
+    for (const dataGroup of grupo.groupedItems) {
+      if (!dataGroup || typeof dataGroup !== 'object' || !Array.isArray(dataGroup.items) || dataGroup.items.length === 0) {
+        console.warn(`DataGroup ignorado no projeto "${grupo.projectname}" por estar vazio ou inválido.`);
+        continue;
+      }
+
       const statusRow = dataGroup.items.find(i => i.item?.startsWith('STATUS:'));
       const isStatusHeader = !!statusRow;
 
       if (isStatusHeader) {
+        // Linha de espaçamento e status
         body.push([
           { text: '', colSpan: 6, margin: [0, 3, 0, 3], fillColor: '#f3f3f3' },
           null, null, null, null, null
@@ -82,10 +104,15 @@ export async function gerarPDFExpedicao(resumo: ExpedicaoResumoPDGrouped[]): Pro
           null, null, null, null, null
         ]);
 
-        return;
+        continue; // pula para próximo dataGroup
       }
 
-      dataGroup.items.forEach(item => {
+      for (const item of dataGroup.items) {
+        if (!item || typeof item !== 'object') {
+          console.warn(`Item inválido ignorado no projeto "${grupo.projectname}".`);
+          continue;
+        }
+
         const isSubtotal = item.item === 'Total';
         const isTotalGeral = item.item === 'Total Geral';
 
@@ -102,7 +129,7 @@ export async function gerarPDFExpedicao(resumo: ExpedicaoResumoPDGrouped[]): Pro
             { text: '', fillColor: '#bbbbbb' },
             { text: '', fillColor: '#bbbbbb' },
             {
-              text: item.previsto.toString(),
+              text: item.previsto?.toString() || '0',
               alignment: 'right',
               bold: true,
               fontSize: 9,
@@ -110,7 +137,7 @@ export async function gerarPDFExpedicao(resumo: ExpedicaoResumoPDGrouped[]): Pro
               margin: [0, 2, 0, 2]
             },
             {
-              text: item.expedido.toString(),
+              text: item.expedido?.toString() || '0',
               alignment: 'right',
               bold: true,
               fontSize: 9,
@@ -121,26 +148,30 @@ export async function gerarPDFExpedicao(resumo: ExpedicaoResumoPDGrouped[]): Pro
         } else {
           body.push([
             { text: item.data || '', fontSize: 8, margin: [0, 1, 0, 1] },
-            { text: item.item, fontSize: 8, margin: [0, 1, 0, 1] },
-            { text: item.genero, fontSize: 8, margin: [0, 1, 0, 1] },
-            { text: item.tamanho, fontSize: 8, margin: [0, 1, 0, 1] },
+            { text: item.item || '', fontSize: 8, margin: [0, 1, 0, 1] },
+            { text: item.genero || '', fontSize: 8, margin: [0, 1, 0, 1] },
+            { text: item.tamanho || '', fontSize: 8, margin: [0, 1, 0, 1] },
             {
-              text: item.previsto.toString(),
+              text: item.previsto?.toString() || '0',
               alignment: 'right',
               fontSize: 8,
               margin: [0, 1, 0, 1]
             },
             {
-              text: item.expedido.toString(),
+              text: item.expedido?.toString() || '0',
               alignment: 'right',
               fontSize: 8,
               margin: [0, 1, 0, 1]
             }
           ]);
         }
-      });
-    });
-  });
+      }
+    }
+  }
+
+  if (body.length === 0) {
+    throw new Error('Nenhum dado válido encontrado nos projetos. O conteúdo do PDF está vazio.');
+  }
 
   const docDefinition: any = {
     pageSize: 'A4',
