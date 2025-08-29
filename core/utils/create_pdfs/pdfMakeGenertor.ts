@@ -99,11 +99,11 @@ export async function gerarPDFExpedicao(resumo: ExpedicaoResumoPDGrouped[]): Pro
           const cleanStatus = status.replace('STATUS:', '').trim().toUpperCase();
           switch (cleanStatus) {
             case 'DESPACHADA':
-              return 'JÁ ENVIADAS';
+              return 'REMETIDO AO CLIENTE - DESPACHADA';
             case 'EXPEDIDA':
-              return 'AGUARDANDO ENVIO';
+              return 'FINALIZADO - AGUARDANDO ENVIO';
             case 'PRONTA':
-              return 'EM PROCESSAMENTO';
+              return 'EM ANDAMENTO';
             default:
               return status; // retorna como está se não reconhecer
           }
