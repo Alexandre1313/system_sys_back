@@ -1,4 +1,4 @@
-import { convertSPTime, DataAgrupada, ExpedicaoResumoPDGrouped, ExpedicaoResumoPDItem, FinalyGrade, Grade } from '@core/index';
+import { DataAgrupada, ExpedicaoResumoPDGrouped, ExpedicaoResumoPDItem, FinalyGrade, Grade } from '@core/index';
 import { Injectable } from '@nestjs/common';
 import { GradeItem, Prisma, Status } from '@prisma/client';
 import { PrismaProvider } from 'src/db/prisma.provider';
@@ -28,7 +28,6 @@ export class GradePrisma {
     return gradeSalva; // Retorne o grade salva
   }
 
-  // Atualiza apenas a propriedade "finalizada" para true dentro de uma transação
   async finalizarGrade(finalyGrade: FinalyGrade): Promise<Grade> {
     const { id, finalizada, status } = finalyGrade;
     return await this.prisma.$transaction(async (prisma) => {
@@ -324,10 +323,7 @@ export class GradePrisma {
       for (const row of rows) {
         const project = row.projectname;
         const status = (row.status || 'SEM STATUS').toUpperCase();
-        const dataStr = row.data
-          ? convertSPTime(new Date(row.data.getFullYear(), row.data.getMonth(), row.data.getDate()).toISOString())
-          : 'null';
-
+        const dataStr = row.data ? row.data.toISOString().split('T')[0] : 'null';
         grouped[project] ??= {};
         grouped[project][status] ??= {};
         grouped[project][status][dataStr] ??= [];
@@ -536,10 +532,7 @@ export class GradePrisma {
       for (const row of rows) {
         const project = row.projectname;
         const status = (row.status || 'SEM STATUS').toUpperCase();
-        const dataStr = row.data
-          ? convertSPTime(new Date(row.data.getFullYear(), row.data.getMonth(), row.data.getDate()).toISOString())
-          : 'null';
-
+        const dataStr = row.data ? row.data.toISOString().split('T')[0] : 'null';
         grouped[project] ??= {};
         grouped[project][status] ??= {};
         grouped[project][status][dataStr] ??= {};
@@ -758,10 +751,7 @@ export class GradePrisma {
       for (const row of rows) {
         const project = row.projectname;
         const status = (row.status || 'SEM STATUS').toUpperCase();
-        const dataStr = row.data
-          ? convertSPTime(new Date(row.data.getFullYear(), row.data.getMonth(), row.data.getDate()).toISOString())
-          : 'null';
-
+        const dataStr = row.data ? row.data.toISOString().split('T')[0] : 'null';
         grouped[project] ??= {};
         grouped[project][status] ??= {};
         grouped[project][status][dataStr] ??= {};
