@@ -10,4 +10,5 @@ export default interface Projeto {
   url: string
   createdAt?: Date;
   updatedAt?: Date;
+  isActive?: boolean;
 }
