@@ -129,15 +129,15 @@ export class ProjetoPrisma {
         const grades = escola.grades;
         if (grades.length === 0) return 4; // Sem grades - ÚLTIMO
         
-        // Verificar se tem alguma grade iniciada
-        if (grades.some(g => g.iniciada)) return 1; // Iniciada - PRIMEIRO
-        
         // Verificar se todas as grades estão finalizadas (expedidas/despachadas)
         const todasFinalizadas = grades.every(g =>
           g.status === 'EXPEDIDA' || g.status === 'DESPACHADA'
         );
         
         if (todasFinalizadas) return 3; // Expedida - TERCEIRO
+        
+        // Verificar se tem alguma grade iniciada (mas não expedida)
+        if (grades.some(g => g.iniciada)) return 1; // Iniciada - PRIMEIRO
         
         return 2; // Não iniciada - SEGUNDO
       };
