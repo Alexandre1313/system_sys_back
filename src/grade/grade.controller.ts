@@ -78,6 +78,26 @@ export class GradeController {
     return resumopdf;
   }
 
+  @Get('saidaspdatacomescola/:projetoId/:tipograde/:remessa')
+  async getItemsComEscola(@Param('projetoId') projetoId: string, @Param('tipograde') tipograde: string,
+    @Param('remessa') remessa: string): Promise<ExpedicaoResumoPDGrouped[]> {
+    const resumo = await this.repo.getResumoExpedicaoPDComEscola(+projetoId, +tipograde, +remessa);
+    if (!resumo) {
+      throw new NotFoundException(`Não foram encontradas saidas para o projeto.`);
+    }
+    return resumo;
+  }
+
+  @Get('saidaspdatacomescolapdf/:projetoId/:tipograde/:remessa')
+  async getItemsComEscolaPDF(@Param('projetoId') projetoId: string, @Param('tipograde') tipograde: string,
+    @Param('remessa') remessa: string): Promise<Buffer> {
+    const resumopdf = await this.repo.getResumoExpedicaoPDComEscolaPDF(+projetoId, +tipograde, +remessa);
+    if (!resumopdf) {
+      throw new NotFoundException(`Não foram encontradas saidas para gerar o pdf.`);
+    }
+    return resumopdf;
+  }
+
   @Post('/ajustar/:id')
   @HttpCode(HttpStatus.OK)
   async ajustarGrade(@Param('id') id: string): Promise<Grade | null> {
