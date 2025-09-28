@@ -2,7 +2,7 @@ import { Caixa, CaixaAjuste, convertSPTime } from '@core/index';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
-import { PrismaProvider } from 'src/db/prisma.provider';
+import { PrismaProvider } from '../db/prisma.provider';
 
 @Injectable()
 export class CaixaPrisma {
@@ -262,7 +262,7 @@ export class CaixaPrisma {
           caixaId: item.caixaId,
           itemName: item.itemName,
           itemGenero: item.itemGenero,
-          itemTam: item.itemTam,
+          itemTam: item.itemTam, 
           itemQty: item.itemQty,
           itemTamanhoId: item.itemTamanhoId,
           updatedAt: convertSPTime(String(item.updatedAt)),
@@ -275,7 +275,7 @@ export class CaixaPrisma {
     }
   }
 
-  async updateItensByBox(caixaData: CaixaAjuste): Promise<CaixaAjuste | null> {
+  async updateItensByBox(caixaData: CaixaAjuste): Promise<CaixaAjuste | null | (CaixaAjuste & { status: string; mensagem: string })> {
     if (!caixaData) return null;
 
     const { id, gradeId, itens } = caixaData;
@@ -285,294 +285,341 @@ export class CaixaPrisma {
 
     while (attempt < MAX_RETRIES) {
       try {
-        await this.prisma.$transaction(async (prisma) => {
-          const itensModify = [];
+        const result = await this.prisma.$transaction(async (prisma) => {
+          // 1. Verificar se a caixa existe
+          const caixaAtual = await prisma.caixa.findUnique({
+            where: { id },
+            include: { caixaItem: true }
+          });
 
+          if (!caixaAtual) {
+            throw new Error(`Caixa não encontrada: ${id}`);
+          }
+
+          // 2. Processar cada item da requisição
           for (const item of itens) {
             const { itemTamanhoId, itemQty } = item;
 
+            // Buscar ItemTamanho com informações de kit
             const itemTamanho = await prisma.itemTamanho.findUnique({
               where: { id: itemTamanhoId },
-            });
-
-            if (!itemTamanho) throw new Error(`ItemTamanho não encontrado: ${itemTamanhoId}`);
-
-            // 📦 Caso: Item Comum (não é kit)
-            if (!itemTamanho.isKit) {
-              const outInput = await prisma.outInput.findFirst({
-                where: { caixaId: id, itemTamanhoId, gradeId },
-              });
-
-              if (!outInput) throw new Error(`Saída não encontrada para item normal`);
-
-              if (outInput.quantidade !== itemQty) {
-                const objectItens = {
-                  stockIdentifier: outInput.estoqueId,
-                  itemTamanhoIdIdentifier: outInput.itemTamanhoId,
-                  gradeIdentifier: outInput.gradeId,
-                  boxIdentifier: outInput.caixaId,
-                  exclude: itemQty === 0,
-                  diff: outInput.quantidade - itemQty,
-                  qtyNew: itemQty,
-                  iskit: false,
-                };
-
-                itensModify.push(objectItens);
-
-                if (objectItens.exclude) {
-                  await prisma.outInput.delete({ where: { id: outInput.id } });
-                } else if (objectItens.diff > 0) {
-                  await prisma.outInput.update({
-                    where: { id: outInput.id },
-                    data: { quantidade: itemQty },
-                  });
+              include: {
+                estoque: true,
+                kitMain: {
+                  include: {
+                    component: {
+                      include: {
+                        estoque: true
+                      }
+                    }
+                  }
                 }
               }
+            });
 
-            } else {
-              // 📦 Caso: Kit
-              const itemTamanhosOut: any = await prisma.$queryRaw`
-                SELECT 
-                  o.id AS "outInputId",
-                  o."quantidade" AS "outQuantidade",
-                  o."itemTamanhoId" AS "componenteId",
-                  o."caixaId",
-                  o."gradeId",
-                  o."kitOrigemId",
-                  it.id AS "itemTamanhoId",                               
-                  ki.quantidade AS "kitQuantidade"
-                FROM "OutInput" o
-                JOIN "ItemTamanho" it ON it.id = o."itemTamanhoId"
-                LEFT JOIN "KitItem" ki 
-                  ON ki."componentId" = o."itemTamanhoId"
-                  AND ki."kitId" = o."kitOrigemId"
-                WHERE o."caixaId" = ${id}
-                  AND o."gradeId" = ${gradeId}
-                  AND o."kitOrigemId" = ${itemTamanho.id}
-                ORDER BY o.id;
-              `;
-
-              console.log(itemTamanhosOut)
-
-              const totalComponentes = itemTamanhosOut.reduce((sum: number, kq: any) => {
-                return sum + (kq.kitQuantidade || 0); // caso seja null
-              }, 0);
-
-              let totalItemsDespachados2 = 0;
+            if (!itemTamanho) {
+              throw new Error(`ItemTamanho não encontrado: ${itemTamanhoId}`);
+            }
 
 
-              // Para cada registro de outInput, iterar os componentes do kit
-              for (const componente of itemTamanhosOut) {
-                const componenteId = componente.componentId;
-                const qtdPorKit = componente.kitQuantidade;
-                const qtdTotal = itemQty * qtdPorKit;
+            // Buscar CaixaItem atual
+            const caixaItemAtual = await prisma.caixaItem.findFirst({
+              where: { caixaId: id, itemTamanhoId }
+            });
 
-                const outInputComp = await prisma.outInput.findFirst({
+            if (!caixaItemAtual) {
+              throw new Error(`CaixaItem não encontrado para itemTamanhoId=${itemTamanhoId}`);
+            }
+
+            const quantidadeAtual = caixaItemAtual.itemQty;
+            const diff = quantidadeAtual - itemQty;
+
+
+            if (itemTamanho.isKit) {
+              // PROCESSAR KIT
+              
+              // 1. PROCESSAR COMPONENTES DO KIT (OutInput e Estoque)
+              for (const kitComponent of itemTamanho.kitMain) {
+                const componenteId = kitComponent.componentId;
+                const qtdPorKit = kitComponent.quantidade;
+                
+                // Diferença de kits: quantidadeAtual - itemQty
+                const diffKits = quantidadeAtual - itemQty;
+                
+                // Diferença de componentes: diffKits * qtdPorKit
+                const diffComponentes = diffKits * qtdPorKit;
+
+                // Buscar OutInput do componente
+                const outInputComponente = await prisma.outInput.findFirst({
                   where: {
                     caixaId: id,
                     itemTamanhoId: componenteId,
                     gradeId,
-                    kitOrigemId: itemTamanhoId,
-                  },
+                    kitOrigemId: itemTamanhoId
+                  }
                 });
 
-                if (!outInputComp) {
-                  throw new Error(`Componente não encontrado para kit itemTamanhoId=${itemTamanhoId}`);
+                if (!outInputComponente) {
+                  throw new Error(`OutInput não encontrado para componente ${componenteId} do kit ${itemTamanhoId}`);
                 }
 
-                if (outInputComp.quantidade !== qtdTotal) {
-                  const objectItens = {
-                    stockIdentifier: outInputComp.estoqueId,
-                    itemTamanhoIdIdentifier: componenteId,
-                    kitItemTamanhoId: itemTamanhoId,
-                    gradeIdentifier: outInputComp.gradeId,
-                    boxIdentifier: outInputComp.caixaId,
-                    exclude: qtdTotal === 0,
-                    diff: outInputComp.quantidade - qtdTotal,
-                    qtyNew: qtdTotal,
-                    iskit: true,
-                  };
+                if (itemQty === 0) {
+                  // Zerar kit - excluir OutInput do componente
+                  await prisma.outInput.delete({ where: { id: outInputComponente.id } });
+                  
+                  // Devolver quantidade total do componente para estoque
+                  await prisma.estoque.update({
+                    where: { id: outInputComponente.estoqueId },
+                    data: { 
+                      quantidade: { 
+                        increment: outInputComponente.quantidade 
+                      } 
+                    }
+                  });
+                } else {
+                  // Atualizar quantidade do componente no OutInput
+                  const novaQuantidadeComponente = itemQty * qtdPorKit;
+                  
+                  await prisma.outInput.update({
+                    where: { id: outInputComponente.id },
+                    data: { quantidade: novaQuantidadeComponente }
+                  });
 
-                  itensModify.push(objectItens);
-
-                  if (objectItens.exclude) {
-                    await prisma.outInput.delete({ where: { id: outInputComp.id } });
-                  } else if (objectItens.diff > 0) {
-                    await prisma.outInput.update({
-                      where: { id: outInputComp.id },
-                      data: { quantidade: qtdTotal },
+                  // Ajustar estoque se houver diferença
+                  if (diffComponentes !== 0) {
+                    // diffComponentes é negativo quando reduzimos kits (devolve para estoque)
+                    // Usar diffComponentes diretamente pois o Prisma increment aceita valores negativos
+                    await prisma.estoque.update({
+                      where: { id: outInputComponente.estoqueId },
+                      data: { 
+                        quantidade: { 
+                          increment: -diffComponentes // Negativo de negativo = positivo (devolve para estoque)
+                        } 
+                      }
                     });
-                    totalItemsDespachados2 += qtdTotal;
                   }
                 }
               }
 
-
-              const totalKitsL = totalItemsDespachados2 / totalComponentes;
-              const diffKitsL = totalKitsL - itemQty;
-
-              const gradeItem = await prisma.gradeItem.findFirst({
-                where: { itemTamanhoId, gradeId },
+              // 2. PROCESSAR GRADEITEM DO KIT (não dos componentes)
+              const gradeItemKit = await prisma.gradeItem.findFirst({
+                where: {
+                  itemTamanhoId: itemTamanhoId, // Kit em si
+                  gradeId
+                }
               });
 
-              if (!gradeItem) {
-                throw new Error(`GradeItem não encontrado para itemTamanhoId=${itemTamanhoId}, gradeId=${gradeId}`);
+              if (gradeItemKit) {
+                if (itemQty === 0) {
+                  // Zerar quantidade expedida do kit para permitir expedir novamente
+                  await prisma.gradeItem.update({
+                    where: { id: gradeItemKit.id },
+                    data: { 
+                      quantidadeExpedida: { 
+                        decrement: quantidadeAtual 
+                      } 
+                    }
+                  });
+                } else {
+                  // Ajustar quantidade expedida do kit
+                  if (diff !== 0) {
+                    await prisma.gradeItem.update({
+                      where: { id: gradeItemKit.id },
+                      data: { 
+                        quantidadeExpedida: { 
+                          decrement: diff 
+                        } 
+                      }
+                    });
+                  }
+                }
               }
 
-              const novaQuantidadeExpedida = gradeItem.quantidadeExpedida - diffKitsL;
-              if (novaQuantidadeExpedida < 0) {
-                throw new Error("QuantidadeExpedida resultaria em valor negativo");
+              // 3. PROCESSAR CAIXAITEM DO KIT (não dos componentes)
+              if (itemQty === 0) {
+                await prisma.caixaItem.delete({ where: { id: caixaItemAtual.id } });
+              } else {
+                await prisma.caixaItem.update({
+                  where: { id: caixaItemAtual.id },
+                  data: { itemQty }
+                });
               }
-
-              await prisma.gradeItem.update({
-                where: { id: gradeItem.id },
-                data: { quantidadeExpedida: novaQuantidadeExpedida },
+            } else {
+              // PROCESSAR ITEM NORMAL
+              const outInputItem = await prisma.outInput.findFirst({
+                where: {
+                  caixaId: id,
+                  itemTamanhoId,
+                  gradeId,
+                  kitOrigemId: null // Item normal não tem kitOrigemId
+                }
               });
 
-              const caixaItem = await prisma.caixaItem.findFirst({
-                where: { itemTamanhoId, caixaId: id },
-              });
-
-              if (!caixaItem) {
-                throw new Error(`CaixaItem não encontrado para itemTamanhoId=${itemTamanhoId}, caixaId=${id}`);
+              if (!outInputItem) {
+                throw new Error(`OutInput não encontrado para item normal ${itemTamanhoId}`);
               }
 
               if (itemQty === 0) {
-                await prisma.caixaItem.delete({ where: { id: caixaItem.id } });
-              } else {
-                await prisma.caixaItem.update({
-                  where: { id: caixaItem.id },
-                  data: { itemQty },
-                });
-              }
-            }
-          }
-
-          // 🔄 Ajustes baseados em itens modificados
-          for (const item of itensModify) {
-            const {
-              stockIdentifier,
-              itemTamanhoIdIdentifier,
-              gradeIdentifier,
-              boxIdentifier,
-              exclude,
-              diff,
-              qtyNew,
-            } = item;
-
-            if (diff <= 0) continue;
-
-            const gradeItem = await prisma.gradeItem.findFirst({
-              where: { itemTamanhoId: itemTamanhoIdIdentifier, gradeId: gradeIdentifier },
-            });
-
-            if (!gradeItem) {
-              throw new Error(`GradeItem não encontrado para itemTamanhoId=${itemTamanhoIdIdentifier}, gradeId=${gradeIdentifier}`);
-            }
-
-            const novaQuantidadeExpedida = gradeItem.quantidadeExpedida - diff;
-            if (novaQuantidadeExpedida < 0) {
-              throw new Error("QuantidadeExpedida negativa");
-            }
-
-            await prisma.gradeItem.update({
-              where: { id: gradeItem.id },
-              data: { quantidadeExpedida: novaQuantidadeExpedida },
-            });
-
-            const caixaItem = await prisma.caixaItem.findFirst({
-              where: { itemTamanhoId: itemTamanhoIdIdentifier, caixaId: boxIdentifier },
-            });
-
-            if (!caixaItem) {
-              throw new Error(`CaixaItem não encontrado para itemTamanhoId=${itemTamanhoIdIdentifier}, caixaId=${boxIdentifier}`);
-            }
-
-            if (exclude) {
-              await prisma.caixaItem.delete({ where: { id: caixaItem.id } });
-            } else {
-              await prisma.caixaItem.update({
-                where: { id: caixaItem.id },
-                data: { itemQty: qtyNew },
-              });
-            }
-
-            const estoque = await prisma.estoque.findFirst({ where: { id: stockIdentifier } });
-            if (!estoque) throw new Error(`Estoque não encontrado: ${stockIdentifier}`);
-
-            await prisma.estoque.update({
-              where: { id: estoque.id },
-              data: { quantidade: estoque.quantidade + diff },
-            });
-          }
-
-          // 📦 Atualização da quantidade total na caixa
-          if (itensModify.length > 0) {
-            const excludeBox = itensModify.every(e => e.exclude);
-            const qtyCaixa = itens.reduce((acc, item) => acc + item.itemQty, 0);
-
-            const box = await prisma.caixa.findFirst({ where: { id } });
-
-            if (!box) throw new Error(`Caixa não encontrada: ${id}`);
-
-            if (excludeBox) {
-              // Converte o número da caixa excluída para inteiro
-              const numeroExcluido = parseInt(box.caixaNumber, 10);
-
-              // Buscar todas as caixas da mesma grade com número maior que a caixa excluída
-              const caixasParaReordenar = await prisma.caixa.findMany({
-                where: {
-                  gradeId: box.gradeId,
-                },
-                orderBy: {
-                  caixaNumber: 'asc'
-                }
-              });
-
-              // Filtra as caixas que possuem número maior que o excluído
-              const caixasPosteriores = caixasParaReordenar.filter(caixa => {
-                const numeroAtual = parseInt(caixa.caixaNumber, 10);
-                return numeroAtual > numeroExcluido;
-              });
-
-              // Reordena as caixas decrementando o número e mantendo formato com dois dígitos
-              for (const caixa of caixasPosteriores) {
-                const numeroAtual = parseInt(caixa.caixaNumber, 10);
-                const novoNumero = (numeroAtual - 1).toString().padStart(2, '0');
-
-                await prisma.caixa.update({
-                  where: { id: caixa.id },
-                  data: {
-                    caixaNumber: novoNumero
+                // Zerar item - excluir OutInput e devolver para estoque
+                await prisma.outInput.delete({ where: { id: outInputItem.id } });
+                
+                // Devolver quantidade para estoque
+                await prisma.estoque.update({
+                  where: { id: outInputItem.estoqueId },
+                  data: { 
+                    quantidade: { 
+                      increment: outInputItem.quantidade 
+                    } 
                   }
                 });
-              }
 
-              await prisma.caixa.delete({ where: { id: box.id } })
-            } else {
+                // Devolver quantidade expedida na GradeItem
+                const gradeItem = await prisma.gradeItem.findFirst({
+                  where: {
+                    itemTamanhoId,
+                    gradeId
+                  }
+                });
+
+                if (gradeItem) {
+                  await prisma.gradeItem.update({
+                    where: { id: gradeItem.id },
+                    data: { 
+                      quantidadeExpedida: { 
+                        decrement: outInputItem.quantidade 
+                      } 
+                    }
+                  });
+                }
+
+                // Excluir CaixaItem
+                await prisma.caixaItem.delete({ where: { id: caixaItemAtual.id } });
+              } else {
+                // Atualizar quantidade do item
+                await prisma.outInput.update({
+                  where: { id: outInputItem.id },
+                  data: { quantidade: itemQty }
+                });
+
+                // Ajustar estoque e GradeItem se houver diferença
+                if (diff !== 0) {
+                  // Ajustar estoque (se diff > 0, devolve para estoque)
+                  await prisma.estoque.update({
+                    where: { id: outInputItem.estoqueId },
+                    data: { 
+                      quantidade: { 
+                        increment: diff 
+                      } 
+                    }
+                  });
+
+                  // Ajustar GradeItem
+                  const gradeItem = await prisma.gradeItem.findFirst({
+                    where: {
+                      itemTamanhoId,
+                      gradeId
+                    }
+                  });
+
+                  if (gradeItem) {
+                    await prisma.gradeItem.update({
+                      where: { id: gradeItem.id },
+                      data: { 
+                        quantidadeExpedida: { 
+                          decrement: diff 
+                        } 
+                      }
+                    });
+                  }
+                }
+
+                // Atualizar CaixaItem
+                await prisma.caixaItem.update({
+                  where: { id: caixaItemAtual.id },
+                  data: { itemQty }
+                });
+              }
+            }
+          }
+
+          // 3. Verificar se caixa deve ser excluída (todos itens zerados)
+          const caixaItemsRestantes = await prisma.caixaItem.findMany({
+            where: { caixaId: id }
+          });
+
+          if (caixaItemsRestantes.length === 0) {
+            // Excluir caixa e reordenar números das caixas posteriores
+            const numeroExcluido = parseInt(caixaAtual.caixaNumber, 10);
+
+            // Buscar caixas posteriores para reordenar
+            const caixasPosteriores = await prisma.caixa.findMany({
+              where: {
+                gradeId: caixaAtual.gradeId,
+                caixaNumber: {
+                  gt: caixaAtual.caixaNumber
+                }
+              },
+              orderBy: { caixaNumber: 'asc' }
+            });
+
+            // Reordenar caixas posteriores (decrementar números)
+            for (const caixa of caixasPosteriores) {
+              const numeroAtual = parseInt(caixa.caixaNumber, 10);
+              const novoNumero = (numeroAtual - 1).toString().padStart(2, '0');
+
               await prisma.caixa.update({
-                where: { id: box.id },
-                data: { qtyCaixa },
+                where: { id: caixa.id },
+                data: { caixaNumber: novoNumero }
               });
             }
 
+            // Excluir todos os OutInput da caixa
+            await prisma.outInput.deleteMany({
+              where: { caixaId: id }
+            });
+
+            // Excluir a caixa
+            await prisma.caixa.delete({ where: { id } });
+
+            // Retornar objeto indicando que a caixa foi excluída
+            return {
+              ...caixaData,
+              status: 'EXCLUIDA',
+              mensagem: 'Caixa foi excluída pois todos os itens foram zerados',
+              qtyCaixa: 0,
+              itens: []
+            } as CaixaAjuste & { status: string; mensagem: string };
+          } else {
+            // Atualizar quantidade total da caixa baseada nos dados da requisição
+            const totalQuantidade = itens.reduce((sum, item) => sum + item.itemQty, 0);
+            await prisma.caixa.update({
+              where: { id },
+              data: { qtyCaixa: totalQuantidade }
+            });
           }
 
         }, {
           isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
           timeout: 20000,
-          maxWait: 5000,
+          maxWait: 5000
         });
 
-        const novaCaixa = await this.getCaixaById(id);
-        return novaCaixa ?? null;
+        // Se a transação retornou um objeto com status, é uma exclusão
+        if (result && typeof result === 'object' && 'status' in result) {
+          return result;
+        }
+
+        // Caso contrário, buscar dados atualizados da caixa (fora da transação)
+        return await this.getCaixaById(id);
 
       } catch (err: any) {
         if (err.code === 'P2034') {
           attempt++;
           console.warn(`Conflito de transação (tentativa ${attempt} de ${MAX_RETRIES})`);
-          if (attempt === MAX_RETRIES) throw new Error("Transação falhou após múltiplas tentativas (P2034)");
-          continue; // tenta novamente
+          if (attempt === MAX_RETRIES) {
+            throw new Error("Transação falhou após múltiplas tentativas (P2034)");
+          }
+          continue;
         }
 
         console.error("Erro inesperado ao atualizar itens da caixa:", err);
@@ -580,7 +627,7 @@ export class CaixaPrisma {
       }
     }
 
-    return null; // falha final
+    return null;
   }
 
 }
