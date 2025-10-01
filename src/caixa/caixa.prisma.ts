@@ -201,7 +201,7 @@ export class CaixaPrisma {
               nome: true,
             },
           },
-          grade: {select: { updatedAt: true, status: true, createdAt: true }},
+          grade: { select: { updatedAt: true, status: true, createdAt: true } },
         },
       });
 
@@ -262,7 +262,7 @@ export class CaixaPrisma {
           caixaId: item.caixaId,
           itemName: item.itemName,
           itemGenero: item.itemGenero,
-          itemTam: item.itemTam, 
+          itemTam: item.itemTam,
           itemQty: item.itemQty,
           itemTamanhoId: item.itemTamanhoId,
           updatedAt: convertSPTime(String(item.updatedAt)),
@@ -334,18 +334,27 @@ export class CaixaPrisma {
             const quantidadeAtual = caixaItemAtual.itemQty;
             const diff = quantidadeAtual - itemQty;
 
+            // 🔍 DEBUG LOG
+            console.log(`
+              🔍 AJUSTE DE ITEM:
+              ItemTamanhoId: ${itemTamanhoId}
+              Quantidade Atual (CaixaItem): ${quantidadeAtual}
+              Nova Quantidade (itemQty): ${itemQty}
+              Diferença (diff): ${diff}
+              É Kit?: ${itemTamanho.isKit}
+            `);
 
             if (itemTamanho.isKit) {
               // PROCESSAR KIT
-              
+
               // 1. PROCESSAR COMPONENTES DO KIT (OutInput e Estoque)
               for (const kitComponent of itemTamanho.kitMain) {
                 const componenteId = kitComponent.componentId;
                 const qtdPorKit = kitComponent.quantidade;
-                
+
                 // Diferença de kits: quantidadeAtual - itemQty
                 const diffKits = quantidadeAtual - itemQty;
-                
+
                 // Diferença de componentes: diffKits * qtdPorKit
                 const diffComponentes = diffKits * qtdPorKit;
 
@@ -366,38 +375,38 @@ export class CaixaPrisma {
                 if (itemQty === 0) {
                   // Zerar kit - excluir OutInput do componente
                   await prisma.outInput.delete({ where: { id: outInputComponente.id } });
-                  
+
                   // Devolver quantidade total do componente para estoque
                   await prisma.estoque.update({
                     where: { id: outInputComponente.estoqueId },
-                    data: { 
-                      quantidade: { 
-                        increment: outInputComponente.quantidade 
-                      } 
+                    data: {
+                      quantidade: {
+                        increment: outInputComponente.quantidade
+                      }
                     }
                   });
                 } else {
                   // Atualizar quantidade do componente no OutInput
                   const novaQuantidadeComponente = itemQty * qtdPorKit;
-                  
+
                   await prisma.outInput.update({
                     where: { id: outInputComponente.id },
                     data: { quantidade: novaQuantidadeComponente }
                   });
 
-                  // Ajustar estoque se houver diferença
-                  if (diffComponentes !== 0) {
-                    // diffComponentes é negativo quando reduzimos kits (devolve para estoque)
-                    // Usar diffComponentes diretamente pois o Prisma increment aceita valores negativos
-                    await prisma.estoque.update({
-                      where: { id: outInputComponente.estoqueId },
-                      data: { 
-                        quantidade: { 
-                          increment: -diffComponentes // Negativo de negativo = positivo (devolve para estoque)
-                        } 
+                // Ajustar estoque se houver diferença
+                if (diffComponentes !== 0) {
+                  // ✅ CORREÇÃO: diffComponentes já tem o sinal correto
+                  // Se positivo: devolver para estoque | Se negativo: retirar do estoque
+                  await prisma.estoque.update({
+                    where: { id: outInputComponente.estoqueId },
+                    data: {
+                      quantidade: {
+                        increment: diffComponentes // ✅ CORRETO: Prisma increment aceita valores negativos
                       }
-                    });
-                  }
+                    }
+                  });
+                }
                 }
               }
 
@@ -414,10 +423,10 @@ export class CaixaPrisma {
                   // Zerar quantidade expedida do kit para permitir expedir novamente
                   await prisma.gradeItem.update({
                     where: { id: gradeItemKit.id },
-                    data: { 
-                      quantidadeExpedida: { 
-                        decrement: quantidadeAtual 
-                      } 
+                    data: {
+                      quantidadeExpedida: {
+                        decrement: quantidadeAtual
+                      }
                     }
                   });
                 } else {
@@ -425,10 +434,10 @@ export class CaixaPrisma {
                   if (diff !== 0) {
                     await prisma.gradeItem.update({
                       where: { id: gradeItemKit.id },
-                      data: { 
-                        quantidadeExpedida: { 
-                          decrement: diff 
-                        } 
+                      data: {
+                        quantidadeExpedida: {
+                          decrement: diff
+                        }
                       }
                     });
                   }
@@ -460,16 +469,25 @@ export class CaixaPrisma {
               }
 
               if (itemQty === 0) {
+                // 🔍 DEBUG LOG ZERAR
+                console.log(`
+                  🗑️ ZERANDO ITEM (DELETANDO):
+                  ItemTamanhoId: ${itemTamanhoId}
+                  Quantidade em OutInput: ${outInputItem.quantidade}
+                  EstoqueId: ${outInputItem.estoqueId}
+                  Vai devolver: +${outInputItem.quantidade} para estoque
+                `);
+
                 // Zerar item - excluir OutInput e devolver para estoque
                 await prisma.outInput.delete({ where: { id: outInputItem.id } });
-                
+
                 // Devolver quantidade para estoque
                 await prisma.estoque.update({
                   where: { id: outInputItem.estoqueId },
-                  data: { 
-                    quantidade: { 
-                      increment: outInputItem.quantidade 
-                    } 
+                  data: {
+                    quantidade: {
+                      increment: outInputItem.quantidade
+                    }
                   }
                 });
 
@@ -484,10 +502,10 @@ export class CaixaPrisma {
                 if (gradeItem) {
                   await prisma.gradeItem.update({
                     where: { id: gradeItem.id },
-                    data: { 
-                      quantidadeExpedida: { 
-                        decrement: outInputItem.quantidade 
-                      } 
+                    data: {
+                      quantidadeExpedida: {
+                        decrement: outInputItem.quantidade
+                      }
                     }
                   });
                 }
@@ -503,13 +521,22 @@ export class CaixaPrisma {
 
                 // Ajustar estoque e GradeItem se houver diferença
                 if (diff !== 0) {
+                  // 🔍 DEBUG LOG ESTOQUE
+                  console.log(`
+                    📦 AJUSTANDO ESTOQUE (ITEM NORMAL):
+                    ItemTamanhoId: ${itemTamanhoId}
+                    EstoqueId: ${outInputItem.estoqueId}
+                    Increment: ${diff}
+                    (Se positivo: devolve | Se negativo: retira)
+                  `);
+
                   // Ajustar estoque (se diff > 0, devolve para estoque)
                   await prisma.estoque.update({
                     where: { id: outInputItem.estoqueId },
-                    data: { 
-                      quantidade: { 
-                        increment: diff 
-                      } 
+                    data: {
+                      quantidade: {
+                        increment: diff
+                      }
                     }
                   });
 
@@ -524,10 +551,10 @@ export class CaixaPrisma {
                   if (gradeItem) {
                     await prisma.gradeItem.update({
                       where: { id: gradeItem.id },
-                      data: { 
-                        quantidadeExpedida: { 
-                          decrement: diff 
-                        } 
+                      data: {
+                        quantidadeExpedida: {
+                          decrement: diff
+                        }
                       }
                     });
                   }
@@ -562,17 +589,6 @@ export class CaixaPrisma {
               orderBy: { caixaNumber: 'asc' }
             });
 
-            // Reordenar caixas posteriores (decrementar números)
-            for (const caixa of caixasPosteriores) {
-              const numeroAtual = parseInt(caixa.caixaNumber, 10);
-              const novoNumero = (numeroAtual - 1).toString().padStart(2, '0');
-
-              await prisma.caixa.update({
-                where: { id: caixa.id },
-                data: { caixaNumber: novoNumero }
-              });
-            }
-
             // Excluir todos os OutInput da caixa
             await prisma.outInput.deleteMany({
               where: { caixaId: id }
@@ -580,6 +596,16 @@ export class CaixaPrisma {
 
             // Excluir a caixa
             await prisma.caixa.delete({ where: { id } });
+
+            // Reordenar caixas posteriores (decrementar números)
+            for (const caixa of caixasPosteriores) {
+              const numeroAtual = parseInt(caixa.caixaNumber, 10);
+              const novoNumero = (numeroAtual - 1).toString();
+              await prisma.caixa.update({
+                where: { id: caixa.id },
+                data: { caixaNumber: novoNumero }
+              });
+            }
 
             // Retornar objeto indicando que a caixa foi excluída
             return {
