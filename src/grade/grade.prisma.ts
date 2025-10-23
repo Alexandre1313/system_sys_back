@@ -357,6 +357,8 @@ export class GradePrisma {
 
         for (const status of sortedStatuses) {
           const statusUpper = status.toUpperCase();
+          let totalStatusPrevisto = 0;
+          let totalStatusExpedido = 0;
 
           groupedItems.push({
             data: null,
@@ -393,6 +395,12 @@ export class GradePrisma {
 
             const subtotalPrevisto = items.reduce((sum, x) => sum + x.previsto, 0);
             const subtotalExpedido = items.reduce((sum, x) => sum + x.expedido, 0);
+            
+            // Acumula no total do status
+            totalStatusPrevisto += subtotalPrevisto;
+            totalStatusExpedido += subtotalExpedido;
+            
+            // Acumula no total geral
             totalGeralPrevisto += subtotalPrevisto;
             totalGeralExpedido += subtotalExpedido;
 
@@ -411,6 +419,19 @@ export class GradePrisma {
               ],
             });
           }
+          
+          // ✅ NOVO: Total acumulado por status
+          groupedItems.push({
+            data: null,
+            items: [{
+              data: null,
+              item: `📊 Total ${statusUpper}`,
+              genero: '',
+              tamanho: '',
+              previsto: totalStatusPrevisto,
+              expedido: totalStatusExpedido,
+            }],
+          });
         }
 
         groupedItems.push({
@@ -574,6 +595,8 @@ export class GradePrisma {
 
         for (const status of sortedStatuses) {
           const statusUpper = status.toUpperCase();
+          let totalStatusPrevisto = 0;
+          let totalStatusExpedido = 0;
 
           groupedItems.push({
             data: null,
@@ -633,6 +656,12 @@ export class GradePrisma {
 
               const subtotalPrevisto = items.reduce((sum, x) => sum + x.previsto, 0);
               const subtotalExpedido = items.reduce((sum, x) => sum + x.expedido, 0);
+              
+              // Acumula no total do status
+              totalStatusPrevisto += subtotalPrevisto;
+              totalStatusExpedido += subtotalExpedido;
+              
+              // Acumula no total geral
               totalGeralPrevisto += subtotalPrevisto;
               totalGeralExpedido += subtotalExpedido;
 
@@ -686,6 +715,19 @@ export class GradePrisma {
               }],
             });
           }
+          
+          // ✅ NOVO: Total acumulado por status
+          groupedItems.push({
+            data: null,
+            items: [{
+              data: null,
+              item: `📊 Total ${statusUpper}`,
+              genero: '',
+              tamanho: '',
+              previsto: totalStatusPrevisto,
+              expedido: totalStatusExpedido,
+            }],
+          });
         }
 
         groupedItems.push({
@@ -848,6 +890,8 @@ export class GradePrisma {
 
         for (const status of sortedStatuses) {
           const statusUpper = status.toUpperCase();
+          let totalStatusPrevisto = 0;
+          let totalStatusExpedido = 0;
 
           groupedItems.push({
             data: null,
@@ -888,6 +932,12 @@ export class GradePrisma {
 
             const subtotalPrevisto = items.reduce((sum, x) => sum + x.previsto, 0);
             const subtotalExpedido = items.reduce((sum, x) => sum + x.expedido, 0);
+            
+            // Acumula no total do status
+            totalStatusPrevisto += subtotalPrevisto;
+            totalStatusExpedido += subtotalExpedido;
+            
+            // Acumula no total geral
             totalGeralPrevisto += subtotalPrevisto;
             totalGeralExpedido += subtotalExpedido;
 
@@ -906,6 +956,19 @@ export class GradePrisma {
               ],
             });
           }
+          
+          // ✅ NOVO: Total acumulado por status
+          groupedItems.push({
+            data: null,
+            items: [{
+              data: null,
+              item: `📊 Total ${statusUpper}`,
+              genero: '',
+              tamanho: '',
+              previsto: totalStatusPrevisto,
+              expedido: totalStatusExpedido,
+            }],
+          });
         }
 
         groupedItems.push({
@@ -1067,6 +1130,8 @@ export class GradePrisma {
 
         for (const status of sortedStatuses) {
           const statusUpper = status.toUpperCase();
+          let totalStatusPrevisto = 0;
+          let totalStatusExpedido = 0;
 
           groupedItems.push({
             data: null,
@@ -1107,6 +1172,12 @@ export class GradePrisma {
 
             const subtotalPrevisto = items.reduce((sum, x) => sum + x.previsto, 0);
             const subtotalExpedido = items.reduce((sum, x) => sum + x.expedido, 0);
+            
+            // Acumula no total do status
+            totalStatusPrevisto += subtotalPrevisto;
+            totalStatusExpedido += subtotalExpedido;
+            
+            // Acumula no total geral
             totalGeralPrevisto += subtotalPrevisto;
             totalGeralExpedido += subtotalExpedido;
 
@@ -1125,6 +1196,19 @@ export class GradePrisma {
               ],
             });
           }
+          
+          // ✅ NOVO: Total acumulado por status
+          groupedItems.push({
+            data: null,
+            items: [{
+              data: null,
+              item: `📊 Total ${statusUpper}`,
+              genero: '',
+              tamanho: '',
+              previsto: totalStatusPrevisto,
+              expedido: totalStatusExpedido,
+            }],
+          });
         }
 
         groupedItems.push({
@@ -1298,6 +1382,8 @@ export class GradePrisma {
 
         for (const status of sortedStatuses) {
           const statusUpper = status.toUpperCase();
+          let totalStatusPrevisto = 0;
+          let totalStatusExpedido = 0;
 
           groupedItems.push({
             data: null,
@@ -1411,6 +1497,19 @@ export class GradePrisma {
               }],
             });
           }
+          
+          // ✅ NOVO: Total acumulado por status
+          groupedItems.push({
+            data: null,
+            items: [{
+              data: null,
+              item: `📊 Total ${statusUpper}`,
+              genero: '',
+              tamanho: '',
+              previsto: totalStatusPrevisto,
+              expedido: totalStatusExpedido,
+            }],
+          });
         }
 
         groupedItems.push({
